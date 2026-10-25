@@ -1,0 +1,4 @@
+import { statusOf } from '../tasks/model';
+import type { Task } from '../tasks/model';
+export function goalStats(tasks:Task[],goalId:string,milestoneId?:string){const linked=tasks.filter(x=>x.goalId===goalId&&!x.archived&&statusOf(x)!=="cancelled"&&(!milestoneId||x.milestoneId===milestoneId));const done=linked.filter(x=>x.done).length;return {total:linked.length,done,open:linked.length-done,progress:linked.length?Math.round(done/linked.length*100):0};}
+export function replaceGoalTasks(all:Task[],goalId:string,next:Task[]){const incoming=new Map(next.map(task=>[task.id,{...task,goalId}]));const output=all.flatMap(task=>{if(task.goalId!==goalId)return [task];const replacement=incoming.get(task.id);incoming.delete(task.id);return replacement?[replacement]:[];});return [...output,...incoming.values()];}

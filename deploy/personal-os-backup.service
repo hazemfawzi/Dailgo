@@ -1,0 +1,18 @@
+[Unit]
+Description=Verified personal assistant database backup
+After=personal-os.service
+
+[Service]
+Type=oneshot
+User=personal-os
+Group=personal-os
+WorkingDirectory=/srv/personal-os/current
+Environment=NODE_ENV=production
+EnvironmentFile=/etc/personal-os.env
+ExecStart=/usr/bin/node /srv/personal-os/current/server/maintenance.mjs backup /var/lib/personal-os/backups
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/personal-os

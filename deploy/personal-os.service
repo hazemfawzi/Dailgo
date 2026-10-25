@@ -1,0 +1,26 @@
+[Unit]
+Description=Personal assistant application
+After=network.target
+
+[Service]
+Type=simple
+User=personal-os
+Group=personal-os
+WorkingDirectory=/srv/personal-os/current
+Environment=NODE_ENV=production
+EnvironmentFile=/etc/personal-os.env
+ExecStart=/usr/bin/node /srv/personal-os/current/server/index.mjs
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+StateDirectory=personal-os
+StateDirectoryMode=0700
+ReadWritePaths=/var/lib/personal-os
+
+[Install]
+WantedBy=multi-user.target
