@@ -1,0 +1,85 @@
+name: Dailgo checks and deployment
+on:
+  pull_request:
+  push:
+    branches: [main, 'codex/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm run test:server
+      - run: npm run test:deploy
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - name: Package tested application
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build-server.mjs
+          node scripts/package-vps.mjs "$RUNNER_TEMP/dailgo-package"
+          tar -czf dailgo.tar.gz -C "$RUNNER_TEMP/dailgo-package" .
+          sha256sum dailgo.tar.gz > dailgo.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dailgo-${{ github.sha }}
+          path: |
+            dailgo.tar.gz
+            dailgo.tar.gz.sha256
+          retention-days: 14
+          if-no-files-found: error
+  deploy:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.DAILGO_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      contents: read
+      actions: read
+    concurrency:
+      group: dailgo-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dailgo-${{ github.sha }}
+      - name: Publish tested release
+        shell: bash
+        env:
+          DAILGO_HOST: ${{ vars.DAILGO_SSH_HOST }}
+          DAILGO_PORT: ${{ vars.DAILGO_SSH_PORT || '22' }}
+          DEPLOY_KEY: ${{ secrets.DAILGO_SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DAILGO_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          [[ "$DAILGO_HOST" =~ ^[a-zA-Z0-9][a-zA-Z0-9.-]*$ ]]
+          [[ "$DAILGO_PORT" =~ ^[0-9]{1,5}$ ]] && (( 10#$DAILGO_PORT >= 1 && 10#$DAILGO_PORT <= 65535 ))
+          test -n "$DEPLOY_KEY" && test -n "$KNOWN_HOSTS"
+          sha256sum -c dailgo.tar.gz.sha256
+          credential_dir=$(mktemp -d "$RUNNER_TEMP/dailgo-ssh.XXXXXX")
+          trap 'rm -rf "$credential_dir"' EXIT
+          chmod 700 "$credential_dir"
+          printf '%s\n' "$DEPLOY_KEY" > "$credential_dir/key"
+          printf '%s\n' "$KNOWN_HOSTS" > "$credential_dir/known_hosts"
+          chmod 600 "$credential_dir/key" "$credential_dir/known_hosts"
+          release_id="${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          [[ "$release_id" =~ ^[0-9a-f]{40}-[0-9]+-[0-9]+$ ]]
+          ssh_options=(-i "$credential_dir/key" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$credential_dir/known_hosts" -o ConnectTimeout=15)
+          scp "${ssh_options[@]}" -P "$DAILGO_PORT" dailgo.tar.gz "dailgo-deploy@$DAILGO_HOST:/var/lib/dailgo-deploy/incoming/$release_id.tar.gz"
+          # Rewrite the filename only; the digest must remain identical.
+          awk -v name="$release_id.tar.gz" '{ print $1 "  " name }' dailgo.tar.gz.sha256 > "$credential_dir/archive.sha256"
+          scp "${ssh_options[@]}" -P "$DAILGO_PORT" "$credential_dir/archive.sha256" "dailgo-deploy@$DAILGO_HOST:/var/lib/dailgo-deploy/incoming/$release_id.tar.gz.sha256"
+          ssh "${ssh_options[@]}" -p "$DAILGO_PORT" "dailgo-deploy@$DAILGO_HOST" "sudo -n /usr/local/sbin/dailgo-release $release_id"
+          curl --fail --silent --show-error --retry 3 --max-time 15 https://dailgo.decoderz.dev/api/health > "$RUNNER_TEMP/dailgo-health.json"
+          curl --fail --silent --show-error --retry 3 --max-time 15 https://dailgo.decoderz.dev/release.json > "$RUNNER_TEMP/dailgo-release.json"
+          node -e 'const fs=require("node:fs");if(JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+"/dailgo-health.json")).status!=="production"||JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+"/dailgo-release.json")).commit!==process.env.GITHUB_SHA)process.exit(1)'

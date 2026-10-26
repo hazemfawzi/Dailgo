@@ -1,0 +1,3 @@
+#!/bin/sh
+# Install root-owned; isolated Python ignores uploader-controlled Python variables.
+exec /usr/bin/python3 -I /usr/local/lib/dailgo/release.py "$@"
