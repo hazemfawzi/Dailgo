@@ -9,7 +9,9 @@
     "test": "node scripts/test.mjs",
     "server": "node scripts/build-server.mjs && node server/index.mjs",
     "preview": "vite preview --host 127.0.0.1",
-    "test:server": "node scripts/build-server.mjs && node --test scripts/server.test.mjs"
+    "test:server": "node scripts/build-server.mjs && node --test scripts/server.test.mjs",
+    "test:browser": "node scripts/build-server.mjs && playwright test",
+    "test:deploy": "python3 -B -m unittest discover -s tests/deploy -v"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -23,6 +25,7 @@
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/vite": "^4.1.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",

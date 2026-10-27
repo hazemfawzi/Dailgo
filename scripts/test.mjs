@@ -184,3 +184,37 @@ test('assistant mutations require an exact unambiguous target and a valid replac
 test('confirmed edits are atomic, idempotent and undo restores values rather than deleting the record',()=>{const {message,data}=mutationFixture();const changed=auditWorkspace(data,confirmMutation(data,'edit-chat',message));assert.equal(changed['personal-os.tasks.v1'][0].title,'Improved interface');assert.equal(changed['personal-os.conversations.v1'][0].messages[0].status,'confirmed');assert.deepEqual(confirmMutation(changed,'edit-chat',message),changed);const preview=undoPreview(changed,'edit-chat','edit-action');assert.equal(preview.mode,'restore');assert.equal(preview.rows[0].state,'safe');const restored=auditWorkspace(changed,undoAction(changed,preview));assert.equal(restored['personal-os.tasks.v1'][0].title,'Interface');assert.equal(restored['personal-os.tasks.v1'].length,1);assert.equal((restored['personal-os.trash.v1']??[]).length,0);assert.equal(restored['personal-os.conversations.v1'][0].messages[0].undo.restoredIds[0],'edit-me');assert.deepEqual(parseBackup(JSON.stringify(makeBackup(restored))),JSON.parse(JSON.stringify(restored)));});
 test('later edits protect mutation undo and stale target revisions block execution',()=>{const {message,data}=mutationFixture();const later=auditWorkspace(data,{...data,'personal-os.tasks.v1':data['personal-os.tasks.v1'].map(x=>({...x,description:'Later edit'}))});assert.throws(()=>confirmMutation(later,'edit-chat',message),/stale-target/);const confirmed=auditWorkspace(data,confirmMutation(data,'edit-chat',message));const edited=auditWorkspace(confirmed,{...confirmed,'personal-os.tasks.v1':confirmed['personal-os.tasks.v1'].map(x=>({...x,description:'Keep this work'}))});assert.equal(undoPreview(edited,'edit-chat','edit-action').rows[0].state,'edited');});
 test('unsafe mutation patches cannot enter backups or execute',()=>{const {message,data}=mutationFixture();const bad={...message.mutation,patch:{id:'replacement'},before:{id:'edit-me'}};assert.equal(validMutation(bad),false);assert.throws(()=>makeBackup({...data,'personal-os.conversations.v1':[{id:'chat',title:'Unsafe',archived:false,messages:[{...message,mutation:bad}]}]}));});
+
+const calendarBuild=await build({entryPoints:['src/features/planner/calendarModel.ts'],bundle:true,platform:'node',format:'esm',write:false});
+const {calendarDate,calendarMonth,parseCalendarDate}=await import(`data:text/javascript;base64,${Buffer.from(calendarBuild.outputFiles[0].text).toString('base64')}`);
+test('calendar cell labels, selected dates and month navigation preserve date-only values across device timezones',()=>{
+ const previousTimezone=process.env.TZ;
+ try{
+  for(const timezone of ['UTC','Africa/Cairo','America/New_York','Pacific/Auckland']){
+   process.env.TZ=timezone;
+   for(const key of ['2026-10-01','2026-11-01','2027-01-01','2028-02-29']){
+    const selected=parseCalendarDate(key);assert.ok(selected);assert.equal(calendarDate(selected),key);
+    const month=calendarMonth(key);assert.equal(calendarDate(month),key.slice(0,7)+'-01');
+    const cell=new Date(month.getFullYear(),month.getMonth(),selected.getDate(),12);
+    assert.equal(calendarDate(cell),key);
+   }
+   const last=calendarMonth('2026-12-31');assert.equal(calendarDate(new Date(last.getFullYear(),last.getMonth()+1,1)),'2027-01-01');
+  }
+ }finally{if(previousTimezone===undefined)delete process.env.TZ;else process.env.TZ=previousTimezone;}
+});
+test('calendar rejects impossible dates and malformed route parameters',()=>{
+ for(const key of ['2026-02-30','2026-13-01','2026-00-01','2026-10-00','2026-1-1','invalid',''])assert.equal(parseCalendarDate(key),null);
+ assert.throws(()=>calendarMonth('2026-02-30'),/Invalid calendar date/);
+});
+test('English and Arabic planning summaries share task priority order and preserve stored order',()=>{
+ const input=[task('low',{priority:'low',plannedDate:'2099-01-01'}),task('high',{priority:'high'}),task('late',{dueDate:'2020-01-01'}),task('pin',{pinned:true}),task('waiting',{status:'waiting',pinned:true}),task('done',{done:true}),task('archived',{archived:true})];
+ const before=JSON.stringify(input);
+ for(const [prompt,translate] of [['Plan my day',t],['خطط يومي',(_en,ar)=>ar]]){
+  const output=respond(prompt,translate,input,[]);
+  assert.deepEqual(output.references.map(x=>x.id),['pin','late','high','low']);
+  assert.ok(output.text.indexOf('• pin')<output.text.indexOf('• late'));
+  assert.ok(output.text.indexOf('• late')<output.text.indexOf('• high'));
+  assert.ok(output.text.indexOf('• high')<output.text.indexOf('• low'));
+ }
+ assert.equal(JSON.stringify(input),before);
+});

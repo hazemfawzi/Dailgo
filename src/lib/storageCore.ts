@@ -57,3 +57,5 @@ export function restoreSnapshot(storage:Pick<Storage,'getItem'|'setItem'>,data:D
 
 
 
+
+export { auditWorkspace };

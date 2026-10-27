@@ -19,3 +19,8 @@ server/domain.mjs
 *.pem
 *.key
 
+
+playwright-report/
+test-results/
+
+__pycache__/

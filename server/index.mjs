@@ -1,3 +1,4 @@
+import { resource,stateKeys } from './resources.mjs';
 import { readConfig } from './config.mjs';
 import { createServer } from 'node:http';
 import { DatabaseSync } from 'node:sqlite';
@@ -5,7 +6,7 @@ import { randomBytes,randomUUID,scryptSync,timingSafeEqual,createHash } from 'no
 import { mkdirSync,existsSync,readFileSync,chmodSync } from 'node:fs';
 import { dirname,resolve,extname,sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-const { validateData }=await import(new URL('./domain.mjs',import.meta.url));
+const { validateData,auditWorkspace }=await import(new URL('./domain.mjs',import.meta.url));
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const defaultDb=fileURLToPath(new URL('../.local-data/workspace.sqlite',import.meta.url));
 const dist=fileURLToPath(new URL('../dist/',import.meta.url));
@@ -26,7 +27,7 @@ export function createLocalServer(file=defaultDb,options={}){
  const requestedPath=decodeURIComponent(url.pathname);if(requestedPath.split('/').some(part=>part.startsWith('.'))||/\.(?:sqlite(?:-wal|-shm)?|env|mjs)$/i.test(requestedPath))return send(res,404,{error:'not-found'});let path=resolve(dist,'.'+requestedPath);if(path!==resolve(dist)&&!path.startsWith(resolve(dist)+sep))return send(res,404,{error:'not-found'});
  if(!existsSync(path)||!extname(path))path=resolve(dist,'index.html');if(!existsSync(path))return send(res,404,{error:'build-required'});
  const type={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'}[extname(path)]??'application/octet-stream';
- res.writeHead(200,{'Content-Type':type,'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Cache-Control':extname(path)==='.html'||path.endsWith('sw.js')?'no-cache':'public, max-age=3600','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'"});return res.end(req.method==='HEAD'?undefined:readFileSync(path));
+ res.writeHead(200,{'Content-Type':type,'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Cache-Control':extname(path)==='.html'||path.endsWith('sw.js')||path.endsWith('release.json')?'no-cache':'public, max-age=3600','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'"});return res.end(req.method==='HEAD'?undefined:readFileSync(path));
  }
  if(req.method!=='GET'){
  const origin=req.headers.origin;try{const parsed=new URL(origin);if(config.production?origin!==config.origin:!['127.0.0.1','localhost'].includes(parsed.hostname)||parsed.protocol!=='http:')throw Error();}catch{return send(res,403,{error:'origin-rejected'});}
@@ -45,6 +46,28 @@ export function createLocalServer(file=defaultDb,options={}){
  if(url.pathname==='/api/account/password'&&req.method==='POST'){const body=await read(req,16384);const user=db.prepare('SELECT * FROM account WHERE id=1').get();if(typeof body.currentPassword!=='string'||body.currentPassword.length>200||typeof body.newPassword!=='string'||body.newPassword.length<12||body.newPassword.length>200||!user||!timingSafeEqual(scryptSync(body.currentPassword,user.salt,64),Buffer.from(user.password,'hex')))return send(res,400,{error:'invalid-credentials'});const salt=randomBytes(16).toString('hex');db.exec('BEGIN IMMEDIATE');try{db.prepare('UPDATE account SET salt=?,password=? WHERE id=1').run(salt,scryptSync(body.newPassword,salt,64).toString('hex'));db.prepare('DELETE FROM sessions').run();db.exec('COMMIT');}catch(error){db.exec('ROLLBACK');throw error;}setSession(res);return send(res,200,{changed:true});}
  if(url.pathname==='/api/account/logout'&&req.method==='POST'){db.prepare('DELETE FROM sessions WHERE token=?').run(session(req).token);res.setHeader('Set-Cookie','personal_os_session=; HttpOnly; SameSite=Strict; Path=/api; Max-Age=0'+(config.cookieSecure?'; Secure':''));return send(res,200,{signedIn:false});}
  if(url.pathname==='/api/workspace'&&req.method==='GET'){const value=db.prepare('SELECT revision,data FROM workspace WHERE id=1').get();return send(res,200,value?{revision:value.revision,data:JSON.parse(value.data)}:{revision:'empty',data:null});}
+ const recordRoute=url.pathname.match(/^\/api\/records\/([a-z]+)(?:\/([^/]+))?$/);
+ const stateRoute=url.pathname.match(/^\/api\/state\/([a-z]+)$/);
+ if(recordRoute||stateRoute||url.pathname==='/api/workspace/commit'){
+  const current=()=>{const row=db.prepare('SELECT revision,data FROM workspace WHERE id=1').get();return {version:3,revision:row?.revision??'empty',data:row?JSON.parse(row.data):{}};};
+  if(req.method==='GET'){
+   const store=current();
+   if(recordRoute){const collection=resource(recordRoute[1],store.data);if(!collection)return send(res,404,{error:'not-found'});const id=recordRoute[2]?decodeURIComponent(recordRoute[2]):null;const item=id?collection.items.find(x=>x.id===id):null;if(id&&!item)return send(res,404,{error:'record-not-found'});return send(res,200,{revision:store.revision,...(id?{item}:{items:collection.items})});}
+   if(stateRoute&&Object.hasOwn(stateKeys,stateRoute[1]))return send(res,200,{revision:store.revision,value:store.data[stateKeys[stateRoute[1]]]??null});
+   return send(res,404,{error:'not-found'});
+  }
+  const allowed=recordRoute?['POST','PATCH','DELETE']:['PUT'];if(!allowed.includes(req.method))return send(res,405,{error:'method-not-allowed'});
+  const body=await read(req);if(typeof body.revision!=='string')throw Error('invalid-revision');
+  db.exec('BEGIN IMMEDIATE');try{
+   const store=current();if(body.revision!==store.revision){db.exec('ROLLBACK');return send(res,409,{error:'workspace-changed'});}
+   let data;
+   if(recordRoute){const collection=resource(recordRoute[1],store.data);if(!collection){db.exec('ROLLBACK');return send(res,404,{error:'not-found'});}const id=recordRoute[2]?decodeURIComponent(recordRoute[2]):null;if(req.method==='POST'&&id||req.method!=='POST'&&!id)throw Error('invalid-record-route');data=collection.change(req.method,id,body.item);}
+   else if(stateRoute){const key=Object.hasOwn(stateKeys,stateRoute[1])?stateKeys[stateRoute[1]]:null;if(!key){db.exec('ROLLBACK');return send(res,404,{error:'not-found'});}data={...store.data,[key]:body.value};}
+   else data=body.data;
+   validateData(data);data=auditWorkspace(store.data,data);validateData(data);const revision=randomUUID();
+   db.prepare('INSERT INTO workspace VALUES(1,?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,data=excluded.data').run(revision,JSON.stringify(data));db.exec('COMMIT');return send(res,200,{version:3,revision,data});
+  }catch(error){db.exec('ROLLBACK');if(error.message==='edit-conflict')return send(res,409,{error:'record-changed'});if(error.message==='record-not-found')return send(res,404,{error:'record-not-found'});throw error;}
+ }
  if(url.pathname==='/api/workspace'&&req.method==='PUT'){
  const body=await read(req);validateData(body.data);if(typeof body.revision!=='string')throw Error('invalid-revision');db.exec('BEGIN IMMEDIATE');try{const current=db.prepare('SELECT revision FROM workspace WHERE id=1').get();if((current?.revision??'empty')!==body.revision){db.exec('ROLLBACK');return send(res,409,{error:'workspace-changed'});}const revision=randomUUID();db.prepare('INSERT INTO workspace VALUES(1,?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,data=excluded.data').run(revision,JSON.stringify(body.data));db.exec('COMMIT');return send(res,200,{revision});}catch(error){db.exec('ROLLBACK');throw error;}
  }

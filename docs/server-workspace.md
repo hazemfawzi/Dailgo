@@ -1,0 +1,109 @@
+# Connected workspace
+
+Dailgo uses one personal account and one SQLite workspace per server. This is not
+multi-user hosting. Sign-in is required before opening the application. All existing
+workspace collections use the shared server storage adapter: tasks/subtasks, goals,
+projects, appointments, routines, memories/attachments, conversations/action previews,
+focus sessions, weekly plans, reviews, trial measurements, preferences and Trash.
+
+## Run
+
+Use Node 24 or newer:
+
+```sh
+npm ci
+npm run build
+npm run server
+# In a second terminal for frontend development:
+npm run dev -- --strictPort
+```
+
+The development app uses port 5173 and proxies `/api` to port 8787. The server also
+serves the built app itself on port 8787. Both listeners bind to loopback. Run behind
+the existing documented HTTPS reverse proxy for remote access; this change does not
+deploy or expose the server. Runtime state stays in ignored `.local-data/` or the
+configured `PERSONAL_OS_DB`. Existing accounts and databases remain compatible.
+
+On an empty database, the user creates their own account (minimum password length
+12). Production still requires the private setup token; do not automate creation of
+real personal accounts. On first sign-in to an empty server workspace, choose either
+an explicit import of the browser snapshot or a blank workspace. The local snapshot
+is never overwritten or deleted by this migration. If the server already contains a
+workspace, it opens directly without replacing it with device data. An old local
+snapshot can subsequently be restored through a reviewed backup replacement.
+
+## Persistence and conflicts
+
+The frontend sends atomic workspace commits and updates its confirmed snapshot only
+after server acknowledgement. Autosave controls show a temporary in-memory preview
+while requests are pending, so typing is responsive on slow connections. A failed
+request rolls the preview back and shows an error; it is not queued as an offline save. The backend validates the complete data and generates task/entry
+revisions, history and recoverable deletions. Multi-record actions (for example
+assistant confirmation plus the resulting task) commit together. Project reparenting
+through the record API updates linked task goals in the same transaction.
+
+Every write carries the observed workspace `revision`. SQLite compares it in a write
+transaction and rejects stale writes with HTTP 409. The frontend loads the latest
+confirmed state and asks the user to review/retry; task and entry editor drafts remain
+open on a rejected save. There is no automatic conflict merge. Other devices refresh
+every 10 seconds and when their window receives focus. They must use the same server;
+separate local servers have separate databases.
+
+Network failures stop writes, show an error and require a refresh/retry. There is no
+silent fallback to browser storage and no offline write queue. A lost response can
+mean the server already committed; refresh before retrying. A 401 returns the user to
+sign-in. The service worker caches application files only, never API responses.
+Opening an account after a cold reload requires server connectivity.
+
+Backup exports include the active server workspace. Backup restore replaces that
+workspace with revision protection. It is not a merge. Old exported files and the
+preserved pre-migration browser copy are independent copies: permanent deletion from
+the server cannot erase them. SQLite data and JSON backup files are not encrypted.
+
+## HTTP API
+
+All routes except health, account status, setup and login require the existing
+HttpOnly session cookie. Writes require an accepted Origin and JSON content type.
+Production additionally enforces the configured HTTPS host/proxy checks.
+
+| Route | Methods | Body / result |
+| --- | --- | --- |
+| `/api/workspace` | GET | `{ revision, data }`; empty database returns `data: null` |
+| `/api/workspace` | PUT | `{ revision, data }`; explicit full replacement for migration/backups |
+| `/api/workspace/commit` | PUT | `{ revision, data }`; validated and audited atomic commit; returns `{ version: 3, revision, data }` |
+| `/api/records/:collection` | GET, POST | GET returns `{ revision, items }`; POST accepts `{ revision, item }` |
+| `/api/records/:collection/:id` | GET, PATCH, DELETE | GET returns `{ revision, item }`; writes accept `{ revision, item? }` |
+| `/api/state/:name` | GET, PUT | GET returns `{ revision, value }`; PUT accepts `{ revision, value }` |
+
+Record collections: `tasks`, `goals`, `projects`, `events`, `routines`, `memories`
+(notes, preferences, decisions and personal records), `conversations`, `sessions`.
+State names: `language`, `theme` (boolean dark mode), `planning`, `focus`, `weeks`,
+`reviews`, `suggestions`, `trial`. Data shapes match `src/lib/storageCore.ts`.
+Record/state writes return the committed workspace. PATCH preserves record IDs and
+server-owned audit fields. Deleting tasks, entries or conversations moves them into
+recoverable Trash. Unknown resources return 404; unsupported methods return 405;
+stale revisions return 409; invalid data returns 400 without a partial write.
+
+The existing full replacement route deliberately preserves imported history rather
+than generating new history for every restored item. Clients should use the audited
+commit or record API for normal changes.
+
+## Verify
+
+```sh
+npm test
+npm run build
+npm run test:server
+npm run test:browser
+```
+
+Browser tests use a temporary database, a dedicated Vite port (5187), and an ephemeral
+backend port, with fixture accounts only. They do not use the real `.local-data`
+account. Playwright uses `/usr/bin/chromium` when installed; otherwise run
+`npx playwright install chromium`, or set `DAILGO_BROWSER_PATH` to an installed
+compatible browser. SQLite tests cover authenticated CRUD, all entry kinds, planning,
+conversations/sessions, audited atomic changes, stale writes and Trash.
+
+The assistant remains rule-based; scheduling and suggestions are computed in the app.
+There are no external AI calls, provider integrations, background notifications,
+real-time push updates, public deployment, or multi-user permissions in this change.

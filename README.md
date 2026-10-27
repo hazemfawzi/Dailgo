@@ -1,17 +1,22 @@
 # Dailgo — Personal AI Operating System
 
-A single-user React + TypeScript + Vite application with browser-local storage and an optional, loopback-only Node/SQLite prototype server. Branding is centralized in `src/config/branding.ts`; the temporary product name is not a company identity. Arabic RTL, English LTR, light/dark themes, mobile navigation and desktop navigation are supported.
+A single-user React + TypeScript + Vite application backed by a loopback-only Node/SQLite server. Sign-in opens the server workspace; changes save automatically with revision conflict protection. Existing browser data can be imported explicitly without deleting its local copy. See [Connected workspace](docs/server-workspace.md) for architecture, API routes, migration and tests. Branding is centralized in `src/config/branding.ts`; the temporary product name is not a company identity. Arabic RTL, English LTR, light/dark themes, mobile navigation and desktop navigation are supported.
 
 ## Run and verify
 
 ```powershell
-npm install
-npm run dev
-npm test
+npm ci
 npm run build
+npm run server
+# In another terminal:
+npm run dev -- --strictPort
+# Validation:
+npm test
+npm run test:server
+npm run test:browser
 ```
 
-Open http://127.0.0.1:5173/. Vite serves browser-history routes during development. Production hosting must route unknown paths to index.html. Automated verification currently contains 88 domain tests and 5 isolated server tests in `scripts/test.mjs`.
+Open http://127.0.0.1:5173/. Vite serves browser-history routes during development. Production hosting must route unknown paths to index.html. Automated verification includes domain tests, isolated server/API tests and Playwright browser workflows. See the connected workspace guide for details.
 
 ## Implemented flows
 
@@ -28,7 +33,7 @@ Open http://127.0.0.1:5173/. Vite serves browser-history routes during developme
 
 ## Data protection
 
-The authoritative store is `personal-os.workspace.v3`: one validated snapshot with a revision. Existing known LocalStorage keys migrate without resetting records. Legacy keys remain historical recovery material until a permanent purge clears them; they are not read after the authoritative snapshot exists.
+The authoritative store is now the authenticated SQLite server workspace: one validated snapshot with a revision. The frontend uses atomic server commits, checks for changes from other devices every 10 seconds, and rejects conflicting writes. The legacy browser store is `personal-os.workspace.v3`. The following browser migration/recovery details describe that preserved legacy copy. Existing known LocalStorage keys migrate without resetting records. Legacy keys remain historical recovery material until a permanent purge clears them; they are not read after the authoritative snapshot exists.
 
 Writes validate data and retain the last saved snapshot when storage fails. Corrupt JSON/data blocks normal writes instead of silently overwriting it with defaults. The data dialog offers a raw recovery download. Supported browsers use Web Locks to serialize writes, and storage events refresh open tabs. Per-item revisions reject stale task/entry/goal editor saves and keep their draft visible on failure. On browsers without Web Locks, revision checks alone cannot guarantee protection against precisely simultaneous writes. Text fields with immediate autosave are not a collaborative text editor.
 
@@ -48,7 +53,7 @@ Intentionally deferred under the user's standalone-prototype direction:
 
 - Real language-model understanding, secure server-side credentials, provider permissions, usage/cost limits and model-specific evaluation.
 - External calendar/mail/Notion integrations and all external execution.
-- Accounts, encrypted server storage, cross-device sync, background push reminders and native applications.
+- Multi-user accounts, encrypted server storage, offline write synchronization, background push reminders and native applications. A single personal account and connected-device refresh are now implemented.
 - A real full-week acceptance trial with the user's actual commitments. The trial screen records self-reported observations; sample data, passing tests and time logs do not establish personal productivity gains or production/security readiness.
 
 No external service is necessary to use the implemented prototype. The eight seeded life goals are illustrative suggestions; only the product-building goal is grounded in the user's stated project.
@@ -72,28 +77,13 @@ No external service is necessary to use the implemented prototype. The eight see
 - Scripted assistant edits with exact-title matching and before/after previews: rename task, move execution date, edit memory details, archive and restore. Ambiguous targets are rejected. Undo restores prior values only when no later edit occurred; creation undo continues using recoverable Trash.
 - Production manifest, generated icons, cached application shell and an install/offline information dialog. Service worker never caches API responses. Updates require an explicit reload action. Offline installation and browser behavior still need manual acceptance testing.
 
-## Optional local server
+## Connected server workspace
 
-Tested with Node 24 and its built-in SQLite module. Start with:
+The Node 24 server is required for normal application use. Start it with `npm run server`; use Vite at port 5173 during development, or the built frontend served by the application server at port 8787. Both frontend origins access the same server account and workspace. Sign-in uses HttpOnly SameSite cookies; sessions retain the existing password and origin protections.
 
-```powershell
-npm run build
-npm run server
-```
+All existing feature data saves through the shared server adapter. First use offers explicit migration of browser data or an empty server workspace; setup does not create a personal account. Other devices refresh every 10 seconds and on window focus. Conflicting changes are rejected rather than merged. Offline saves are unavailable, with no silent browser fallback.
 
-Open http://127.0.0.1:8787/ for the production build, or continue using Vite at port 5173 (API requests proxy to the local server). The production origin has separate browser storage; it does not automatically inherit the Vite browser records.
-
-Open Data and backup, check the local server, and create the single local account yourself. No personal account is created by setup scripts. Passwords are hashed with scrypt; sessions use HttpOnly SameSite cookies, with login throttling and origin checks. SQLite records are not encrypted at rest. Runtime files live in `.local-data/`, excluded from source control and release packages. This is a local prototype, not a public authentication deployment.
-
-Transfers are manual full snapshots with a confirmation preview. Saving replaces the separate server copy; loading replaces browser records and settings. Both directions check revisions and reject stale previews. Export a backup before replacement. No automatic merge, synchronization, real AI or external integration is enabled.
-
-```powershell
-npm test
-npm run test:server
-npm run preview
-```
-
-Domain tests use in-memory data; server tests create isolated fixture databases in the project `.local-data/tests/` directory. They do not sign into or modify the user's live local account.
+JSON backup restore replaces the active server workspace after preview and revision checks. SQLite files stay in ignored `.local-data/`, unencrypted at rest. See [Connected workspace](docs/server-workspace.md) for the CRUD/state API, failure behavior, account management and isolated tests.
 
 ## External launch gates
 
@@ -104,4 +94,11 @@ Provider-backed AI, external tool connections and public deployment remain disab
 
 Production preparation is included in `deploy/VPS.md`: Nginx HTTPS configuration, a restricted systemd service, private SQLite storage, a protected first-account setup token, password reset through protected stdin, and online SQLite backups with a daily timer. Runtime domain validators are generated at `server/domain.mjs`; private databases remain in `.local-data/` locally or the configured absolute path on the VPS.
 
-Build the frontend and server validators before running `node scripts/package-vps.mjs ABSOLUTE_EMPTY_OUTPUT_DIRECTORY`. The resulting package has no runtime npm dependencies. Deployment has not been executed on a remote VPS. Hostname, SSH user, domain and operating system must be confirmed first. AI and external integrations remain disabled; server snapshot transfers are manual.
+Build the frontend and server validators before running `node scripts/package-vps.mjs ABSOLUTE_EMPTY_OUTPUT_DIRECTORY`. The resulting package has no runtime npm dependencies. Deployment has not been executed on a remote VPS. Hostname, SSH user, domain and operating system must be confirmed first. AI and external integrations remain disabled; the connected app saves automatically to the server workspace.
+
+## GitHub deployment
+
+[GitHub → VPS setup](deploy/GITHUB.md) documents CI, a dedicated deployment account,
+verified release packages, backups and rollback for `dailgo.decoderz.dev`. Deployment
+is disabled until repository/environment settings and the existing VPS are prepared.
+`npm run test:deploy` validates the deployment controller without changing system services.

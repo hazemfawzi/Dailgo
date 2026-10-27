@@ -31,3 +31,61 @@ test('private database locations and file URLs are never public app routes',asyn
  assert.throws(()=>readConfig({NODE_ENV:'production',APP_ORIGIN:prodOrigin,PERSONAL_OS_DB:fileURLToPath(new URL('../dist/private.sqlite',import.meta.url))}));
  for(const path of ['/.env','/workspace.sqlite','/workspace.sqlite-wal','/server/config.mjs'])assert.equal((await fetch(base+path)).status,404);
 });
+
+// Independent account/database: resource tests never touch the user's workspace.
+const apiFixture=createLocalServer(folder+'api-'+randomUUID()+'.sqlite');
+await new Promise(resolve=>apiFixture.server.listen(0,'127.0.0.1',resolve));
+after(async()=>{await new Promise(resolve=>apiFixture.server.close(resolve));apiFixture.db.close();});
+const apiBase='http://127.0.0.1:'+apiFixture.server.address().port;let apiCookie='';let apiRevision='empty';
+async function resourceCall(path,method='GET',body,authenticated=true){const response=await fetch(apiBase+'/api/'+path,{method,headers:{Origin:origin,...(body?{'Content-Type':'application/json'}:{}),...(authenticated&&apiCookie?{Cookie:apiCookie}:{})},body:body?JSON.stringify(body):undefined});return {response,body:await response.json()};}
+test('resource APIs require authentication and create audited tasks with revision protection',async()=>{
+ assert.equal((await resourceCall('records/tasks')).response.status,401);
+ const setup=await resourceCall('account/setup','POST',{username:'api-fixture',password:'api-fixture-test-password'});apiCookie=setup.response.headers.get('set-cookie').split(';')[0];
+ const item={id:'api-task',title:'API task',category:'Work',done:false,archived:false};
+ const created=await resourceCall('records/tasks','POST',{revision:apiRevision,item});assert.equal(created.response.status,200);apiRevision=created.body.revision;
+ assert.equal(created.body.data['personal-os.tasks.v1'][0].history[0].fields[0],'created');
+ const stale=await resourceCall('records/tasks/api-task','PATCH',{revision:'empty',item:{title:'Stale write'}});assert.equal(stale.response.status,409);
+ const changed=await resourceCall('records/tasks/api-task','PATCH',{revision:apiRevision,item:{title:'Updated task',history:[]}});assert.equal(changed.response.status,200);apiRevision=changed.body.revision;assert.equal(changed.body.data['personal-os.tasks.v1'][0].history.length,2);
+ assert.equal((await resourceCall('records/tasks/api-task')).body.item.title,'Updated task');
+ const invalid=await resourceCall('records/tasks','POST',{revision:apiRevision,item:{id:'invalid'}});assert.equal(invalid.response.status,400);assert.equal((await resourceCall('workspace')).body.revision,apiRevision);
+});
+test('goals, projects, events, routines and memories have isolated resource APIs',async()=>{
+ for(const [name,kind] of [['goals','goal'],['projects','project'],['events','event'],['routines','routine'],['memories','note']]){
+  const item={id:'api-'+kind,kind,title:'API '+kind,area:'Personal',detail:'',date:'',time:'',progress:0,archived:false,doneDates:[]};
+  const result=await resourceCall('records/'+name,'POST',{revision:apiRevision,item});assert.equal(result.response.status,200);apiRevision=result.body.revision;
+  const listed=await resourceCall('records/'+name);assert.deepEqual(listed.body.items.map(x=>x.id),[item.id]);
+ }
+ assert.equal((await resourceCall('records/goals/api-note')).response.status,404);
+ const invalid=await resourceCall('records/goals/api-goal','PATCH',{revision:apiRevision,item:{kind:'note'}});assert.equal(invalid.response.status,400);
+});
+test('planning, weekly reviews, focus and sessions persist through their APIs',async()=>{
+ for(const [name,value] of [['planning',{weekStartsOn:6,capacity:240,buffer:30,timezone:'Africa/Cairo'}],['weeks',{'2026-10-24':{outcomes:[],capacities:{},review:{wins:'Done',obstacles:'',next:''}}}],['reviews',{'2026-10-25':{wins:'Done',obstacles:'',next:'Next'}}],['focus',{ends:null,remaining:1500}]]){
+  const result=await resourceCall('state/'+name,'PUT',{revision:apiRevision,value});assert.equal(result.response.status,200);apiRevision=result.body.revision;assert.deepEqual((await resourceCall('state/'+name)).body.value,value);
+ }
+ const conversation=await resourceCall('records/conversations','POST',{revision:apiRevision,item:{id:'api-conversation',title:'Hello',archived:false,messages:[]}});assert.equal(conversation.response.status,200);apiRevision=conversation.body.revision;
+ const session=await resourceCall('records/sessions','POST',{revision:apiRevision,item:{id:'api-session',taskId:'api-task',startedAt:'2026-10-25T10:00:00Z',endedAt:'2026-10-25T10:05:00Z',seconds:300}});assert.equal(session.response.status,200);apiRevision=session.body.revision;
+});
+test('atomic commits audit on the server and reject stale record revisions without partial writes',async()=>{
+ const before=(await resourceCall('workspace')).body;
+ const invalid=structuredClone(before.data);invalid['personal-os.tasks.v1'][0].title='stale edit';invalid['personal-os.tasks.v1'][0].revision='stale';invalid['personal-os.reviews.v1']['2026-10-25'].wins='must not save';
+ assert.equal((await resourceCall('workspace/commit','PUT',{revision:apiRevision,data:invalid})).response.status,409);
+ assert.deepEqual((await resourceCall('workspace')).body,before);
+ const valid=structuredClone(before.data);valid['personal-os.tasks.v1'][0].title='Atomic task';valid['personal-os.reviews.v1']['2026-10-25'].wins='Atomic review';
+ const result=await resourceCall('workspace/commit','PUT',{revision:apiRevision,data:valid});assert.equal(result.response.status,200);apiRevision=result.body.revision;assert.equal(result.body.data['personal-os.tasks.v1'][0].history.length,3);assert.equal(result.body.data['personal-os.reviews.v1']['2026-10-25'].wins,'Atomic review');
+});
+test('deleting a record creates recoverable trash and stale devices cannot delete newer data',async()=>{
+ const before=apiRevision;const deleted=await resourceCall('records/tasks/api-task','DELETE',{revision:apiRevision});assert.equal(deleted.response.status,200);apiRevision=deleted.body.revision;
+ assert.equal(deleted.body.data['personal-os.tasks.v1'].length,0);assert.equal(deleted.body.data['personal-os.trash.v1'][0].item.id,'api-task');
+ assert.equal((await resourceCall('records/goals/api-goal','DELETE',{revision:before})).response.status,409);
+ assert.equal((await resourceCall('records/goals/api-goal')).response.status,200);
+});
+test('reparenting projects through the API moves linked task goals atomically',async()=>{
+ const goal={id:'api-next-goal',kind:'goal',title:'Next goal',area:'Work',detail:'',date:'',time:'',progress:0,archived:false,doneDates:[]};
+ let result=await resourceCall('records/goals','POST',{revision:apiRevision,item:goal});assert.equal(result.response.status,200);apiRevision=result.body.revision;
+ result=await resourceCall('records/tasks','POST',{revision:apiRevision,item:{id:'project-linked-task',title:'Linked task',category:'Work',done:false,archived:false,projectId:'api-project',goalId:'api-goal',milestoneId:'old-milestone'}});assert.equal(result.response.status,200);apiRevision=result.body.revision;
+ const before=apiRevision;
+ result=await resourceCall('records/projects/api-project','PATCH',{revision:apiRevision,item:{parentGoalId:'api-next-goal'}});assert.equal(result.response.status,200);apiRevision=result.body.revision;
+ const linked=result.body.data['personal-os.tasks.v1'].find(x=>x.id==='project-linked-task');assert.equal(linked.goalId,'api-next-goal');assert.equal(linked.milestoneId,undefined);
+ assert.equal(result.body.data['personal-os.entries.v1'].entries.find(x=>x.id==='api-project').parentGoalId,'api-next-goal');
+ assert.equal((await resourceCall('records/projects/api-project','PATCH',{revision:before,item:{parentGoalId:'api-goal'}})).response.status,409);
+});
