@@ -3,7 +3,7 @@ import { readConfig } from './config.mjs';
 import { createServer } from 'node:http';
 import { DatabaseSync } from 'node:sqlite';
 import { randomBytes,randomUUID,scryptSync,timingSafeEqual,createHash } from 'node:crypto';
-import { mkdirSync,existsSync,readFileSync,chmodSync } from 'node:fs';
+import { mkdirSync,existsSync,readFileSync,chmodSync,realpathSync } from 'node:fs';
 import { dirname,resolve,extname,sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const { validateData,auditWorkspace }=await import(new URL('./domain.mjs',import.meta.url));
@@ -76,7 +76,8 @@ export function createLocalServer(file=defaultDb,options={}){
  return {server,db};
 }
 export function startServer(){if(Number(process.versions.node.split('.')[0])<24)throw Error('Node.js 24 or later is required');process.umask(0o077);const config=readConfig();const {server,db}=createLocalServer(config.dbPath||defaultDb,{config});server.listen(config.port,'127.0.0.1',()=>process.stdout.write('Application listener ready on loopback port '+config.port+'\n'));const stop=()=>{server.close(()=>{db.close();process.exit(0);});server.closeIdleConnections();setTimeout(()=>process.exit(1),25000).unref();};process.once('SIGTERM',stop);process.once('SIGINT',stop);return server;}
-if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))startServer();
+// Node resolves import.meta.url to the real release path; argv may use current/.
+if(process.argv[1]&&existsSync(process.argv[1])&&realpathSync(process.argv[1])===realpathSync(fileURLToPath(import.meta.url)))startServer();
 
 
 

@@ -89,3 +89,47 @@ test('reparenting projects through the API moves linked task goals atomically',a
  assert.equal(result.body.data['personal-os.entries.v1'].entries.find(x=>x.id==='api-project').parentGoalId,'api-next-goal');
  assert.equal((await resourceCall('records/projects/api-project','PATCH',{revision:before,item:{parentGoalId:'api-goal'}})).response.status,409);
 });
+
+
+// Exercise the actual executable entry points through the same current symlink
+// used by systemd, rather than importing their exported functions directly.
+const { mkdtempSync,symlinkSync,readdirSync,rmSync }=await import('node:fs');
+const { tmpdir }=await import('node:os');
+const { join }=await import('node:path');
+const { spawn,execFileSync }=await import('node:child_process');
+const { createServer: createPortReservation }=await import('node:net');
+function cliFixture(t,cleanup=true){
+ const directory=mkdtempSync(join(tmpdir(),'dailgo-cli-'));
+ if(cleanup)t.after(()=>rmSync(directory,{recursive:true,force:true}));
+ const release=join(directory,'releases','release with spaces');mkdirSync(release,{recursive:true});
+ execFileSync(process.execPath,['scripts/package-vps.mjs',release],{stdio:'pipe'});
+ const current=join(directory,'current');symlinkSync(release,current,'dir');
+ const database=join(directory,'private','workspace.sqlite');mkdirSync(join(directory,'private'));
+ const env={...process.env,NODE_ENV:'production',APP_ORIGIN:'https://dailgo.decoderz.dev',PERSONAL_OS_DB:database,PERSONAL_OS_SETUP_TOKEN:'fixture-setup-token-'+randomUUID()};
+ return {directory,current,database,env};
+}
+test('packaged server starts and serves production health through the current release symlink',async t=>{
+ const fixture=cliFixture(t,false);let child;let exited;
+ t.after(async()=>{try{if(child&&child.exitCode===null&&child.signalCode===null){child.kill('SIGTERM');const timer=setTimeout(()=>child.kill('SIGKILL'),5000);try{await exited;}finally{clearTimeout(timer);}}}finally{rmSync(fixture.directory,{recursive:true,force:true});}});
+ const reservation=createPortReservation();
+ await new Promise(resolve=>reservation.listen(0,'127.0.0.1',resolve));const port=reservation.address().port;await new Promise(resolve=>reservation.close(resolve));
+ child=spawn(process.execPath,[join(fixture.current,'server','index.mjs')],{cwd:fixture.current,env:{...fixture.env,PORT:String(port)},stdio:['ignore','pipe','pipe']});
+ let diagnostics='';child.stderr.on('data',chunk=>{diagnostics+=chunk;});
+ exited=new Promise(resolve=>child.once('exit',resolve));
+ await new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>reject(Error('Server did not start: '+diagnostics)),5000);
+  const fail=(code,signal)=>{clearTimeout(timer);reject(Error(`Server exited before readiness: code=${code}, signal=${signal}; ${diagnostics}`));};
+  child.once('exit',fail);child.once('error',error=>{clearTimeout(timer);reject(error);});
+  child.stdout.on('data',chunk=>{if(String(chunk).includes('Application listener ready')){clearTimeout(timer);child.removeListener('exit',fail);resolve();}});
+ });
+ const response=await new Promise((resolve,reject)=>{const req=httpRequest({hostname:'127.0.0.1',port,path:'/api/health',headers:{Host:'dailgo.decoderz.dev','X-Forwarded-Proto':'https'}},res=>{const chunks=[];res.on('data',chunk=>chunks.push(chunk));res.on('end',()=>resolve({status:res.statusCode,body:JSON.parse(Buffer.concat(chunks))}));});req.on('error',reject);req.end();});
+ assert.equal(response.status,200);assert.equal(response.body.status,'production');
+});
+test('packaged maintenance command creates a verified backup through the current release symlink',t=>{
+ const fixture=cliFixture(t);const database=new DatabaseSync(fixture.database);database.exec("CREATE TABLE marker(value TEXT); INSERT INTO marker VALUES('retained data')");database.close();
+ const backups=join(fixture.directory,'backups');
+ const output=execFileSync(process.execPath,[join(fixture.current,'server','maintenance.mjs'),'backup',backups],{cwd:fixture.current,env:fixture.env,encoding:'utf8'});
+ assert.match(output,/Verified database backup created/);
+ const files=readdirSync(backups);assert.equal(files.length,1);
+ const snapshot=new DatabaseSync(join(backups,files[0]),{readOnly:true});try{assert.equal(snapshot.prepare('SELECT value FROM marker').get().value,'retained data');assert.equal(Object.values(snapshot.prepare('PRAGMA quick_check').get())[0],'ok');}finally{snapshot.close();}
+});
