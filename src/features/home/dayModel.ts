@@ -9,9 +9,9 @@ export function startDayTask(data:Data,id:string,today:string,now=Date.now()):Da
  const tasks=(data['personal-os.tasks.v1']??[]) as Task[];
  const task=tasks.find(x=>x.id===id);
  if(!task||!isActionable(task)||task.plannedDate!==today)throw Error('unavailable-task');
- const timer=data['personal-os.focus.v1'] as {ends?:number|null;sessionId?:string}|undefined;
+ const timer=data['personal-os.focus.v1'] as {ends?:number|null;sessionId?:string;pendingCompletion?:unknown}|undefined;
  // An unfinished session must be recorded through the timer before switching tasks.
- if(timer?.ends)throw Error('active-focus');
+ if(timer?.ends||timer?.pendingCompletion)throw Error('active-focus');
  const seconds=Math.max(60,Math.min(1500,(task.estimate||25)*60));
  return {...data,'personal-os.tasks.v1':tasks.map(x=>x.id===id?{...x,status:'doing',done:false}:x),
   'personal-os.focus.v1':{taskId:id,ends:now+seconds*1000,remaining:seconds,plannedSeconds:seconds,sessionId:crypto.randomUUID(),startedAt:new Date(now).toISOString()}};

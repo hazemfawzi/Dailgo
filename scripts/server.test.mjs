@@ -145,3 +145,7 @@ test('goal API and atomic commits reject milestones beyond the target without pa
  const invalid=structuredClone(valid.data);invalid['personal-os.entries.v1'].entries.find(x=>x.id==='dated-goal').milestones[0].date='2027-06-01';
  result=await resourceCall('workspace/commit','PUT',{revision:apiRevision,data:invalid});assert.equal(result.response.status,400);assert.deepEqual((await resourceCall('workspace')).body,valid);
 });
+test('goal API permits a reviewed late milestone and requires a new acknowledgement when its target changes',async()=>{
+ let result=await resourceCall('records/goals/dated-goal','PATCH',{revision:apiRevision,item:{milestones:[{id:'m',title:'Reviewed milestone',date:'2027-06-01',targetDateAcknowledgement:'2026-12-31/2027-06-01'}]}});assert.equal(result.response.status,200);apiRevision=result.body.revision;
+ const before=(await resourceCall('workspace')).body;result=await resourceCall('records/goals/dated-goal','PATCH',{revision:apiRevision,item:{date:'2026-11-01'}});assert.equal(result.response.status,400);assert.deepEqual((await resourceCall('workspace')).body,before);
+});

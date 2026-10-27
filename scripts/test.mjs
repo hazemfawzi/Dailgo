@@ -37,7 +37,7 @@ test('new tasks in a goal stay linked while existing task fields are retained',(
 });
 const workspaceBuild=await build({entryPoints:['src/features/life/demoGoals.ts'],bundle:true,platform:'node',format:'esm',write:false});
 const {restoreWorkspace,demoGoals}=await import(`data:text/javascript;base64,${Buffer.from(workspaceBuild.outputFiles[0].text).toString('base64')}`);
-test('fresh browsers receive the eight illustrative goals',()=>{
+test('legacy demo restoration can supply eight illustrative goals',()=>{
  const data=restoreWorkspace(null,[]);assert.equal(data.entries.length,8);assert.equal(new Set(data.entries.map(x=>x.area)).size,6);
 });
 test('legacy goals retain edits and do not duplicate when the demo is installed',()=>{
@@ -88,7 +88,7 @@ test('unknown messages explain supported simulation instead of inventing an acti
  const output=respond('What is the weather?',t,[],[]);assert.equal(output.proposal,undefined);assert.match(output.text,/scripted assistant/);
 });
 const storageBuild=await build({entryPoints:['src/lib/storageCore.ts'],bundle:true,platform:'node',format:'esm',write:false});
-const {STORE_KEY,readStore,commit,makeBackup,parseBackup,storageToken,restoreSnapshot}=await import(`data:text/javascript;base64,${Buffer.from(storageBuild.outputFiles[0].text).toString('base64')}`);
+const {STORE_KEY,validateData,readStore,commit,makeBackup,parseBackup,storageToken,restoreSnapshot}=await import(`data:text/javascript;base64,${Buffer.from(storageBuild.outputFiles[0].text).toString('base64')}`);
 function memoryStorage(initial={}){const values=new Map(Object.entries(initial));return {getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v),values};}
 test('legacy migration preserves all existing data and links in one write',()=>{const tasks=[task('linked',{goalId:'g',milestoneId:'m',archived:true})];const s=memoryStorage({'personal-os.tasks.v1':JSON.stringify(tasks)});const old=readStore(s);const next=commit(s,old.revision,{...old.data,'personal-os.language':'ar'});assert.deepEqual(readStore(s).data['personal-os.tasks.v1'],tasks);assert.equal(next.version,3);assert.ok(s.getItem('personal-os.tasks.v1'));});
 test('corrupt saved JSON and invalid shapes are never overwritten',()=>{for(const raw of ['{broken','{"version":3,"revision":"r","data":{"personal-os.tasks.v1":[{}]}}']){const s=memoryStorage({[STORE_KEY]:raw});assert.throws(()=>readStore(s));assert.throws(()=>commit(s,'r',{}));assert.equal(s.getItem(STORE_KEY),raw);}});
@@ -219,7 +219,7 @@ test('English and Arabic planning summaries share task priority order and preser
  assert.equal(JSON.stringify(input),before);
 });
 
-const uxBuild=await build({stdin:{contents:"export * from './src/features/planner/taskDates'; export * from './src/features/life/goalDates'; export { localDate as planningToday } from './src/lib/workspace';",resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',write:false});
+const uxBuild=await build({stdin:{contents:"export * from './src/features/planner/taskDates'; export * from './src/features/life/goalDates'; export { localDate as planningToday } from './src/lib/workspace'; export { closeGoal } from './src/features/life/goalModel';",resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',write:false});
 const ux=await import(`data:text/javascript;base64,${Buffer.from(uxBuild.outputFiles[0].text).toString('base64')}`);
 test('Arabic study requests produce a dated task preview without matching memory lookup',()=>{
  const answer=respond('عايز أذاكر بكرة الساعة 8',(_en,ar)=>ar,[],[]);
@@ -256,4 +256,64 @@ test('planning commands explain execution dates, preserve deadlines and reject n
  }
  const preview=mutationResponse('Plan task: Review API => 2026-10-30',t,[original],[]);const message={id:'plan',role:'assistant',...preview};const data={'personal-os.tasks.v1':[{...original,done:true}],'personal-os.conversations.v1':[{id:'chat',archived:false,messages:[message]}]};
  assert.throws(()=>confirmMutation(data,'chat',message),/unavailable-task/);
+});
+test('late milestone acknowledgements are tied to both dates and do not excuse impossible dates',()=>{
+ const goal={id:'g',date:'2026-12-31',milestones:[{id:'m',date:'2027-06-01'}]};
+ const acknowledged=ux.acknowledgeLateMilestones(goal,true);assert.equal(ux.milestoneDateIssue(acknowledged),null);
+ assert.equal(ux.milestoneDateIssue({...acknowledged,date:'2026-11-01'}),'after-goal');
+ assert.equal(ux.milestoneDateIssue({...acknowledged,milestones:[{...acknowledged.milestones[0],date:'2027-07-01'}]}),'after-goal');
+ assert.equal(ux.milestoneDateIssue(ux.acknowledgeLateMilestones(goal,false)),'after-goal');
+ assert.equal(ux.milestoneDateIssue({date:'2026-12-31',milestones:[{date:'2027-02-30',targetDateAcknowledgement:'2026-12-31/2027-02-30'}]}),'invalid-date');
+});
+test('Due commands change only deadlines and keep execution dates protected',()=>{
+ const item=task('due',{title:'Review API',plannedDate:'2026-10-28',dueDate:'2026-10-29'});
+ for(const command of ['Due task','حدد استحقاق المهمة']){
+  const result=mutationResponse(`${command}: Review API => 2026-10-30`,t,[item],[]);assert.equal(result.mutation.patch.dueDate,'2026-10-30');assert.equal(result.mutation.patch.plannedDate,undefined);assert.match(result.text,/due date only/);assert.equal(validMutation(result.mutation),true);
+  assert.equal(mutationResponse(`${command}: Review API => 2026-10-30`,t,[{...item,done:true}],[]).mutation,undefined);
+  assert.equal(mutationResponse(`${command}: Review API => 2026-02-30`,t,[item],[]).mutation,undefined);
+ }
+});
+test('target countdown uses calendar days and handles leap dates and overdue goals',()=>{
+ assert.equal(ux.goalDaysRemaining('2026-12-31','2026-10-27'),65);assert.equal(ux.goalDaysRemaining('2026-10-27','2026-10-27'),0);assert.equal(ux.goalDaysRemaining('2026-10-26','2026-10-27'),-1);assert.equal(ux.goalDaysRemaining('2028-03-01','2028-02-28'),2);assert.equal(ux.goalDaysRemaining('','2026-10-27'),null);
+});
+test('closing a complete goal confirms its outcome and archives only the reviewed current goal',()=>{
+ const goal={id:'g',kind:'goal',revision:'current',archived:false};const data={'personal-os.entries.v1':{entries:[goal]},'personal-os.tasks.v1':[task('done',{goalId:'g',done:true})]};
+ const closed=ux.closeGoal(data,'g','current');assert.equal(closed['personal-os.entries.v1'].entries[0].archived,true);assert.equal(closed['personal-os.entries.v1'].entries[0].outcomeAchieved,true);assert.equal(goal.archived,false);
+ assert.throws(()=>ux.closeGoal(data,'g','stale'),/goal-not-ready/);assert.throws(()=>ux.closeGoal({...data,'personal-os.tasks.v1':[task('open',{goalId:'g'})]},'g','current'),/goal-not-ready/);
+});
+const journeyBuild=await build({stdin:{contents:"export * from './src/features/journey/model'; export * from './src/features/home/focusModel'; export * from './src/lib/undoStore';",resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',write:false});
+const cycle=await import(`data:text/javascript;base64,${Buffer.from(journeyBuild.outputFiles[0].text).toString('base64')}`);
+const startSpec={areas:['Learning','Health'],language:'ar',dark:true,wakeTime:'07:00',eveningTime:'20:00',weekStartsOn:6,title:'Learn English',goalArea:'Learning',date:'2026-12-31',criteria:'Complete the first course',tasks:[{title:'Choose a lesson',estimate:15},{title:'Practice',estimate:20},{title:'Review',estimate:10}],templateId:'language'};
+test('onboarding creates one reviewed goal, milestones and three tasks atomically and cannot replay',()=>{
+ const before={'personal-os.tasks.v1':[],'personal-os.entries.v1':{version:2,demoVersion:1,entries:[]}};const created=cycle.completeOnboarding(before,startSpec,'setup','2026-10-27T09:00:00Z');
+ assert.equal(created['personal-os.tasks.v1'].length,3);assert.equal(created['personal-os.entries.v1'].entries.length,1);assert.equal(created['personal-os.entries.v1'].entries[0].milestones.length,2);assert.equal(created['personal-os.planning.v1'].weekStartsOn,6);assert.equal(created['personal-os.language'],'ar');assert.equal(created['personal-os.journey.v1'].wakeTime,'07:00');validateData(created);assert.deepEqual(cycle.completeOnboarding(created,startSpec,'different'),created);assert.deepEqual(before['personal-os.tasks.v1'],[]);
+ assert.throws(()=>cycle.completeOnboarding(before,{...startSpec,tasks:[{title:'',estimate:5}]},'invalid'),/invalid-onboarding/);
+ assert.throws(()=>cycle.completeOnboarding(before,{...startSpec,areas:['Work','Work']},'invalid'),/invalid-onboarding/);
+ assert.deepEqual(parseBackup(JSON.stringify(makeBackup(created))),JSON.parse(JSON.stringify(created)));
+});
+test('morning focus caps selection at three, saves execution dates and never changes deadlines',()=>{
+ const tasks=Array.from({length:4},(_,i)=>task(String(i),{dueDate:'2026-10-26'}));const data={'personal-os.tasks.v1':tasks};const saved=cycle.saveMorningPlan(data,['0','1','2'],'2026-10-27');assert.equal(saved['personal-os.tasks.v1'][0].plannedDate,'2026-10-27');assert.equal(saved['personal-os.tasks.v1'][0].dueDate,'2026-10-26');assert.equal(saved['personal-os.tasks.v1'][3].plannedDate,undefined);assert.equal(saved['personal-os.journey.v1'].morningReviewedOn,'2026-10-27');assert.throws(()=>cycle.saveMorningPlan(data,['0','1','2','3'],'2026-10-27'),/invalid-focus/);assert.throws(()=>cycle.saveMorningPlan(data,['0','0'],'2026-10-27'),/invalid-focus/);
+});
+test('evening rollover changes only explicitly selected unfinished execution days',()=>{
+ const tasks=[task('selected',{plannedDate:'2026-10-27',dueDate:'2026-10-27'}),task('keep',{plannedDate:'2026-10-27'}),task('done',{done:true,plannedDate:'2026-10-27'}),task('due',{dueDate:'2026-10-27'}),task('future',{plannedDate:'2026-10-30',dueDate:'2026-10-26'})];const data={'personal-os.tasks.v1':tasks};const moved=cycle.rolloverDay(data,['selected','due'],'2026-10-27');assert.equal(moved['personal-os.tasks.v1'][0].plannedDate,'2026-10-28');assert.equal(moved['personal-os.tasks.v1'][0].dueDate,'2026-10-27');assert.equal(moved['personal-os.tasks.v1'][1].plannedDate,'2026-10-27');assert.throws(()=>cycle.rolloverDay(data,['done'],'2026-10-27'),/unavailable/);assert.throws(()=>cycle.rolloverDay(data,['future'],'2026-10-27'),/unavailable/);assert.throws(()=>cycle.rolloverDay(data,['selected'],'2026-10-27','2026-10-26'),/invalid-rollover/);
+});
+test('natural capture parses an afternoon task, area and tags without fabricating a reminder',()=>{
+ for(const text of ['اتصل بأحمد بكرة 4 العصر #شغل','اتصل بأحمد بكرة ٤ العصر #شغل']){
+  const draft=parseCapture(text,'2026-10-27');assert.equal(draft[0].kind,'task');assert.equal(draft[0].date,'2026-10-28');assert.equal(draft[0].time,'16:00');assert.equal(draft[0].area,'Work');assert.deepEqual(draft[0].tags,['شغل']);assert.equal(draft[0].title,'اتصل بأحمد');assert.equal(captureErrors(draft),false);const data=applyCapture({},draft,captureSource);assert.equal(data['personal-os.tasks.v1'][0].plannedTime,'16:00');assert.equal(data['personal-os.tasks.v1'][0].dueDate,undefined);assert.equal(data['personal-os.tasks.v1'][0].source.fragment,text);
+ }
+ assert.equal(parseCapture('اتصل بأحمد بكرة الساعة 8','2026-10-27')[0].time,'');assert.equal(captureErrors(parseCapture('اتصل بأحمد 4 العصر','2026-10-27')),true);assert.equal(captureErrors(parseCapture('Task: Call 2026-10-28 25:00','2026-10-27')),true);assert.equal(parseCapture('غير واضح ما أريد','2026-10-27')[0].kind,'note');
+});
+test('focus expiration records actual timer time once and asks before completing a task',()=>{
+ const taskItem=task('focus',{revision:'task-1'});const data={'personal-os.tasks.v1':[taskItem],'personal-os.focus.v1':{ends:61000,remaining:60,taskId:'focus',sessionId:'session',startedAt:new Date(1000).toISOString(),plannedSeconds:60}};const finished=cycle.finishFocus(data,'session',62000,true);assert.equal(finished['personal-os.sessions.v1'][0].seconds,60);assert.equal(finished['personal-os.tasks.v1'][0].done,false);assert.equal(finished['personal-os.focus.v1'].pendingCompletion.taskId,'focus');assert.deepEqual(cycle.finishFocus(finished,'session',63000,true),finished);assert.equal(cycle.answerFocusCompletion(finished,'session',true)['personal-os.tasks.v1'][0].done,true);assert.equal(cycle.answerFocusCompletion(finished,'session',false)['personal-os.tasks.v1'][0].done,false);
+ const changed={...finished,'personal-os.tasks.v1':[{...taskItem,revision:'later'}]};assert.throws(()=>cycle.answerFocusCompletion(changed,'session',true),/focus-task-changed/);assert.throws(()=>startDayTask({...finished,'personal-os.tasks.v1':[{...taskItem,plannedDate:'2026-10-27'}]},'focus','2026-10-27'),/active-focus/);
+});
+test('undo restores completion and archival only while the confirmed record revision still matches',()=>{
+ const before=auditWorkspace({},{'personal-os.tasks.v1':[task('undo')]});const after=auditWorkspace(before,{...before,'personal-os.tasks.v1':before['personal-os.tasks.v1'].map(item=>({...item,done:true,status:'done'}))});const ticket=cycle.transitionTicket(before,after,1000);assert.ok(ticket);assert.equal(cycle.applyUndo(after,ticket,2000)['personal-os.tasks.v1'][0].done,false);const later=auditWorkspace(after,{...after,'personal-os.tasks.v1':after['personal-os.tasks.v1'].map(item=>({...item,description:'later edit'}))});assert.throws(()=>cycle.applyUndo(later,ticket,2000),/undo-target-changed/);assert.throws(()=>cycle.applyUndo(after,ticket,20000),/undo-expired/);
+ const archived=auditWorkspace(before,{...before,'personal-os.tasks.v1':before['personal-os.tasks.v1'].map(item=>({...item,archived:true}))});assert.equal(cycle.applyUndo(archived,cycle.transitionTicket(before,archived,1000),2000)['personal-os.tasks.v1'][0].archived,false);
+});
+test('weekly review counts recorded activity and preserves extra future results and capacities',()=>{
+ const nextPlan={outcomes:[{title:'A',goalId:'',done:false},{title:'B',goalId:'',done:false},{title:'C',goalId:'',done:false},{title:'Keep fourth',goalId:'',done:true}],capacities:{'2026-11-02':120},review:{wins:'Saved',obstacles:'',next:''}};const data={'personal-os.tasks.v1':[task('done',{category:'Work',done:true,completedAt:'2026-10-27T09:00:00Z'}),task('not-completed',{category:'Health',done:false})],'personal-os.entries.v1':{entries:[{id:'routine',kind:'routine',area:'Health',doneDates:['2026-10-27']}]},'personal-os.weeks.v1':{'2026-11-02':nextPlan}};const counts=cycle.weeklyActivity(data,'2026-10-26');assert.equal(counts.find(item=>item.area==='Work').count,1);assert.equal(counts.find(item=>item.area==='Health').count,1);const results=['First','Second','Third'].map(title=>({title,goalId:'',criteria:'Reviewed'}));const saved=cycle.saveWeeklyResults(data,'2026-10-26',results,JSON.stringify(nextPlan));assert.equal(saved['personal-os.weeks.v1']['2026-11-02'].outcomes[3].title,'Keep fourth');assert.equal(saved['personal-os.weeks.v1']['2026-11-02'].capacities['2026-11-02'],120);assert.throws(()=>cycle.saveWeeklyResults(data,'2026-10-26',results,'null'),/weekly-preview-changed/);
+});
+test('journey preferences, mood, notes and planned task times validate and survive backup',()=>{
+ const data={'personal-os.journey.v1':{...cycle.defaultJourney,onboardingComplete:true},'personal-os.reviews.v1':{'2026-10-27':{wins:'Done',obstacles:'',next:'',mood:4,note:'One line'}},'personal-os.tasks.v1':[task('timed',{plannedDate:'2026-10-28',plannedTime:'16:00',tags:['شغل']})]};validateData(data);assert.deepEqual(parseBackup(JSON.stringify(makeBackup(data))),data);assert.throws(()=>validateData({...data,'personal-os.journey.v1':{...cycle.defaultJourney,focusIds:['a','b','c','d']}}));assert.throws(()=>validateData({...data,'personal-os.reviews.v1':{'2026-10-27':{wins:'',obstacles:'',next:'',mood:9}}}));
 });

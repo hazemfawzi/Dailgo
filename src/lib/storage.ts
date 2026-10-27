@@ -1,3 +1,4 @@
+import { offerUndo,clearUndo } from './undoStore';
 import { forgetRecord } from './forget';
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import type { SetStateAction } from 'react';
@@ -23,7 +24,7 @@ export function currentStorageToken(){return remote?snapshot.revision:storageTok
 export async function connectServerStorage(){
  const store=await loadServerStore();remote=true;ready=true;snapshot=store;previews.clear();issue='';setServerData(store.data);emit();
 }
-export function disconnectServerStorage(){remote=true;ready=true;snapshot={version:3,revision:'empty',data:{}};issue='auth';previews.clear();setServerData({});emit();}
+export function disconnectServerStorage(){clearUndo();remote=true;ready=true;snapshot={version:3,revision:'empty',data:{}};issue='auth';previews.clear();setServerData({});emit();}
 export function refreshStorage(){
  if(remote){void locked(async()=>{try{snapshot=await loadServerStore();issue='';emit();}catch(error){failed(error);}});return;}
  try{snapshot=readStore(localStorage);issue='';}catch{issue='corrupt';}emit();
@@ -32,8 +33,8 @@ function init(){if(ready)return;ready=true;refreshStorage();window.addEventListe
 function subscribe(fn:()=>void){init();listeners.add(fn);return()=>{listeners.delete(fn);};}
 export function useStorageState(){init();useSyncExternalStore(subscribe,()=>snapshot);const error=useSyncExternalStore(subscribe,()=>issue);const saving=useSyncExternalStore(subscribe,()=>pendingWrites>0||previews.size>0);return {data:snapshot.data,revision:snapshot.revision,error,saving};}
 export async function replaceData(data:Data,expected:string){
- pendingWrites++;emit();
- try{snapshot=remote?await commitServerStore(data,expected):commit(localStorage,expected,data);issue='';emit();return true;}
+ const before=snapshot.data;pendingWrites++;emit();
+ try{snapshot=remote?await commitServerStore(data,expected):commit(localStorage,expected,data);issue='';offerUndo(before,snapshot.data);emit();return true;}
  catch(error){if(remote){if(error instanceof ApiError&&error.status===409){try{snapshot=await loadServerStore();}catch{/* Preserve the last confirmed snapshot. */}}failed(error);}
  else{if(error instanceof Error&&['conflict','edit-conflict'].includes(error.message)){refreshStorage();issue='conflict';}else issue='failed';emit();}return false;}finally{pendingWrites--;emit();}
 }
@@ -63,7 +64,7 @@ export function usePersisted<T>(key:string,initial:T,restore?:(saved:unknown)=>T
 }
 export function restoreBackupData(data:Data,token:string){return locked(async()=>{try{
  if(currentStorageToken()!==token)return false;
- snapshot=remote?await replaceServerStore(data,token):restoreSnapshot(localStorage,data,token);issue='';emit();return true;
+ snapshot=remote?await replaceServerStore(data,token):restoreSnapshot(localStorage,data,token);clearUndo();issue='';emit();return true;
  }catch(error){if(remote)failed(error);return false;}});}
 export function transactData(update:(data:Data)=>Data){return locked(async()=>{
  if(issue==='corrupt'||issue==='failed'||issue==='auth')return false;
@@ -77,6 +78,6 @@ export function transactData(update:(data:Data)=>Data){return locked(async()=>{
 export function purgeTrashRecord(recordId:string){return locked(async()=>{try{const current=currentStore();const token=currentStorageToken();const next=forgetRecord(current.data,recordId);snapshot=remote?await replaceServerStore(next,token):restoreSnapshot(localStorage,next,token);if(!remote)for(const key of DATA_KEYS)localStorage.removeItem(key);issue='';emit();return true;}catch(error){if(remote)failed(error);else refreshStorage();return false;}});}
 // Refresh only between writes, so another device cannot replace an in-flight edit.
 export function startServerRefresh(){
- const refresh=()=>{if(remote&&!issue)refreshStorage();};const timer=window.setInterval(refresh,10000);window.addEventListener('focus',refresh);
+ const refresh=()=>{if(!remote||issue==='auth')return;if(!issue){refreshStorage();return;}void locked(async()=>{try{await loadServerStore();}catch(error){if(error instanceof ApiError&&error.status===401)failed(error);}});};const timer=window.setInterval(refresh,10000);window.addEventListener('focus',refresh);
  return()=>{window.clearInterval(timer);window.removeEventListener('focus',refresh);};
 }
