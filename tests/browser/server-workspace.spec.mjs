@@ -173,8 +173,41 @@ test('saved task completion and archive offer undo without overwriting newer edi
  await page.getByRole('button',{name:'Complete: Deadline only',exact:true}).click();await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeVisible();const snapshot=await (await page.request.get('/api/workspace')).json();const changed={...snapshot.data,'personal-os.tasks.v1':snapshot.data['personal-os.tasks.v1'].map(task=>task.id==='due-only'?{...task,title:'Newer task edit'}:task)};expect((await page.request.put('/api/workspace/commit',{headers:{Origin:'http://127.0.0.1:5187'},data:{revision:snapshot.revision,data:changed}})).status()).toBe(200);await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(page.getByRole('button',{name:'Complete: Newer task edit',exact:true})).toBeVisible();await page.getByRole('button',{name:'Undo',exact:true}).click();await expect(page.locator('.undo-notice')).toContainText('Could not undo');expect((await workspace(page))['personal-os.tasks.v1'].find(task=>task.id==='due-only')).toMatchObject({done:true,title:'Newer task edit'});
 });
 test('evening review rolls only selected tasks and weekly review saves three results with a six-area radar',async({page})=>{
- await signIn(page);await seedUxWorkspace(page,'en',{'personal-os.journey.v1':completeJourney});await page.clock.setFixedTime(new Date('2026-10-27T19:00:00Z'));await page.reload();await expect(page.getByRole('link',{name:'Open evening review',exact:true})).toBeVisible();const review=page.locator('#daily-review');await review.locator('summary').click();await review.getByRole('checkbox',{name:'Move tomorrow: Deadline only',exact:true}).check();await review.getByRole('button',{name:'Confirm selected tasks for tomorrow',exact:true}).click();await review.getByRole('button',{name:'Mood 4',exact:true}).click();await review.getByLabel('Evening note',{exact:true}).fill('Useful focused day');await review.getByRole('button',{name:'Finish evening review',exact:true}).click();await expect(page.getByRole('link',{name:'Open evening review',exact:true})).toHaveCount(0);await expect.poll(async()=>{const data=await workspace(page);return data['personal-os.reviews.v1']['2026-10-27'].note;}).toBe('Useful focused day');const data=await workspace(page);expect(data['personal-os.reviews.v1']['2026-10-27'].mood).toBe(4);expect(data['personal-os.tasks.v1'].find(task=>task.id==='due-only')).toMatchObject({plannedDate:'2026-10-28',dueDate:'2026-10-27'});
- await page.goto('/planner?tab=week&week=2026-10-27&review=1');await expect(page.getByRole('img',{name:'Life areas recorded activity radar',exact:true})).toBeVisible();expect(await page.locator('.area-activity button').count()).toBe(6);for(let i=1;i<=3;i++)await page.getByLabel('Next week result '+i,{exact:true}).fill('Next result '+i);await page.getByRole('button',{name:'Save three results for next week',exact:true}).click();await expect.poll(async()=>{return (await workspace(page))['personal-os.weeks.v1']['2026-11-02'].outcomes.map(item=>item.title);}).toEqual(['Next result 1','Next result 2','Next result 3']);
+ await signIn(page);
+ await seedUxWorkspace(page,'en',{'personal-os.journey.v1':completeJourney});
+ await page.clock.setFixedTime(new Date('2026-10-27T19:00:00Z'));
+ await page.reload();
+ await expect(page.getByRole('link',{name:'Open evening review',exact:true})).toBeVisible();
+ const review=page.locator('#daily-review');
+ await review.locator('summary').click();
+ await review.getByRole('checkbox',{name:'Move tomorrow: Deadline only',exact:true}).check();
+ await review.getByRole('button',{name:'Confirm selected tasks for tomorrow',exact:true}).click();
+ await review.getByRole('button',{name:'Mood 4',exact:true}).click();
+ await review.getByLabel('Evening note',{exact:true}).fill('Useful focused day');
+ await review.getByRole('button',{name:'Finish evening review',exact:true}).click();
+ await expect(page.getByRole('link',{name:'Open evening review',exact:true})).toHaveCount(0);
+ await expect.poll(async()=>{
+  const data=await workspace(page);
+  return data['personal-os.reviews.v1']?.['2026-10-27']?.note;
+ }).toBe('Useful focused day');
+ const data=await workspace(page);
+ expect(data['personal-os.reviews.v1']['2026-10-27'].mood).toBe(4);
+ expect(data['personal-os.tasks.v1'].find(task=>task.id==='due-only')).toMatchObject({plannedDate:'2026-10-28',dueDate:'2026-10-27'});
+ await page.goto('/planner?tab=week&week=2026-10-27&review=1');
+ await expect(page.getByRole('img',{name:'Life areas recorded activity radar',exact:true})).toBeVisible();
+ expect(await page.locator('.area-activity button').count()).toBe(6);
+ for(let i=1;i<=3;i++)await page.getByLabel('Next week result '+i,{exact:true}).fill('Next result '+i);
+ // Keep the new week absent during the first read, as on a slower CI connection.
+ // A polling assertion must tolerate its absence until the commit is acknowledged.
+ await page.route('**/api/workspace/commit',async route=>{
+  await new Promise(resolve=>setTimeout(resolve,300));
+  await route.continue();
+ });
+ await page.getByRole('button',{name:'Save three results for next week',exact:true}).click();
+ await expect.poll(async()=>{
+  const saved=await workspace(page);
+  return saved['personal-os.weeks.v1']?.['2026-11-02']?.outcomes.map(item=>item.title);
+ }).toEqual(['Next result 1','Next result 2','Next result 3']);
 });
 test('elapsed focus asks before completion, records once, and accepts an explicit answer',async({page})=>{
  await signIn(page);await seedUxWorkspace(page,'en',{'personal-os.journey.v1':completeJourney});const focus=page.locator('#daily-focus');await focus.getByRole('combobox',{name:'Focus task',exact:true}).selectOption('due-only');await focus.getByRole('button',{name:'Start focus',exact:true}).click();await expect.poll(async()=>typeof (await workspace(page))['personal-os.focus.v1'].ends).toBe('number');await page.clock.setFixedTime(new Date('2026-10-27T09:25:01Z'));await expect(focus.getByRole('group',{name:'Focus completion question',exact:true})).toBeVisible();expect((await workspace(page))['personal-os.tasks.v1'].find(task=>task.id==='due-only').done).toBe(false);await page.reload();await expect(focus.getByRole('group',{name:'Focus completion question',exact:true})).toBeVisible();expect((await workspace(page))['personal-os.sessions.v1']).toHaveLength(1);await focus.getByRole('button',{name:'Yes, mark complete',exact:true}).click();await expect(focus.getByRole('group',{name:'Focus completion question',exact:true})).toHaveCount(0);await expect.poll(async()=>{const data=await workspace(page);return [data['personal-os.tasks.v1'].find(task=>task.id==='due-only').done,data['personal-os.sessions.v1'].length,data['personal-os.sessions.v1'][0].seconds];}).toEqual([true,1,1500]);
