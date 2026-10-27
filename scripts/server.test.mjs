@@ -133,3 +133,19 @@ test('packaged maintenance command creates a verified backup through the current
  const files=readdirSync(backups);assert.equal(files.length,1);
  const snapshot=new DatabaseSync(join(backups,files[0]),{readOnly:true});try{assert.equal(snapshot.prepare('SELECT value FROM marker').get().value,'retained data');assert.equal(Object.values(snapshot.prepare('PRAGMA quick_check').get())[0],'ok');}finally{snapshot.close();}
 });
+
+test('goal API and atomic commits reject milestones beyond the target without partial writes',async()=>{
+ const item={id:'dated-goal',kind:'goal',title:'Dated goal',area:'Work',detail:'',date:'2026-12-31',time:'',progress:0,archived:false,doneDates:[],milestones:[]};
+ let result=await resourceCall('records/goals','POST',{revision:apiRevision,item});assert.equal(result.response.status,200);apiRevision=result.body.revision;
+ const before=(await resourceCall('workspace')).body;
+ result=await resourceCall('records/goals/dated-goal','PATCH',{revision:apiRevision,item:{milestones:[{id:'m',title:'Late milestone',date:'2027-06-01'}]}});assert.equal(result.response.status,400);assert.deepEqual((await resourceCall('workspace')).body,before);
+ result=await resourceCall('records/goals/dated-goal','PATCH',{revision:apiRevision,item:{milestones:[{id:'m',title:'Valid milestone',date:'2026-12-01'}]}});assert.equal(result.response.status,200);apiRevision=result.body.revision;
+ const valid=(await resourceCall('workspace')).body;
+ result=await resourceCall('records/goals/dated-goal','PATCH',{revision:apiRevision,item:{date:'2026-11-01'}});assert.equal(result.response.status,400);
+ const invalid=structuredClone(valid.data);invalid['personal-os.entries.v1'].entries.find(x=>x.id==='dated-goal').milestones[0].date='2027-06-01';
+ result=await resourceCall('workspace/commit','PUT',{revision:apiRevision,data:invalid});assert.equal(result.response.status,400);assert.deepEqual((await resourceCall('workspace')).body,valid);
+});
+test('goal API permits a reviewed late milestone and requires a new acknowledgement when its target changes',async()=>{
+ let result=await resourceCall('records/goals/dated-goal','PATCH',{revision:apiRevision,item:{milestones:[{id:'m',title:'Reviewed milestone',date:'2027-06-01',targetDateAcknowledgement:'2026-12-31/2027-06-01'}]}});assert.equal(result.response.status,200);apiRevision=result.body.revision;
+ const before=(await resourceCall('workspace')).body;result=await resourceCall('records/goals/dated-goal','PATCH',{revision:apiRevision,item:{date:'2026-11-01'}});assert.equal(result.response.status,400);assert.deepEqual((await resourceCall('workspace')).body,before);
+});

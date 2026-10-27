@@ -4,7 +4,7 @@ Dailgo uses one personal account and one SQLite workspace per server. This is no
 multi-user hosting. Sign-in is required before opening the application. All existing
 workspace collections use the shared server storage adapter: tasks/subtasks, goals,
 projects, appointments, routines, memories/attachments, conversations/action previews,
-focus sessions, weekly plans, reviews, trial measurements, preferences and Trash.
+focus sessions, weekly plans, reviews, daily-cycle preferences, trial measurements and Trash.
 
 ## Run
 
@@ -59,6 +59,27 @@ Backup exports include the active server workspace. Backup restore replaces that
 workspace with revision protection. It is not a merge. Old exported files and the
 preserved pre-migration browser copy are independent copies: permanent deletion from
 the server cannot erase them. SQLite data and JSON backup files are not encrypted.
+
+## Daily cycle
+
+Fresh blank workspaces start in Arabic without sample tasks. A skippable, three-step
+wizard saves language, theme, wake/evening times and week start, then creates one
+reviewed template/custom goal, two milestones and three linked tasks in one commit.
+Existing workspaces retain their data and language; they can open the setup from Home.
+
+Morning choices store up to three focus tasks and their execution days separately
+from due dates. Evening reminders run inside the open app using the planning timezone.
+Mood, notes and explicitly selected next-day rollovers persist on the server. Weekly
+review saves three next-week results while preserving additional results and capacity.
+The six-area radar counts recorded completions, routine check-ins and linked focus
+sessions; it does not measure wellbeing or activity outside the app.
+
+Quick capture understands supported date/time phrases and area hashtags with an editable
+preview; ambiguous time remains in the title. `N`, `/` and `F` open a task, search, and
+focus respectively, while ignoring typing and open dialogs. Task details are collapsed
+by default. Expired linked focus sessions record elapsed timer time once and ask before
+marking the task complete. Undo is available for ten seconds after saved completion,
+routine check-in or archive, and refuses to overwrite newer item revisions.
 
 ## HTTP API
 

@@ -1,4 +1,4 @@
-import { getPlanning } from './preferences';
+import { getPlanning } from './planningConfig';
 import type { Dispatch, SetStateAction } from 'react';
 export type Translate = (en: string, ar: string) => string;
 export type Area = 'Work' | 'Family' | 'Health' | 'Learning' | 'Finance' | 'Personal';
@@ -9,7 +9,7 @@ export type EntryKind = 'project' | 'goal' | 'event' | 'routine' | 'note' | 'pre
 const labels: Record<EntryKind, [string, string]> = { project:['Project','مشروع'],goal: ['Goal', 'هدف'], event: ['Event', 'موعد'], routine: ['Routine', 'روتين'], note: ['Note', 'ملاحظة'], preference: ['Preference', 'تفضيل'], decision: ['Decision', 'قرار'], personal: ['Personal information', 'معلومة شخصية'] };
 export const kindLabel = (kind: EntryKind, t: Translate) => t(...labels[kind]);
 export const memoryKinds: EntryKind[] = ['note', 'preference', 'decision', 'personal'];
-export type Milestone={id:string;title:string;date:string};
+export type Milestone={id:string;title:string;date:string;targetDateAcknowledgement?:string};
 export type Entry = import("./audit").AuditFields & {tags?:string[];links?:string[];attachments?:{name:string;mime:string;data:string}[];parentGoalId?:string;routineDays?:number[];sourceLabel?:string;certainty?:"explicit"|"inferred"|"unspecified";context?:string;expiresOn?:string;alternatives?:string;rationale?:string;successCriteria?:string;outcomeAchieved?:boolean; source?:import("../features/capture/model").CaptureSource; id: string; milestones?:Milestone[]; durationMinutes?:number; kind: EntryKind; title: string; detail: string; area: Area; date: string; time: string; progress: number; archived: boolean; doneDates: string[] };
 export type EntrySetter = Dispatch<SetStateAction<Entry[]>>;
 export function localDate(date = new Date()) { const parts=new Intl.DateTimeFormat('en-CA',{timeZone:getPlanning().timezone,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);return ['year','month','day'].map(type=>parts.find(p=>p.type===type)?.value).join('-'); }
