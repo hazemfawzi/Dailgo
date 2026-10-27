@@ -1,6 +1,6 @@
 # Dailgo — Personal AI Operating System
 
-A single-user React + TypeScript + Vite application backed by a loopback-only Node/SQLite server. Sign-in opens the server workspace; changes save automatically with revision conflict protection. Existing browser data can be imported explicitly without deleting its local copy. See [Connected workspace](docs/server-workspace.md) for architecture, API routes, migration and tests. Branding is centralized in `src/config/branding.ts`; the temporary product name is not a company identity. Arabic RTL, English LTR, light/dark themes, mobile navigation and desktop navigation are supported.
+A React + TypeScript + Vite application with a primary private account, invited family accounts and separate shared spaces backed by a loopback-only Node/SQLite server. Sign-in opens the server workspace; changes save automatically with revision conflict protection. Existing browser data can be imported explicitly without deleting its local copy. See [Connected workspace](docs/server-workspace.md) for architecture, API routes, migration and tests. Branding is centralized in `src/config/branding.ts`; the temporary product name is not a company identity. Arabic RTL, English LTR, light/dark themes, mobile navigation and desktop navigation are supported.
 
 ## Run and verify
 
@@ -13,10 +13,22 @@ npm run dev -- --strictPort
 # Validation:
 npm test
 npm run test:server
+npm run test:features
 npm run test:browser
+npm run test:production
+npm run test:deploy
 ```
 
 Open http://127.0.0.1:5173/. Vite serves browser-history routes during development. Production hosting must route unknown paths to index.html. Automated verification includes domain tests, isolated server/API tests and Playwright browser workflows. See the connected workspace guide for details.
+
+## Current release
+
+[Product checklist](docs/PRODUCT_PLAN.md) covers the daily journey and review fixes.
+[Optional integrations](deploy/INTEGRATIONS.md) explains server-side Claude, verified
+SMTP, Push, encrypted Google Calendar OAuth and the deliberately disabled Pro payment
+adapter. Claude usage does not require selling a subscription. All provider changes
+are opt-in; tool proposals require confirmation. [Native widgets](native/README.md)
+include Android and iOS companion sources and separate CI builds.
 
 ## Implemented flows
 
@@ -24,11 +36,11 @@ Open http://127.0.0.1:5173/. Vite serves browser-history routes during developme
 - Tasks: create/edit, subtasks, tags, estimates, priorities, pinning, duplication, filters, list/board, bulk actions, archive/restore, recoverable deletion. States are todo, doing, waiting, blocked, deferred, cancelled and done. Optional reason, waiting party and review date. Waiting, blocked and deferred tasks do not reserve flexible work time or move automatically. Cancelled tasks are excluded from progress and overdue counts.
 - Goals and projects: distinct record types. Projects optionally serve a goal. A task can belong to a project and its parent goal without making duplicate records. Changing a project's parent updates its task links atomically. Goals retain milestones. Task completion percentage is separate from manually assessed outcome achievement and success criteria.
 - Planner: task dates distinguish execution from deadlines. Weekly results have editable completion criteria and a configurable count. Per-day total capacity and reserve, workload warnings, appointment overlap detection, union of occupied appointment time, and midnight crossings. Old event durations remain explicitly estimated. Rollover previews let users choose each new date or leave the task behind, with projected load. Old weekly notes remain accessible after changing week-start preference.
-- Calendar and routines: local event CRUD, date/time/duration editing, overlap warnings, and optional weekday repetition for routines. No actual notifications are sent.
+- Calendar and routines: local event CRUD, date/time/duration editing, overlap warnings, and optional weekday repetition for routines. Optional server reminders require configured email or Push services and explicit opt-in.
 - Capture: shared plus button, multi-item Arabic/English rule-based suggestions, editable previews, required appointment date/time, source provenance and atomic idempotent confirmation. Clear unsupported language is kept for user review rather than fabricated understanding. Drafts are in-memory and do not survive reload.
 - Memory: notes/preferences/decisions/personal information, source, explicit/inferred/unspecified basis, context, expiry, decision alternatives and rationale. Expired memories are omitted from new summaries. Potential contradictions require equal title, kind, life area and context; they are flagged for review, never automatically merged.
 - Action center: searchable requests from active and archived conversations, status/date filters, details and direct conversation links. Undo previews protect edited, linked and legacy records; confirmation rechecks the preview and atomically moves unchanged targets to recoverable Trash. Partial undo and its counts remain in the conversation. No permanent deletion occurs in this flow.
-- Assistant: compound Arabic/English requests produce editable per-item previews (type, area, title, date/time and details), with item exclusions and whole-batch confirmation/cancellation. Required appointment details block the entire batch. Stable IDs, latest-preview checks, atomic confirmation and source provenance prevent duplicate or stale execution. These use local rules, not language-model understanding. Also includes scripted local responses, area/context selection, reply timestamps, source-record references, editable action previews, explicit missing-date/time questions, confirmation/cancellation, persistent conversations and recoverable deletion. An action and its confirmation are committed in the same snapshot. Old messages with no timestamp are labelled accordingly. There are no model calls or external actions.
+- Assistant: compound Arabic/English requests produce editable per-item previews (type, area, title, date/time and details), with item exclusions and whole-batch confirmation/cancellation. Required appointment details block the entire batch. Stable IDs, latest-preview checks, atomic confirmation and source provenance prevent duplicate or stale execution. Local mode uses rules; optional Claude mode uses scoped server-side tool proposals with confirmation and protected undo. Also includes scripted local responses, area/context selection, reply timestamps, source-record references, editable action previews, explicit missing-date/time questions, confirmation/cancellation, persistent conversations and recoverable deletion. An action and its confirmation are committed in the same snapshot. Old messages with no timestamp are labelled accordingly. External model calls require server configuration and user consent; proposed workspace changes still require confirmation.
 - Search: shared top-bar search across tasks, goals, projects, appointments, routines, memories, archived records and captured source text.
 
 ## Data protection
@@ -49,14 +61,9 @@ The local reliability, capture, task lifecycle, daily/weekly review, scheduling,
 
 Manual UI checks covered Arabic mobile/desktop rendering, waiting-state editing and source links, focus session logging and daily review persistence after reload, global search, assistant preview edits and confirmation after reload, deletion and restoration, appointment overlap warnings, and project creation with a linked goal and task.
 
-Intentionally deferred under the user's standalone-prototype direction:
+Optional services (Claude, email, Push, Google Calendar and billing) require administrator configuration; tests use mocked providers and do not establish live vendor delivery. Billing remains disabled by default and is independent of Claude. Native widgets have companion sources and CI build definitions; signing and physical-device acceptance remain separate release gates. Offline writes and Notion integration are outside this release.
 
-- Real language-model understanding, secure server-side credentials, provider permissions, usage/cost limits and model-specific evaluation.
-- External calendar/mail/Notion integrations and all external execution.
-- Multi-user accounts, encrypted server storage, offline write synchronization, background push reminders and native applications. A single personal account and connected-device refresh are now implemented.
-- A real full-week acceptance trial with the user's actual commitments. The trial screen records self-reported observations; sample data, passing tests and time logs do not establish personal productivity gains or production/security readiness.
-
-No external service is necessary to use the implemented prototype. The eight seeded life goals are illustrative suggestions; only the product-building goal is grounded in the user's stated project.
+New accounts start without seeded sample goals. Goal templates create records only after explicit confirmation. A real full-week trial remains necessary to assess usefulness with actual commitments.
 
 ## Source organization
 

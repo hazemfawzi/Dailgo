@@ -13,7 +13,7 @@ export function resetPassword(file,password){if(password.length<12||password.len
 if(process.argv[1]&&existsSync(process.argv[1])&&realpathSync(process.argv[1])===realpathSync(fileURLToPath(import.meta.url))){
  process.umask(0o077);const config=readConfig();const file=config.dbPath;if(!file)throw Error('Set PERSONAL_OS_DB to an absolute database path');
  if(process.argv[2]==='backup'){const folder=process.argv[3];if(!folder)throw Error('Pass an absolute backup directory');await backupDatabase(file,folder);process.stdout.write('Verified database backup created.\n');}
- else if(process.argv[2]==='reset-password'){if(process.stdin.isTTY)throw Error('Supply the password through protected standard input, not arguments');const password=readFileSync(0,'utf8').replace(/\r?\n$/,'');resetPassword(file,password);process.stdout.write('Password replaced; all sessions revoked.\n');}
+ else if(process.argv[2]==='reset-password'){if(process.stdin.isTTY)throw Error('Supply the password through protected standard input, not arguments');const password=readFileSync(0,'utf8').replace(/\r?\n$/,'');resetPassword(file,password);process.stdout.write('Owner password replaced; owner sessions revoked.\n');}
  else throw Error('Supported maintenance commands: backup, reset-password');
 }
 

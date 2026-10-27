@@ -19,9 +19,19 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run test:server
+      - run: npm run test:features
       - run: npm run test:deploy
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
+      - run: npm run test:production
+      - name: Save browser failure details
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-failure-${{ github.sha }}-${{ github.run_attempt }}
+          path: test-results/
+          retention-days: 3
+          if-no-files-found: ignore
       - name: Package tested application
         shell: bash
         run: |

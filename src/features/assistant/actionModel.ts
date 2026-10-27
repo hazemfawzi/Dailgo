@@ -1,3 +1,4 @@
+import { undoAIPlan,aiRecord,aiTargetId } from './ai/plan';
 import type { Data } from '../../lib/storageCore';
 import type { Entry } from '../../lib/workspace';
 import type { Task } from '../tasks/model';
@@ -5,12 +6,13 @@ import type { Message } from './engine';
 import { applyMutation,mutationRecord,mutationUndoable } from './mutationModel';
 export type ActionConversation={id:string;title:string;archived:boolean;messages:Message[]};
 export type UndoRow={id:string;title:string;collection:'personal-os.tasks.v1'|'personal-os.entries.v1';state:'safe'|'edited'|'missing'|'linked'};
-export type UndoPreview={conversationId:string;messageId:string;rows:UndoRow[];token:string;mode?:'restore'|'remove'};
-export function actionRecords(data:Data){return ((data['personal-os.conversations.v1']??[]) as ActionConversation[]).flatMap(c=>c.messages.filter(m=>m.role==='assistant'&&(m.proposal||m.batch||m.mutation)).map(m=>({conversation:c,message:m})));}
+export type UndoPreview={conversationId:string;messageId:string;rows:UndoRow[];token:string;mode?:'restore'|'remove'|'ai'};
+export function actionRecords(data:Data){return ((data['personal-os.conversations.v1']??[]) as ActionConversation[]).flatMap(c=>c.messages.filter(m=>m.role==='assistant'&&(m.proposal||m.batch||m.mutation||m.ai?.actions.length)).map(m=>({conversation:c,message:m})));}
 export function undoPreview(data:Data,conversationId:string,messageId:string):UndoPreview{
  const chats=(data['personal-os.conversations.v1']??[]) as ActionConversation[];
  const message=chats.find(c=>c.id===conversationId)?.messages.find(m=>m.id===messageId);
  if(!message||message.status!=='confirmed')throw Error('unavailable-action');
+ if(message.ai){let safe=true;try{undoAIPlan(data,message.ai);}catch{safe=false;}const rows:UndoRow[]=message.ai.actions.map(action=>({id:aiTargetId(action),title:aiRecord(action).title,collection:(action.kind==='create_goal'||action.kind==='update_goal')?'personal-os.entries.v1':'personal-os.tasks.v1',state:safe?'safe':'edited'}));return {conversationId,messageId,rows,mode:'ai',token:JSON.stringify({message,data})};}
  if(message.mutation){const record=mutationRecord(data,message.mutation);const rows:UndoRow[]=[{id:message.mutation.id,title:record?.title??message.mutation.title,collection:message.mutation.collection,state:!record?'missing':mutationUndoable(data,message.mutation)?'safe':'edited'}];return {conversationId,messageId,rows,mode:'restore',token:JSON.stringify({message,record,rows})};}
  const tasks=(data['personal-os.tasks.v1']??[]) as Task[];const workspace=data['personal-os.entries.v1'] as {entries:Entry[]}|Entry[]|undefined;
  const entries=Array.isArray(workspace)?workspace:workspace?.entries??[];
@@ -29,6 +31,7 @@ export function undoPreview(data:Data,conversationId:string,messageId:string):Un
 export function undoAction(data:Data,preview:UndoPreview,at=new Date().toISOString()):Data{
  const fresh=undoPreview(data,preview.conversationId,preview.messageId);
  if(fresh.token!==preview.token)throw Error('stale-undo');
+ if(fresh.mode==='ai'){if(!fresh.rows.length||fresh.rows.some(row=>row.state!=='safe'))throw Error('nothing-to-undo');const chats=(data['personal-os.conversations.v1']??[]) as ActionConversation[];const message=chats.find(x=>x.id===preview.conversationId)!.messages.find(x=>x.id===preview.messageId)!;const changed=undoAIPlan(data,message.ai!);return {...changed,'personal-os.conversations.v1':chats.map(chat=>chat.id===preview.conversationId?{...chat,messages:chat.messages.map(item=>item.id===preview.messageId?{...item,status:'reverted'}:item)}:chat)};}
  if(fresh.mode==='restore'){if(!fresh.rows.some(x=>x.state==='safe'))throw Error('nothing-to-undo');const chats=(data['personal-os.conversations.v1']??[]) as ActionConversation[];const msg=chats.find(x=>x.id===preview.conversationId)!.messages.find(x=>x.id===preview.messageId)!;const restored=applyMutation(data,msg.mutation!,true);return {...restored,'personal-os.conversations.v1':chats.map(c=>c.id===preview.conversationId?{...c,messages:c.messages.map(m=>m.id===preview.messageId?{...m,status:'reverted',undo:{at,removedIds:[],keptIds:[],restoredIds:[msg.mutation!.id]}}:m)}:c)};}
  const removedIds=fresh.rows.filter(x=>x.state==='safe').map(x=>x.id);if(!removedIds.length)throw Error('nothing-to-undo');
  const ids=new Set(removedIds);const tasks=(data['personal-os.tasks.v1']??[]) as Task[];const workspace=data['personal-os.entries.v1'] as {entries:Entry[]}|Entry[]|undefined;

@@ -1,10 +1,17 @@
 # Connected workspace
 
-Dailgo uses one personal account and one SQLite workspace per server. This is not
-multi-user hosting. Sign-in is required before opening the application. All existing
-workspace collections use the shared server storage adapter: tasks/subtasks, goals,
-projects, appointments, routines, memories/attachments, conversations/action previews,
-focus sessions, weekly plans, reviews, daily-cycle preferences, trial measurements and Trash.
+Dailgo preserves its primary private account and SQLite workspace, and supports
+invited accounts with separate workspaces. Family spaces share only their own tasks.
+Goal links expose explicitly selected goal fields and can be revoked or expire.
+Sign-in is required for private account APIs. Cross-tab account changes are rejected
+before an old tab can write into another account.
+
+Personal collections include tasks/subtasks, goals, projects, appointments, routines,
+memories/attachments, conversations/proposals, focus sessions, plans/reviews, daily
+preferences, financial records and optional prayer settings. JSON backup/export
+covers that personal workspace. Family exports are separate; full server SQLite
+backups include all accounts and integration state. See [optional activation and
+rollback](../deploy/INTEGRATIONS.md) and [native widgets](../native/README.md).
 
 ## Run
 
@@ -76,9 +83,9 @@ sessions; it does not measure wellbeing or activity outside the app.
 
 Quick capture understands supported date/time phrases and area hashtags with an editable
 preview; ambiguous time remains in the title. `N`, `/` and `F` open a task, search, and
-focus respectively, while ignoring typing and open dialogs. Task details are collapsed
+focus respectively. Single-key shortcuts ignore text editing; Ctrl/Cmd+K also works inside text fields. All shortcuts ignore open dialogs. Ctrl/Cmd+K opens the assistant and its change history. Task details are collapsed
 by default. Expired linked focus sessions record elapsed timer time once and ask before
-marking the task complete. Undo is available for ten seconds after saved completion,
+marking the task complete. Undo is available for twenty seconds after saved completion,
 routine check-in or archive, and refuses to overwrite newer item revisions.
 
 ## HTTP API
@@ -115,7 +122,10 @@ commit or record API for normal changes.
 npm test
 npm run build
 npm run test:server
+npm run test:features
 npm run test:browser
+npm run test:production
+npm run test:deploy
 ```
 
 Browser tests use a temporary database, a dedicated Vite port (5187), and an ephemeral
@@ -125,6 +135,21 @@ account. Playwright uses `/usr/bin/chromium` when installed; otherwise run
 compatible browser. SQLite tests cover authenticated CRUD, all entry kinds, planning,
 conversations/sessions, audited atomic changes, stale writes and Trash.
 
-The assistant remains rule-based; scheduling and suggestions are computed in the app.
-There are no external AI calls, provider integrations, background notifications,
-real-time push updates, public deployment, or multi-user permissions in this change.
+Local capture remains rule-based. Optional Claude calls run on the server with
+scope, context size and usage limits, returning proposals without direct writes.
+SMTP, Push, Google OAuth and optional Pro billing are disabled until configured.
+Background delivery is opt-in and cannot be verified through local fixture tests.
+All accounts share the server's configured provider budget, while their workspace
+content remains isolated. Shared family tasks never enter the assistant context.
+
+Recurring completion generates one next occurrence in the same audited commit.
+Undo removes an untouched generated occurrence and refuses a newer edit. Monthly
+recurrence retains its original anchor day across shorter months. Goal templates
+are available both during onboarding and later in My Life. Dates are stored as ISO
+keys; display dates, times, counts and Arabic plural forms use the shared formatters.
+Native date/number inputs retain browser-controlled editing formats.
+
+A missing deployed lazy chunk triggers one guarded reload after pending writes are
+acknowledged. Open dialogs or storage errors keep the manual recovery path. Production
+browser tests run the packaged artifact and simulate this failure, separately from
+Vite development-browser tests.

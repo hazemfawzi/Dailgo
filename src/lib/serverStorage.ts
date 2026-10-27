@@ -1,11 +1,14 @@
 import { validateData } from './storageCore';
 import type { Data,Store } from './storageCore';
+let expectedAccount:string|null=null;
+export function clearServerAccount(){expectedAccount=null;}
 export class ApiError extends Error {
  constructor(public status:number){super(`Server request failed (${status})`);}
 }
 export async function apiRequest(path:string,method='GET',body?:unknown){
- const response=await fetch('/api/'+path,{method,credentials:'same-origin',cache:'no-store',headers:body===undefined?undefined:{'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(15000)});
- if(!response.ok)throw new ApiError(response.status);
+ const response=await fetch('/api/'+path,{method,credentials:'same-origin',cache:'no-store',headers:{...(body===undefined?{}:{'Content-Type':'application/json'}),...(expectedAccount?{'X-Dailgo-Account':expectedAccount}:{})},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(15000)});
+ const actual=response.headers.get('X-Dailgo-Account');if(actual&&expectedAccount&&actual!==expectedAccount){window.dispatchEvent(new Event('dailgo-session-expired'));throw new ApiError(401);}if(actual)expectedAccount=actual;
+ if(!response.ok){if(response.status===401&&expectedAccount&&!path.startsWith('public/')&&path!=='widgets/today'&&path!=='account/login')window.dispatchEvent(new Event('dailgo-session-expired'));throw new ApiError(response.status);}
  return response.json();
 }
 export function serverStore(value:{revision:string;data:unknown}):Store{

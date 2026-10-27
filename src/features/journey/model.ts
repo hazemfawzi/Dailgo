@@ -55,3 +55,9 @@ export function saveWeeklyResults(data:Data,start:string,titles:{title:string;go
  const outcomes=titles.map((item,index)=>({...item,title:item.title.trim(),done:old?.outcomes?.[index]?.title===item.title.trim()?!!old.outcomes[index].done:false}));
  return {...data,[JOURNEY_KEY]:{...journeyState(data),weeklyReviewedOn:start},'personal-os.weeks.v1':{...plans,[next]:{...(old??{capacities:{},review:{wins:'',obstacles:'',next:''}}),outcomes:[...outcomes,...(old?.outcomes?.slice(3)??[])]}}};
 }
+
+export function addGoalTemplate(data:Data,spec:{templateId:string;title:string;goalArea:Area;date:string;criteria:string;tasks:{title:string;estimate:number}[];language:'ar'|'en'},batch:string):Data{
+ if(workspaceEntries(data).some(entry=>entry.id==='onboarding-goal-'+batch))return data;
+ const created=completeOnboarding({...data,[JOURNEY_KEY]:defaultJourney},{...spec,areas:[spec.goalArea,spec.goalArea==='Learning'?'Work':'Learning'],dark:data['personal-os.dark']===true,wakeTime:'07:00',eveningTime:'20:00',weekStartsOn:spec.language==='ar'?6:1},batch);
+ return {...data,'personal-os.tasks.v1':created['personal-os.tasks.v1'],'personal-os.entries.v1':created['personal-os.entries.v1']};
+}

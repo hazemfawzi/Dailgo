@@ -4,7 +4,7 @@ import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import type { SetStateAction } from 'react';
 import { commit, readStore, restoreSnapshot, storageToken, DATA_KEYS,validateData } from './storageCore';
 import type { Data, Store } from './storageCore';
-import { ApiError,loadServerStore,commitServerStore,replaceServerStore } from './serverStorage';
+import { clearServerAccount,ApiError,loadServerStore,commitServerStore,replaceServerStore } from './serverStorage';
 import { setServerData } from './activeWorkspace';
 let snapshot:Store={version:3,revision:'legacy',data:{}};
 let issue='';let ready=false;let remote=false;let pendingWrites=0;
@@ -24,7 +24,7 @@ export function currentStorageToken(){return remote?snapshot.revision:storageTok
 export async function connectServerStorage(){
  const store=await loadServerStore();remote=true;ready=true;snapshot=store;previews.clear();issue='';setServerData(store.data);emit();
 }
-export function disconnectServerStorage(){clearUndo();remote=true;ready=true;snapshot={version:3,revision:'empty',data:{}};issue='auth';previews.clear();setServerData({});emit();}
+export function disconnectServerStorage(){clearServerAccount();clearUndo();remote=true;ready=true;snapshot={version:3,revision:'empty',data:{}};issue='auth';previews.clear();setServerData({});emit();}
 export function refreshStorage(){
  if(remote){void locked(async()=>{try{snapshot=await loadServerStore();issue='';emit();}catch(error){failed(error);}});return;}
  try{snapshot=readStore(localStorage);issue='';}catch{issue='corrupt';}emit();
@@ -81,3 +81,5 @@ export function startServerRefresh(){
  const refresh=()=>{if(!remote||issue==='auth')return;if(!issue){refreshStorage();return;}void locked(async()=>{try{await loadServerStore();}catch(error){if(error instanceof ApiError&&error.status===401)failed(error);}});};const timer=window.setInterval(refresh,10000);window.addEventListener('focus',refresh);
  return()=>{window.clearInterval(timer);window.removeEventListener('focus',refresh);};
 }
+
+export function waitForPendingSaves(){return locked(async()=>!issue&&pendingWrites===0&&previews.size===0);}

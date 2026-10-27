@@ -1,0 +1,57 @@
+name: DailgoWidget
+options:
+  bundleIdPrefix: dev.decoderz
+  deploymentTarget:
+    iOS: '17.0'
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ''
+targets:
+  Dailgo:
+    type: application
+    platform: iOS
+    sources: [App, Shared]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.decoderz.dailgo
+        TARGETED_DEVICE_FAMILY: '1,2'
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Dailgo
+        UILaunchScreen: {}
+        SharedKeychainGroup: '$(AppIdentifierPrefix)dev.decoderz.dailgo.shared'
+    entitlements:
+      path: App/Dailgo.entitlements
+      properties:
+        keychain-access-groups: ['$(AppIdentifierPrefix)dev.decoderz.dailgo.shared']
+    dependencies:
+      - target: DailgoToday
+        embed: true
+  DailgoToday:
+    type: app-extension
+    platform: iOS
+    sources: [Widget, Shared]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.decoderz.dailgo.today
+        SKIP_INSTALL: YES
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: Dailgo Today
+        SharedKeychainGroup: '$(AppIdentifierPrefix)dev.decoderz.dailgo.shared'
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Widget/DailgoToday.entitlements
+      properties:
+        keychain-access-groups: ['$(AppIdentifierPrefix)dev.decoderz.dailgo.shared']
+schemes:
+  Dailgo:
+    build:
+      targets:
+        Dailgo: all
+        DailgoToday: all

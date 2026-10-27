@@ -15,7 +15,9 @@ export function restoreWorkspace(saved:unknown,initial:Entry[]=[]):WorkspaceData
  const current=saved&&typeof saved==='object'&&!Array.isArray(saved)?saved as Partial<WorkspaceData>:null;
  if(current?.version===2&&current.demoVersion===1&&Array.isArray(current.entries))return current as WorkspaceData;
  const previous:Entry[]=Array.isArray(saved)?saved:current&&Array.isArray(current.entries)?current.entries:initial;
- const entries=previous.map(entry=>entry.kind==='goal'&&((entry.id==='seed-goal-learning'&&entry.title==='Build a consistent reading habit')||(entry.id==='seed-goal-health'&&entry.title==='Move a little every day'))?{...entry,archived:true}:entry);
- for(const goal of demoGoals)if(!entries.some(e=>e.id===goal.id||(e.kind==='goal'&&e.title===goal.title)))entries.push({...goal,doneDates:[]});
+ const entries=[...previous];
+ // Demo data is an explicit fixture only; reading a legacy workspace never adds
+ // or archives records behind the user's back.
+
  return {version:2,demoVersion:1,entries};
 }
