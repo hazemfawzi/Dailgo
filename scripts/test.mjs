@@ -218,3 +218,42 @@ test('English and Arabic planning summaries share task priority order and preser
  }
  assert.equal(JSON.stringify(input),before);
 });
+
+const uxBuild=await build({stdin:{contents:"export * from './src/features/planner/taskDates'; export * from './src/features/life/goalDates'; export { localDate as planningToday } from './src/lib/workspace';",resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',write:false});
+const ux=await import(`data:text/javascript;base64,${Buffer.from(uxBuild.outputFiles[0].text).toString('base64')}`);
+test('Arabic study requests produce a dated task preview without matching memory lookup',()=>{
+ const answer=respond('عايز أذاكر بكرة الساعة 8',(_en,ar)=>ar,[],[]);
+ assert.equal(answer.status,'pending');assert.equal(answer.proposal.kind,'task');assert.equal(answer.proposal.date,weekDates(ux.planningToday())[1]);assert.match(answer.proposal.title,/أذاكر/);assert.match(answer.proposal.title,/الساعة 8/);assert.doesNotMatch(answer.text,/ذاكرتك فارغة|Your memory is empty/);
+ for(const input of ['أذاكر بكرة','محتاج اذاكر اليوم','عاوز أراجع غدا'])assert.equal(respond(input,t,[],[]).proposal?.kind,'task');
+ assert.match(respond('Show my memories',t,[],[]).text,/Your memory is empty/);
+ assert.match(respond('اعرض ذاكرتي',t,[],[]).text,/Your memory is empty/);
+ assert.doesNotMatch(respond('معنى أذاكر',t,[],[]).text,/Your memory is empty/);
+ assert.equal(respond('Task: Prepare report tomorrow',t,[],[]).proposal.date,weekDates(ux.planningToday())[1]);
+});
+test('dated task views show execution and due dates once without converting deadlines into planned work',()=>{
+ const date='2026-10-27';const tasks=[task('due',{dueDate:date,estimate:60}),task('planned',{plannedDate:date,estimate:30}),task('both',{plannedDate:date,dueDate:date,estimate:10}),task('later',{dueDate:date,plannedDate:'2026-10-28',estimate:20}),task('waiting',{status:'waiting',dueDate:date}),task('cancelled',{status:'cancelled',dueDate:date}),task('archive',{archived:true,dueDate:date})];
+ const before=JSON.stringify(tasks);assert.deepEqual(ux.tasksOnDate(tasks,date).map(x=>x.id),['due','planned','both','later','waiting']);assert.deepEqual(ux.taskDateLabels(tasks[2],date),{planned:true,due:true});assert.equal(dayLoad(tasks,[],date,240).taskMinutes,40);assert.equal(JSON.stringify(tasks),before);
+});
+test('milestone dates respect the goal deadline and calendar validity',()=>{
+ assert.equal(ux.milestoneDateIssue({date:'2026-12-31',milestones:[{date:'2027-06-01'}]}),'after-goal');
+ assert.equal(ux.milestoneDateIssue({date:'2026-12-31',milestones:[{date:'2026-12-31'}]}),null);
+ assert.equal(ux.milestoneDateIssue({date:'2026-12-31',milestones:[{date:'2026-02-30'}]}),'invalid-date');
+ assert.equal(ux.milestoneDateIssue({date:'',milestones:[{date:'2027-06-01'},{date:''}]}),null);
+});
+test('milestone write validation preserves readable legacy data and checks changed goal targets',()=>{
+ const goal={id:'g',kind:'goal',date:'2026-12-31',milestones:[{id:'m',date:'2027-06-01'}]};const legacy={'personal-os.entries.v1':{entries:[goal]}};
+ assert.doesNotThrow(()=>ux.validateGoalDateChanges(legacy,{...legacy,'personal-os.tasks.v1':[]}));
+ assert.throws(()=>ux.validateGoalDateChanges({},legacy),/milestone-after-goal/);
+ const fixed={...goal,milestones:[{id:'m',date:'2026-12-01'}]};const before={'personal-os.entries.v1':[fixed]};
+ assert.throws(()=>ux.validateGoalDateChanges(before,{'personal-os.entries.v1':[{...fixed,date:'2026-11-30'}]}),/milestone-after-goal/);
+});
+test('planning commands explain execution dates, preserve deadlines and reject non-actionable tasks',()=>{
+ const original=task('plan',{title:'Review API',dueDate:'2026-10-27',plannedDate:'2026-10-26'});
+ for(const command of ['Plan task','Move task','خطط المهمة','انقل المهمة']){
+  const answer=mutationResponse(`${command}: Review API => 2026-10-30`,t,[original],[]);assert.equal(answer.mutation.patch.plannedDate,'2026-10-30');assert.match(answer.text,/execution day only/);assert.equal(original.dueDate,'2026-10-27');
+  assert.equal(mutationResponse(`${command}: Review API => 2026-10-30`,t,[{...original,done:true}],[]).mutation,undefined);
+  assert.equal(mutationResponse(`${command}: Review API => 2026-10-30`,t,[{...original,status:'blocked'}],[]).mutation,undefined);
+ }
+ const preview=mutationResponse('Plan task: Review API => 2026-10-30',t,[original],[]);const message={id:'plan',role:'assistant',...preview};const data={'personal-os.tasks.v1':[{...original,done:true}],'personal-os.conversations.v1':[{id:'chat',archived:false,messages:[message]}]};
+ assert.throws(()=>confirmMutation(data,'chat',message),/unavailable-task/);
+});

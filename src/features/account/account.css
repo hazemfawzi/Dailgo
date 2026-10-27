@@ -1,10 +1,14 @@
-.account-screen{min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--background,#f7f8fa);color:var(--foreground,#252238)}
-.account-card{width:min(100%,640px);padding:28px;border:1px solid #d8d4e5;border-radius:18px;background:var(--card,#fff);line-height:1.8}
+.account-screen{min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--bg,#f7f8fa);color:var(--text,#252238)}
+.account-card{width:min(100%,640px);padding:28px;border:1px solid #d8d4e5;border-radius:18px;background:var(--surface,#fff);line-height:1.8}
 .account-card h1{font-size:1.5rem;font-weight:700}.account-card h2{font-size:1.2rem;font-weight:600;margin-top:16px}
 .account-card form,.server-connection form{display:grid;gap:12px}.account-card label,.server-connection label{display:grid;gap:5px}
 .account-card input,.server-connection input{border:1px solid #aaa;border-radius:8px;padding:8px;background:transparent;color:inherit;min-width:0}
 .account-card button,.server-connection button{border:1px solid #7562c3;border-radius:8px;padding:7px 12px;cursor:pointer;background:#7562c3;color:white}
 .account-card button:disabled,.server-connection button:disabled{opacity:.5;cursor:wait}.account-card .secondary{margin-top:16px;background:transparent;color:inherit}
 .account-actions{display:flex;flex-wrap:wrap;gap:10px}.account-card [role=alert]{color:#a12828;margin:12px 0}
-.server-connection{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 16px;background:#eeeaf8;color:#30264f;font-size:13px;position:relative;z-index:20}
-.server-connection details[open]{position:relative}.server-connection form{padding:12px;background:#fff;color:#252238;border:1px solid #d8d4e5;border-radius:8px;width:min(85vw,320px)}
+.server-connection{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 16px;background:var(--soft);color:var(--text);font-size:13px;position:relative;z-index:35;margin-inline-start:248px;border-bottom:1px solid var(--border);min-width:0}
+.server-connection details[open]{position:relative}.server-connection form{padding:12px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;width:min(85vw,320px)}
+
+.server-connection>span{min-width:0;overflow-wrap:anywhere;flex:1 1 260px}
+@media(max-width:1150px){.server-connection{margin-inline-start:215px}}
+@media(max-width:850px){.server-connection{margin-inline-start:0}}

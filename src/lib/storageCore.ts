@@ -59,3 +59,5 @@ export function restoreSnapshot(storage:Pick<Storage,'getItem'|'setItem'>,data:D
 
 
 export { auditWorkspace };
+
+export { validateGoalDateChanges } from '../features/life/goalDates';

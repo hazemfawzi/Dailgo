@@ -1,4 +1,4 @@
-import { getPlanning } from './preferences';
+import { getPlanning } from './planningConfig';
 import type { Dispatch, SetStateAction } from 'react';
 export type Translate = (en: string, ar: string) => string;
 export type Area = 'Work' | 'Family' | 'Health' | 'Learning' | 'Finance' | 'Personal';

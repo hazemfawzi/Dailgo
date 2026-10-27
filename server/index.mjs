@@ -6,7 +6,7 @@ import { randomBytes,randomUUID,scryptSync,timingSafeEqual,createHash } from 'no
 import { mkdirSync,existsSync,readFileSync,chmodSync,realpathSync } from 'node:fs';
 import { dirname,resolve,extname,sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-const { validateData,auditWorkspace }=await import(new URL('./domain.mjs',import.meta.url));
+const { validateData,auditWorkspace,validateGoalDateChanges }=await import(new URL('./domain.mjs',import.meta.url));
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const defaultDb=fileURLToPath(new URL('../.local-data/workspace.sqlite',import.meta.url));
 const dist=fileURLToPath(new URL('../dist/',import.meta.url));
@@ -64,7 +64,7 @@ export function createLocalServer(file=defaultDb,options={}){
    if(recordRoute){const collection=resource(recordRoute[1],store.data);if(!collection){db.exec('ROLLBACK');return send(res,404,{error:'not-found'});}const id=recordRoute[2]?decodeURIComponent(recordRoute[2]):null;if(req.method==='POST'&&id||req.method!=='POST'&&!id)throw Error('invalid-record-route');data=collection.change(req.method,id,body.item);}
    else if(stateRoute){const key=Object.hasOwn(stateKeys,stateRoute[1])?stateKeys[stateRoute[1]]:null;if(!key){db.exec('ROLLBACK');return send(res,404,{error:'not-found'});}data={...store.data,[key]:body.value};}
    else data=body.data;
-   validateData(data);data=auditWorkspace(store.data,data);validateData(data);const revision=randomUUID();
+   validateData(data);validateGoalDateChanges(store.data,data);data=auditWorkspace(store.data,data);validateData(data);const revision=randomUUID();
    db.prepare('INSERT INTO workspace VALUES(1,?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,data=excluded.data').run(revision,JSON.stringify(data));db.exec('COMMIT');return send(res,200,{version:3,revision,data});
   }catch(error){db.exec('ROLLBACK');if(error.message==='edit-conflict')return send(res,409,{error:'record-changed'});if(error.message==='record-not-found')return send(res,404,{error:'record-not-found'});throw error;}
  }
