@@ -40,3 +40,7 @@ Developer account and signing profiles, and is not performed by the web deployme
 The Linux web workspace has no Android SDK, Gradle, Swift or Xcode. Native compilation
 must pass the dedicated CI jobs; physical-device delivery, Keychain provisioning,
 voice permissions and Push delivery require checks on the intended phone.
+
+CI installs `platform-tools`, `platforms;android-35` and `build-tools;35.0.0`
+explicitly. The obsolete SDK package `tools` is intentionally excluded from
+`setup-android` defaults; requesting it fails before the Gradle build starts.
