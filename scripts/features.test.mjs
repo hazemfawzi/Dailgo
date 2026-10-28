@@ -14,7 +14,7 @@ import { createNotifications,validPushSubscription } from '../server/notificatio
 import { createCalendar } from '../server/calendar.mjs';
 import { createBilling } from '../server/billing.mjs';
 import { secretBox } from '../server/secret.mjs';
-const result=await build({stdin:{contents:"export * as rec from './src/features/tasks/recurrence'; export { restoreWorkspace } from './src/features/life/demoGoals'; export * as fmt from './src/i18n/format'; export * as tools from './src/features/tools/model'; export * as ai from './src/features/assistant/ai/plan'; export * as undo from './src/lib/undoStore'; export { loadView } from './src/lib/lazyView'; export { shortcutAction } from './src/lib/shortcuts'; export { titleKey } from './src/lib/text'; export { auditWorkspace,validateData,makeBackup,parseBackup } from './src/lib/storageCore'; export { respond,messageText } from './src/features/assistant/engine';",resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',write:false});
+const result=await build({stdin:{contents:"export * as rec from './src/features/tasks/recurrence'; export { restoreWorkspace } from './src/features/life/demoGoals'; export { planningFor } from './src/lib/planningConfig'; export * as fmt from './src/i18n/format'; export * as tools from './src/features/tools/model'; export * as ai from './src/features/assistant/ai/plan'; export * as undo from './src/lib/undoStore'; export { loadView } from './src/lib/lazyView'; export { shortcutAction } from './src/lib/shortcuts'; export { titleKey } from './src/lib/text'; export { auditWorkspace,validateData,makeBackup,parseBackup } from './src/lib/storageCore'; export { respond,messageText } from './src/features/assistant/engine';",resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',write:false});
 const domain=await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`);
 const task=(id,fields={})=>({id,title:id,category:'Work',done:false,archived:false,...fields});
 const goal=(id,fields={})=>({id,title:id,kind:'goal',area:'Work',detail:'Private goal notes',date:'2026-12-31',time:'',progress:0,doneDates:[],archived:false,...fields});
@@ -76,4 +76,13 @@ test('owner reviews partner comments and replacing the workspace forgets removed
   assert.equal((await f.call('workspace','PUT',{revision:saved.body.revision,data:{'personal-os.entries.v1':{version:2,demoVersion:1,entries:[]}}},f.cookie)).status,200);
   assert.equal((await f.call('public/goal','POST',{token:share.token})).status,404);assert.equal(f.db.prepare('SELECT count(*) AS n FROM goal_comments').get().n,0);
  }finally{await f.close();}
+});
+
+
+test('Arabic planning defaults to Saturday without overwriting an explicitly saved week start',()=>{
+ assert.equal(domain.planningFor({}).weekStartsOn,6);
+ assert.equal(domain.planningFor({'personal-os.language':'ar'}).weekStartsOn,6);
+ assert.equal(domain.planningFor({'personal-os.language':'en'}).weekStartsOn,1);
+ assert.equal(domain.planningFor({'personal-os.language':'ar','personal-os.planning.v1':{weekStartsOn:1,timezone:'Africa/Cairo'}}).weekStartsOn,1);
+ assert.equal(domain.fmt.formatClockPart(1,'ar'),'٠١');
 });

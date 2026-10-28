@@ -1,15 +1,15 @@
 # Release validation boundaries
 
-Branch: `codex/consistent-arabic-workflow`.
+Branch: `codex/oct28-review`.
 
 The local release checks use disposable accounts, databases and mocked external
 providers. They do not modify the live VPS or call paid APIs.
 
 - Domain: 108 tests (planning, lifecycle, backup, recovery, daily journeys).
 - Server: 20 tests (authentication, account snapshots, persistence and deployment contracts).
-- Extended features: 21 tests (recurrence, locale formatting, assistant proposals/undo/budgets,
+- Extended features: 22 tests (recurrence, locale formatting, assistant proposals/undo/budgets,
   sharing and isolation, provider protocols, encryption, readonly tokens and key provisioning).
-- Browser: 28 scenarios, including Arabic mobile, keyboard shortcuts, account changes,
+- Browser: 30 scenarios, including Arabic mobile, keyboard shortcuts, account changes,
   recurrent tasks, family task export/import, finance and provider-unavailable states.
 - Packaged production: one browser scenario exercises the deployable bundle and one-time
   stale-chunk recovery while preserving saved work.
@@ -28,3 +28,7 @@ their explicit tests. Billing stays disabled; Claude does not require paid subsc
 Pushing a branch is not merging or deploying it. Existing CI results and the currently
 served release must be checked separately after review. Preserve the deployment helper's
 SQLite backup before updating the VPS, which hosts other projects.
+
+The October 28 regressions cover Arabic digit ratios and zero padding, human-readable
+evening/chat dates, editable week starts with historical plans preserved, visible
+recurrence choices, shared capture/assistant area inference and legacy reply rendering.
