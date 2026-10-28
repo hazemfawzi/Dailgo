@@ -40,8 +40,20 @@ export function respond(input:string,t:Translate,tasks:Task[],entries:Entry[]):O
  const english=respondText(input,(en)=>en,tasks,entries);const arabic=respondText(input,(_,ar)=>ar,tasks,entries);
  return {...(t('en','ar')==='ar'?arabic:english),reply:{key:'rules-v1',en:english.text,ar:arabic.text}};
 }
+const legacyReplies:Record<string,string>={
+ 'Your memory is empty. Try “Remember: I prefer quiet mornings”.':'ذاكرتك فارغة. جرّب «احفظ: أفضل الصباح الهادئ».',
+ 'Review the before/after change. Only confirmation updates the existing record.':'راجع الفرق قبل وبعد. السجل الموجود مش هيتغير غير بعد تأكيدك.',
+ 'This changes the due date only. The execution day stays unchanged. Review and confirm.':'ده بيغيّر موعد التسليم فقط. يوم التنفيذ هيفضل زي ما هو. راجع وأكد.',
+ 'This changes the execution day only. The due date stays unchanged. Review and confirm.':'ده بيغيّر يوم التنفيذ فقط. موعد التسليم هيفضل زي ما هو. راجع وأكد.',
+ 'Review the task title and optional execution day, then confirm to save.':'راجع عنوان المهمة ويوم التنفيذ الاختياري، ثم أكد الحفظ.',
+ 'I can prepare this local action. Review the details below, then confirm to save it.':'جهزت الإجراء المحلي. راجع التفاصيل أدناه، ثم أكد لحفظه.',
+};
+export function proposalArea(proposal:Proposal,scope='all'):Area {
+ if(['Work','Family','Health','Learning','Finance','Personal'].includes(scope))return scope as Area;
+ return proposal.area??(proposal.kind==='task'?parseCapture('Task: '+proposal.title)[0]?.area:undefined)??'Personal';
+}
 export function messageText(message:Pick<Message,'role'|'text'|'reply'>,t:Translate){
  if(message.role==='assistant'&&message.reply?.key==='rules-v1')return t(message.reply.en,message.reply.ar);
- if(message.role==='assistant'&&message.text==='Your memory is empty. Try “Remember: I prefer quiet mornings”.')return t(message.text,'ذاكرتك فارغة. جرّب «احفظ: أفضل الصباح الهادئ».');
+ if(message.role==='assistant'&&Object.hasOwn(legacyReplies,message.text))return t(message.text,legacyReplies[message.text]);
  return message.text;
 }

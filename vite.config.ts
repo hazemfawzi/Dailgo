@@ -1,9 +1,11 @@
+import { execFileSync } from 'node:child_process';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { branding } from './src/config/branding';
 
-export default defineConfig({build:{rollupOptions:{output:{manualChunks(id){if(/node_modules\/(?:react|react-dom|scheduler|react-router|react-router-dom)\//.test(id))return 'react-vendor';}}}},server:{proxy:{'/api':'http://127.0.0.1:8787'}},preview:{proxy:{'/api':'http://127.0.0.1:8787'}}, plugins: [react(), tailwindcss(),{
+const buildCommit=process.env.GITHUB_SHA??execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+export default defineConfig({define:{'import.meta.env.VITE_APP_COMMIT':JSON.stringify(buildCommit)},build:{rollupOptions:{output:{manualChunks(id){if(/node_modules\/(?:react|react-dom|scheduler|react-router|react-router-dom)\//.test(id))return 'react-vendor';}}}},server:{proxy:{'/api':'http://127.0.0.1:8787'}},preview:{proxy:{'/api':'http://127.0.0.1:8787'}}, plugins: [react(), tailwindcss(),{
  name:'local-offline-app',
  transformIndexHtml(html,context){return html.replace(/<title>.*?<\/title>/,`<title>${branding.name.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]!))}</title>`).replace('</head>',(context.server?'':'<link rel="manifest" href="/manifest.webmanifest">')+'<meta name="theme-color" content="#7562c3"></head>');},
  generateBundle(_options,bundle){

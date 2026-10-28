@@ -11,7 +11,9 @@ export function formatClockPart(value:number,language:string){return new Intl.Nu
 export function formatTime(value:string|undefined,language:string){if(!value)return '';return /^\d{2}:\d{2}$/.test(value)?value.split(':').map(part=>formatClockPart(Number(part),language)).join(':'):value;}
 export function formatTimestamp(value:string,language:string){
  const date=new Date(value);if(!Number.isFinite(date.getTime()))return value;
- return new Intl.DateTimeFormat(localeFor(language),{dateStyle:'medium',timeStyle:'short',timeZone:getPlanning().timezone}).format(date);
+ const parts=new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:getPlanning().timezone}).formatToParts(date);
+ const part=(name:string)=>parts.find(p=>p.type===name)?.value??'';
+ return `${formatCalendarDate(['year','month','day'].map(part).join('-'),language)} · ${formatTime(part('hour')+':'+part('minute'),language)}`;
 }
 export function formatDuration(seconds:number,language:string){return `${formatNumber(Math.floor(seconds/60),language)}:${formatClockPart(seconds%60,language)}`;}
 type Unit='task'|'item'|'goal'|'day'|'result'|'minute';
