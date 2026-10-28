@@ -1,21 +1,264 @@
 import { formatNumber as localizedNumber } from '../../i18n/format';
-import { formatCalendarDate,formatNumber } from '../../i18n/format';
-import { useEffect,useRef,useState } from 'react';
-import { Link,useSearchParams } from 'react-router-dom';
-import { useStorageState,transactData } from '../../lib/storage';
+import { formatCalendarDate, formatNumber } from '../../i18n/format';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useStorageState, transactData } from '../../lib/storage';
 import { Button } from '../../components/ui/button';
 import { areaLabel } from '../../lib/workspace';
-import type { Area,Translate } from '../../lib/workspace';
+import type { Area, Translate } from '../../lib/workspace';
 import type { Task } from '../tasks/model';
 import { goalStats } from '../life/goalModel';
-import { nextDay,saveWeeklyResults,weeklyActivity,workspaceEntries } from './model';
-export function WeeklyGuided({start,t}:{start:string;t:Translate}){
- const {data}=useStorageState();const [params]=useSearchParams();const section=useRef<HTMLElement>(null);const next=nextDay(start,7);const plans=data['personal-os.weeks.v1'] as Record<string,any>|undefined;const old=plans?.[next];const expected=useRef(JSON.stringify(old??null));const goals=workspaceEntries(data).filter(goal=>goal.kind==='goal');const tasks=(data['personal-os.tasks.v1']??[]) as Task[];
- const [outcomes,setOutcomes]=useState<{title:string;goalId:string;criteria:string}[]>(()=>Array.from({length:3},(_,i)=>({title:old?.outcomes?.[i]?.title??'',goalId:old?.outcomes?.[i]?.goalId??'',criteria:old?.outcomes?.[i]?.criteria??''})));const [area,setArea]=useState<Area|null>(null);const [notice,setNotice]=useState('');const [busy,setBusy]=useState(false);
- useEffect(()=>{if(params.get('review')==='1'){const frame=requestAnimationFrame(()=>section.current?.scrollIntoView({block:'start'}));return()=>cancelAnimationFrame(frame);}},[start,params.get('review')]);
- const activity=weeklyActivity(data,start);const maximum=Math.max(1,...activity.map(item=>item.count));const point=(index:number,radius:number)=>{const angle=(index*60-90)*Math.PI/180;return [160+Math.cos(angle)*radius,130+Math.sin(angle)*radius];};const points=activity.map((item,i)=>point(i,80*item.count/maximum).join(',')).join(' ');const minimum=Math.min(...activity.map(item=>item.count));
- return <section id="weekly-review" ref={section} className="card guided-weekly"><h3 dir="auto">{t('Weekly review · connect your days to your goals','مراجعة الأسبوع · اربط يومك بأهدافك')}</h3><p dir="auto">{t('Review progress, notice where activity was recorded, then choose three results for next week.','راجع التقدم، وشوف النشاط المسجل في المجالات، وبعدها اختار ثلاث نتائج للأسبوع الجاي.')}</p><figure className="life-wheel"><svg viewBox="0 0 320 260" role="img" aria-label={t('Life areas recorded activity radar','عجلة النشاط المسجل في مجالات الحياة')}><title>{t('Recorded activity across six life areas','النشاط المسجل في ستة مجالات للحياة')}</title>{[40,80].map(radius=><polygon key={radius} points={activity.map((_,i)=>point(i,radius).join(',')).join(' ')} fill="none" stroke="var(--border)"/>)}{activity.map((item,i)=>{const end=point(i,80);const label=point(i,111);return <g key={item.area}><line x1={160} y1={130} x2={end[0]} y2={end[1]} stroke="var(--border)"/><text x={label[0]} y={label[1]} textAnchor="middle" dominantBaseline="middle" fill="var(--text)" fontSize={11}>{areaLabel(item.area,t)}</text></g>;})}<polygon points={points} fill="var(--soft)" stroke="var(--purple)" strokeWidth={2}/>{activity.map((item,i)=>{const dot=point(i,80*item.count/maximum);return <circle key={item.area} cx={dot[0]} cy={dot[1]} r={4} fill="var(--purple)"><title>{areaLabel(item.area,t)}: {localizedNumber(item.count,t('en','ar'))}</title></circle>;})}</svg><figcaption>{t('Counts of recorded task completions, routine check-ins and linked focus sessions. This shows relative activity, not wellbeing or goal achievement.','عدد إنجازات المهام وتسجيلات الروتين وجلسات التركيز المرتبطة. الرسم يوضح توزيع النشاط النسبي، مش جودة حياتك أو تحقق أهدافك.')}</figcaption></figure><div className="area-activity">{activity.map(item=><button key={item.area} aria-pressed={area===item.area} onClick={()=>setArea(area===item.area?null:item.area)}>{areaLabel(item.area,t)} · {formatNumber(item.count,t('en','ar'))}</button>)}</div><p dir="auto" className="muted">{t('Least recorded activity this week','أقل نشاط مسجل الأسبوع ده')}: {activity.filter(item=>item.count===minimum).map(item=>areaLabel(item.area,t)).join('، ')}. {t('Activity outside this app is not measured.','النشاط خارج التطبيق مش داخل الحساب.')}</p>
- <div className="weekly-goal-progress">{goals.filter(goal=>!area||goal.area===area).map(goal=>{const stats=goalStats(tasks,goal.id);return <Link key={goal.id} to={`/life/${goal.id}`}><strong dir="auto">{goal.title}</strong><span>{formatNumber(stats.done,t('en','ar'))}/{formatNumber(stats.total,t('en','ar'))} · {formatNumber(stats.progress,t('en','ar'))}%{goal.archived?' · '+t('Archived','مؤرشف'):''}</span><progress value={stats.progress} max={100}/></Link>;})}{!goals.length&&<p dir="auto">{t('Add one goal to connect next week’s results to it.','أضف هدف واحد عشان تربط بيه نتائج الأسبوع الجاي.')} <Link to="/life">{t('Create a goal','إنشاء هدف')}</Link></p>}</div>
- <h4 dir="auto">{t('Choose three results for next week','اختار ثلاث نتائج للأسبوع الجاي')} · <bdi>{formatCalendarDate(next,t('en','ar'))}</bdi></h4>{outcomes.map((outcome,index)=><div className="next-week-outcome editor-form" key={index}><label>{t(`Next week result ${localizedNumber(index+1,t('en','ar'))}`,`نتيجة الأسبوع القادم ${localizedNumber(index+1,t('en','ar'))}`)}<input dir="auto" maxLength={160} value={outcome.title} onChange={e=>setOutcomes(old=>old.map((item,i)=>i===index?{...item,title:e.target.value}:item))}/></label><label>{t('Linked goal','الهدف المرتبط')}<select value={outcome.goalId} onChange={e=>setOutcomes(old=>old.map((item,i)=>i===index?{...item,goalId:e.target.value}:item))}><option value="">{t('No goal','بدون هدف')}</option>{goals.map(goal=><option key={goal.id} value={goal.id}>{goal.title}</option>)}</select></label><label>{t('Completion criterion','معيار الاكتمال')}<input dir="auto" maxLength={500} value={outcome.criteria} onChange={e=>setOutcomes(old=>old.map((item,i)=>i===index?{...item,criteria:e.target.value}:item))}/></label></div>)}<p dir="auto" className="muted">{t('This updates the first three results for next week. Additional saved results and capacity settings are kept.','ده هيحدّث أول ثلاث نتائج للأسبوع الجاي. النتائج الإضافية وإعدادات السعة المحفوظة بتفضل موجودة.')}</p><Button disabled={busy||outcomes.some(item=>!item.title.trim())} onClick={async()=>{setBusy(true);let savedNext:unknown;const ok=await transactData(current=>{const changed=saveWeeklyResults(current,start,outcomes,expected.current);savedNext=(changed['personal-os.weeks.v1'] as Record<string,unknown>)[next];return changed;});setBusy(false);if(ok)expected.current=JSON.stringify(savedNext);setNotice(ok?t('Next week’s results are saved. Open the next week to plan their tasks.','اتحفظت نتائج الأسبوع الجاي. افتح الأسبوع القادم عشان تخطط مهامها.'):t('The next-week plan changed or could not be saved. Reopen this review before replacing it.','خطة الأسبوع الجاي اتغيرت أو تعذر حفظها. افتح المراجعة من جديد قبل استبدالها.'));}}>{t('Save three results for next week','حفظ ثلاث نتائج للأسبوع الجاي')}</Button>{notice&&<p dir="auto" role="status">{notice}</p>}
- </section>;
+import { nextDay, saveWeeklyResults, weeklyActivity, workspaceEntries } from './model';
+export function WeeklyGuided({ start, t }: { start: string; t: Translate }) {
+  const { data } = useStorageState();
+  const [params] = useSearchParams();
+  const section = useRef<HTMLElement>(null);
+  const next = nextDay(start, 7);
+  const plans = data['personal-os.weeks.v1'] as Record<string, any> | undefined;
+  const old = plans?.[next];
+  const expected = useRef(JSON.stringify(old ?? null));
+  const goals = workspaceEntries(data).filter((goal) => goal.kind === 'goal');
+  const tasks = (data['personal-os.tasks.v1'] ?? []) as Task[];
+  const [outcomes, setOutcomes] = useState<{ title: string; goalId: string; criteria: string }[]>(
+    () =>
+      Array.from({ length: 3 }, (_, i) => ({
+        title: old?.outcomes?.[i]?.title ?? '',
+        goalId: old?.outcomes?.[i]?.goalId ?? '',
+        criteria: old?.outcomes?.[i]?.criteria ?? '',
+      })),
+  );
+  const [area, setArea] = useState<Area | null>(null);
+  const [notice, setNotice] = useState('');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (params.get('review') === '1') {
+      const frame = requestAnimationFrame(() =>
+        section.current?.scrollIntoView({ block: 'start' }),
+      );
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [start, params.get('review')]);
+  const activity = weeklyActivity(data, start);
+  const maximum = Math.max(1, ...activity.map((item) => item.count));
+  const point = (index: number, radius: number) => {
+    const angle = ((index * 60 - 90) * Math.PI) / 180;
+    return [160 + Math.cos(angle) * radius, 130 + Math.sin(angle) * radius];
+  };
+  const points = activity
+    .map((item, i) => point(i, (80 * item.count) / maximum).join(','))
+    .join(' ');
+  const minimum = Math.min(...activity.map((item) => item.count));
+  return (
+    <section id="weekly-review" ref={section} className="card guided-weekly">
+      <h3 dir="auto">
+        {t('Weekly review · connect your days to your goals', 'مراجعة الأسبوع · اربط يومك بأهدافك')}
+      </h3>
+      <p dir="auto">
+        {t(
+          'Review progress, notice where activity was recorded, then choose three results for next week.',
+          'راجع التقدم، وشوف النشاط المسجل في المجالات، وبعدها اختار ثلاث نتائج للأسبوع الجاي.',
+        )}
+      </p>
+      <figure className="life-wheel">
+        <svg
+          viewBox="0 0 320 260"
+          role="img"
+          aria-label={t(
+            'Life areas recorded activity radar',
+            'عجلة النشاط المسجل في مجالات الحياة',
+          )}
+        >
+          <title>
+            {t('Recorded activity across six life areas', 'النشاط المسجل في ستة مجالات للحياة')}
+          </title>
+          {[40, 80].map((radius) => (
+            <polygon
+              key={radius}
+              points={activity.map((_, i) => point(i, radius).join(',')).join(' ')}
+              fill="none"
+              stroke="var(--border)"
+            />
+          ))}
+          {activity.map((item, i) => {
+            const end = point(i, 80);
+            const label = point(i, 111);
+            return (
+              <g key={item.area}>
+                <line x1={160} y1={130} x2={end[0]} y2={end[1]} stroke="var(--border)" />
+                <text
+                  x={label[0]}
+                  y={label[1]}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fill="var(--text)"
+                  fontSize={11}
+                >
+                  {areaLabel(item.area, t)}
+                </text>
+              </g>
+            );
+          })}
+          <polygon points={points} fill="var(--soft)" stroke="var(--purple)" strokeWidth={2} />
+          {activity.map((item, i) => {
+            const dot = point(i, (80 * item.count) / maximum);
+            return (
+              <circle key={item.area} cx={dot[0]} cy={dot[1]} r={4} fill="var(--purple)">
+                <title>
+                  {areaLabel(item.area, t)}: {localizedNumber(item.count, t('en', 'ar'))}
+                </title>
+              </circle>
+            );
+          })}
+        </svg>
+        <figcaption>
+          {t(
+            'Counts of recorded task completions, routine check-ins and linked focus sessions. This shows relative activity, not wellbeing or goal achievement.',
+            'عدد إنجازات المهام وتسجيلات الروتين وجلسات التركيز المرتبطة. الرسم يوضح توزيع النشاط النسبي، مش جودة حياتك أو تحقق أهدافك.',
+          )}
+        </figcaption>
+      </figure>
+      <div className="area-activity">
+        {activity.map((item) => (
+          <button
+            key={item.area}
+            aria-pressed={area === item.area}
+            onClick={() => setArea(area === item.area ? null : item.area)}
+          >
+            {areaLabel(item.area, t)} · {formatNumber(item.count, t('en', 'ar'))}
+          </button>
+        ))}
+      </div>
+      <p dir="auto" className="muted">
+        {t('Least recorded activity this week', 'أقل نشاط مسجل الأسبوع ده')}:{' '}
+        {activity
+          .filter((item) => item.count === minimum)
+          .map((item) => areaLabel(item.area, t))
+          .join('، ')}
+        . {t('Activity outside this app is not measured.', 'النشاط خارج التطبيق مش داخل الحساب.')}
+      </p>
+      <div className="weekly-goal-progress">
+        {goals
+          .filter((goal) => !area || goal.area === area)
+          .map((goal) => {
+            const stats = goalStats(tasks, goal.id);
+            return (
+              <Link key={goal.id} to={`/life/${goal.id}`}>
+                <strong dir="auto">{goal.title}</strong>
+                <span>
+                  {formatNumber(stats.done, t('en', 'ar'))}/
+                  {formatNumber(stats.total, t('en', 'ar'))} ·{' '}
+                  {formatNumber(stats.progress, t('en', 'ar'))}%
+                  {goal.archived ? ' · ' + t('Archived', 'مؤرشف') : ''}
+                </span>
+                <progress value={stats.progress} max={100} />
+              </Link>
+            );
+          })}
+        {!goals.length && (
+          <p dir="auto">
+            {t(
+              'Add one goal to connect next week’s results to it.',
+              'أضف هدف واحد عشان تربط بيه نتائج الأسبوع الجاي.',
+            )}{' '}
+            <Link to="/life">{t('Create a goal', 'إنشاء هدف')}</Link>
+          </p>
+        )}
+      </div>
+      <h4 dir="auto">
+        {t('Choose three results for next week', 'اختار ثلاث نتائج للأسبوع الجاي')} ·{' '}
+        <bdi>{formatCalendarDate(next, t('en', 'ar'))}</bdi>
+      </h4>
+      {outcomes.map((outcome, index) => (
+        <div className="next-week-outcome editor-form" key={index}>
+          <label>
+            {t(
+              `Next week result ${localizedNumber(index + 1, t('en', 'ar'))}`,
+              `نتيجة الأسبوع القادم ${localizedNumber(index + 1, t('en', 'ar'))}`,
+            )}
+            <input
+              dir="auto"
+              maxLength={160}
+              value={outcome.title}
+              onChange={(e) =>
+                setOutcomes((old) =>
+                  old.map((item, i) => (i === index ? { ...item, title: e.target.value } : item)),
+                )
+              }
+            />
+          </label>
+          <label>
+            {t('Linked goal', 'الهدف المرتبط')}
+            <select
+              value={outcome.goalId}
+              onChange={(e) =>
+                setOutcomes((old) =>
+                  old.map((item, i) => (i === index ? { ...item, goalId: e.target.value } : item)),
+                )
+              }
+            >
+              <option value="">{t('No goal', 'بدون هدف')}</option>
+              {goals.map((goal) => (
+                <option key={goal.id} value={goal.id}>
+                  {goal.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {t('Completion criterion', 'معيار الاكتمال')}
+            <input
+              dir="auto"
+              maxLength={500}
+              value={outcome.criteria}
+              onChange={(e) =>
+                setOutcomes((old) =>
+                  old.map((item, i) =>
+                    i === index ? { ...item, criteria: e.target.value } : item,
+                  ),
+                )
+              }
+            />
+          </label>
+        </div>
+      ))}
+      <p dir="auto" className="muted">
+        {t(
+          'This updates the first three results for next week. Additional saved results and capacity settings are kept.',
+          'ده هيحدّث أول ثلاث نتائج للأسبوع الجاي. النتائج الإضافية وإعدادات السعة المحفوظة بتفضل موجودة.',
+        )}
+      </p>
+      <Button
+        disabled={busy || outcomes.some((item) => !item.title.trim())}
+        onClick={async () => {
+          setBusy(true);
+          let savedNext: unknown;
+          const ok = await transactData((current) => {
+            const changed = saveWeeklyResults(current, start, outcomes, expected.current);
+            savedNext = (changed['personal-os.weeks.v1'] as Record<string, unknown>)[next];
+            return changed;
+          });
+          setBusy(false);
+          if (ok) expected.current = JSON.stringify(savedNext);
+          setNotice(
+            ok
+              ? t(
+                  'Next week’s results are saved. Open the next week to plan their tasks.',
+                  'اتحفظت نتائج الأسبوع الجاي. افتح الأسبوع القادم عشان تخطط مهامها.',
+                )
+              : t(
+                  'The next-week plan changed or could not be saved. Reopen this review before replacing it.',
+                  'خطة الأسبوع الجاي اتغيرت أو تعذر حفظها. افتح المراجعة من جديد قبل استبدالها.',
+                ),
+          );
+        }}
+      >
+        {t('Save three results for next week', 'حفظ ثلاث نتائج للأسبوع الجاي')}
+      </Button>
+      {notice && (
+        <p dir="auto" role="status">
+          {notice}
+        </p>
+      )}
+    </section>
+  );
 }

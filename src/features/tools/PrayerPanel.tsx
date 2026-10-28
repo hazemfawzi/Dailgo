@@ -1,4 +1,4 @@
-import { CalculationMethod,Coordinates,Madhab,PrayerTimes } from 'adhan';
+import { CalculationMethod, Coordinates, Madhab, PrayerTimes } from 'adhan';
 import { useState } from 'react';
 import { usePersisted } from '../../lib/storage';
 import { localDate } from '../../lib/workspace';
@@ -7,9 +7,182 @@ import type { Translate } from '../../lib/workspace';
 import { localeFor } from '../../i18n/format';
 import { defaultPrayer } from './model';
 import type { PrayerPreferences } from './model';
-export function PrayerPanel({t,compact=false}:{t:Translate;compact?:boolean}){
- const [settings,setSettings]=usePersisted<PrayerPreferences>('personal-os.prayer.v1',defaultPrayer);const [planning]=usePlanning();const [error,setError]=useState('');const parameters=CalculationMethod[settings.method]();parameters.madhab=Madhab[settings.madhab];const times=new PrayerTimes(new Coordinates(settings.latitude,settings.longitude),new Date(localDate()+'T12:00:00'),parameters);const label={fajr:t('Fajr','الفجر'),sunrise:t('Sunrise','الشروق'),dhuhr:t('Dhuhr','الظهر'),asr:t('Asr','العصر'),maghrib:t('Maghrib','المغرب'),isha:t('Isha','العشاء')};
- const grid=<dl className="prayer-grid">{Object.entries(label).map(([key,name])=><div key={key}><dt>{name}</dt><dd>{Number.isFinite((times[key as keyof typeof label] as Date).getTime())?new Intl.DateTimeFormat(localeFor(t('en','ar')),{timeZone:planning.timezone,hour:'2-digit',minute:'2-digit'}).format(times[key as keyof typeof label] as Date):t('Unavailable','غير متاح')}</dd></div>)}</dl>;
- if(compact)return settings.enabled?<section className="card tools-section"><h3 dir="auto">{t('Prayer breaks','فواصل الصلاة')}</h3>{grid}</section>:null;
- return <section className="card tools-section editor-form"><h2 dir="auto">{t('Prayer breaks (optional)','فواصل الصلاة (اختياري)')}</h2><label><input type="checkbox" checked={settings.enabled} onChange={e=>setSettings(old=>({...old,enabled:e.target.checked}))}/>{t('Show prayer breaks in my day','عرض فواصل الصلاة في يومي')}</label><p dir="auto">{t('Calculated locally from the coordinates and method you choose. Confirm times with your local mosque; these are planning cues, not automatic notifications. The default coordinates are Cairo until you change them.','الحساب محلي حسب الإحداثيات والطريقة اللي تختارها. راجع التوقيت مع مسجدك؛ دي فواصل للتخطيط، مش إشعارات تلقائية. الإحداثيات الافتراضية للقاهرة لحد ما تغيرها.')}</p><div className="form-pair"><label>{t('Latitude','دائرة العرض')}<input type="number" min={-66} max={66} step="0.0001" value={settings.latitude} onChange={e=>{const latitude=Number(e.target.value);if(Number.isFinite(latitude)&&Math.abs(latitude)<=66)setSettings(old=>({...old,latitude}));}}/></label><label>{t('Longitude','خط الطول')}<input type="number" min={-180} max={180} step="0.0001" value={settings.longitude} onChange={e=>{const longitude=Number(e.target.value);if(Number.isFinite(longitude)&&Math.abs(longitude)<=180)setSettings(old=>({...old,longitude}));}}/></label></div><button className="button button-outline" onClick={()=>{if(!navigator.geolocation){setError(t('Location is unavailable; enter coordinates manually.','الموقع غير متاح؛ أدخل الإحداثيات يدويًا.'));return;}navigator.geolocation.getCurrentPosition(result=>{if(Math.abs(result.coords.latitude)>66){setError(t('This latitude needs a local high-latitude timetable.','الموقع ده محتاج جدول محلي لخطوط العرض العليا.'));return;}setSettings(old=>({...old,latitude:result.coords.latitude,longitude:result.coords.longitude}));},()=>setError(t('Location permission was declined or unavailable.','إذن الموقع مرفوض أو غير متاح.')));}}>{t('Use my location','استخدم موقعي')}</button><label>{t('Calculation method','طريقة الحساب')}<select value={settings.method} onChange={e=>setSettings(old=>({...old,method:e.target.value as PrayerPreferences['method']}))}><option value="Egyptian">{t('Egyptian authority','الهيئة المصرية للمساحة')}</option><option value="MuslimWorldLeague">{t('Muslim World League','رابطة العالم الإسلامي')}</option><option value="UmmAlQura">{t('Umm al-Qura','أم القرى')}</option></select></label><label>{t('Asr method','حساب العصر')}<select value={settings.madhab} onChange={e=>setSettings(old=>({...old,madhab:e.target.value as PrayerPreferences['madhab']}))}><option value="Shafi">{t('Standard','الجمهور')}</option><option value="Hanafi">{t('Hanafi','حنفي')}</option></select></label>{settings.enabled&&grid}{error&&<p dir="auto" role="status">{error}</p>}</section>;
+export function PrayerPanel({ t, compact = false }: { t: Translate; compact?: boolean }) {
+  const [settings, setSettings] = usePersisted<PrayerPreferences>(
+    'personal-os.prayer.v1',
+    defaultPrayer,
+  );
+  const [planning] = usePlanning();
+  const [error, setError] = useState('');
+  const parameters = CalculationMethod[settings.method]();
+  parameters.madhab = Madhab[settings.madhab];
+  const times = new PrayerTimes(
+    new Coordinates(settings.latitude, settings.longitude),
+    new Date(localDate() + 'T12:00:00'),
+    parameters,
+  );
+  const label = {
+    fajr: t('Fajr', 'الفجر'),
+    sunrise: t('Sunrise', 'الشروق'),
+    dhuhr: t('Dhuhr', 'الظهر'),
+    asr: t('Asr', 'العصر'),
+    maghrib: t('Maghrib', 'المغرب'),
+    isha: t('Isha', 'العشاء'),
+  };
+  const grid = (
+    <dl className="prayer-grid">
+      {Object.entries(label).map(([key, name]) => (
+        <div key={key}>
+          <dt>{name}</dt>
+          <dd>
+            {Number.isFinite((times[key as keyof typeof label] as Date).getTime())
+              ? new Intl.DateTimeFormat(localeFor(t('en', 'ar')), {
+                  timeZone: planning.timezone,
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }).format(times[key as keyof typeof label] as Date)
+              : t('Unavailable', 'غير متاح')}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+  if (compact)
+    return settings.enabled ? (
+      <section className="card tools-section">
+        <h3 dir="auto">{t('Prayer breaks', 'فواصل الصلاة')}</h3>
+        {grid}
+      </section>
+    ) : null;
+  return (
+    <section className="card tools-section editor-form">
+      <h2 dir="auto">{t('Prayer breaks (optional)', 'فواصل الصلاة (اختياري)')}</h2>
+      <label>
+        <input
+          type="checkbox"
+          checked={settings.enabled}
+          onChange={(e) => setSettings((old) => ({ ...old, enabled: e.target.checked }))}
+        />
+        {t('Show prayer breaks in my day', 'عرض فواصل الصلاة في يومي')}
+      </label>
+      <p dir="auto">
+        {t(
+          'Calculated locally from the coordinates and method you choose. Confirm times with your local mosque; these are planning cues, not automatic notifications. The default coordinates are Cairo until you change them.',
+          'الحساب محلي حسب الإحداثيات والطريقة اللي تختارها. راجع التوقيت مع مسجدك؛ دي فواصل للتخطيط، مش إشعارات تلقائية. الإحداثيات الافتراضية للقاهرة لحد ما تغيرها.',
+        )}
+      </p>
+      <div className="form-pair">
+        <label>
+          {t('Latitude', 'دائرة العرض')}
+          <input
+            type="number"
+            min={-66}
+            max={66}
+            step="0.0001"
+            value={settings.latitude}
+            onChange={(e) => {
+              const latitude = Number(e.target.value);
+              if (Number.isFinite(latitude) && Math.abs(latitude) <= 66)
+                setSettings((old) => ({ ...old, latitude }));
+            }}
+          />
+        </label>
+        <label>
+          {t('Longitude', 'خط الطول')}
+          <input
+            type="number"
+            min={-180}
+            max={180}
+            step="0.0001"
+            value={settings.longitude}
+            onChange={(e) => {
+              const longitude = Number(e.target.value);
+              if (Number.isFinite(longitude) && Math.abs(longitude) <= 180)
+                setSettings((old) => ({ ...old, longitude }));
+            }}
+          />
+        </label>
+      </div>
+      <button
+        className="button button-outline"
+        onClick={() => {
+          if (!navigator.geolocation) {
+            setError(
+              t(
+                'Location is unavailable; enter coordinates manually.',
+                'الموقع غير متاح؛ أدخل الإحداثيات يدويًا.',
+              ),
+            );
+            return;
+          }
+          navigator.geolocation.getCurrentPosition(
+            (result) => {
+              if (Math.abs(result.coords.latitude) > 66) {
+                setError(
+                  t(
+                    'This latitude needs a local high-latitude timetable.',
+                    'الموقع ده محتاج جدول محلي لخطوط العرض العليا.',
+                  ),
+                );
+                return;
+              }
+              setSettings((old) => ({
+                ...old,
+                latitude: result.coords.latitude,
+                longitude: result.coords.longitude,
+              }));
+            },
+            () =>
+              setError(
+                t(
+                  'Location permission was declined or unavailable.',
+                  'إذن الموقع مرفوض أو غير متاح.',
+                ),
+              ),
+          );
+        }}
+      >
+        {t('Use my location', 'استخدم موقعي')}
+      </button>
+      <label>
+        {t('Calculation method', 'طريقة الحساب')}
+        <select
+          value={settings.method}
+          onChange={(e) =>
+            setSettings((old) => ({
+              ...old,
+              method: e.target.value as PrayerPreferences['method'],
+            }))
+          }
+        >
+          <option value="Egyptian">{t('Egyptian authority', 'الهيئة المصرية للمساحة')}</option>
+          <option value="MuslimWorldLeague">
+            {t('Muslim World League', 'رابطة العالم الإسلامي')}
+          </option>
+          <option value="UmmAlQura">{t('Umm al-Qura', 'أم القرى')}</option>
+        </select>
+      </label>
+      <label>
+        {t('Asr method', 'حساب العصر')}
+        <select
+          value={settings.madhab}
+          onChange={(e) =>
+            setSettings((old) => ({
+              ...old,
+              madhab: e.target.value as PrayerPreferences['madhab'],
+            }))
+          }
+        >
+          <option value="Shafi">{t('Standard', 'الجمهور')}</option>
+          <option value="Hanafi">{t('Hanafi', 'حنفي')}</option>
+        </select>
+      </label>
+      {settings.enabled && grid}
+      {error && (
+        <p dir="auto" role="status">
+          {error}
+        </p>
+      )}
+    </section>
+  );
 }

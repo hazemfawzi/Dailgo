@@ -1,4 +1,4 @@
-import { InvitePage,SharedGoalPage,VerifyEmailPage } from './features/tools/PublicPages';
+import { InvitePage, SharedGoalPage, VerifyEmailPage } from './features/tools/PublicPages';
 import './features/tools/tools.css';
 import './features/journey/journey.css';
 import '@fontsource/tajawal/400.css';
@@ -14,5 +14,21 @@ import './features.css';
 import './upgrades.css';
 import './goals.css';
 import './week.css';
-ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><BrowserRouter>{location.pathname==='/invite'?<InvitePage/>:location.pathname==='/verify-email'?<VerifyEmailPage/>:location.pathname==='/share'?<SharedGoalPage/>:<ServerWorkspace><App/></ServerWorkspace>}</BrowserRouter></React.StrictMode>);
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      {location.pathname === '/invite' ? (
+        <InvitePage />
+      ) : location.pathname === '/verify-email' ? (
+        <VerifyEmailPage />
+      ) : location.pathname === '/share' ? (
+        <SharedGoalPage />
+      ) : (
+        <ServerWorkspace>
+          <App />
+        </ServerWorkspace>
+      )}
+    </BrowserRouter>
+  </React.StrictMode>,
+);
 import './recommendations.css';

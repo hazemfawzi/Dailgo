@@ -69,12 +69,6 @@ New accounts start without seeded sample goals. Goal templates create records on
 
 `src/features/` contains home, tasks, life, planner, assistant, memory, capture, review and settings. Shared UI primitives live in `src/components/ui`; persistence, validation, audit and forgetting live in `src/lib`. Routes load lazily. Local styling uses shared CSS/Tailwind and existing Radix/shadcn-style components, with Lucide icons.
 
-
-
-
-
-
-
 ## New local capabilities
 
 - Keyboard skip link, render-error recovery, narrower mobile header and a collapsible home briefing.
@@ -95,7 +89,6 @@ JSON backup restore replaces the active server workspace after preview and revis
 ## External launch gates
 
 Provider-backed AI, external tool connections and public deployment remain disabled pending explicit provider/tool/hosting choices and credentials. Do not put API keys in browser storage or Vite environment variables. A public deployment additionally needs HTTPS, hardened account recovery/session policy, managed secrets, tested backups/restoration, user consent scopes and a completed browser/accessibility/security review. The server deliberately binds only to 127.0.0.1.
-
 
 ## VPS deployment (Node 24)
 

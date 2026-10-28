@@ -2,4 +2,83 @@ import { formatCalendarDate } from '../../i18n/format';
 import type { Message } from './engine';
 import type { Translate } from '../../lib/workspace';
 import { Button } from '../../components/ui/button';
-export function MutationPreview({message,t,busy,confirm,cancel}:{message:Message;t:Translate;busy:boolean;confirm:()=>void;cancel:()=>void}){const m=message.mutation!;const show=(value:unknown,field:string)=>['plannedDate','dueDate'].includes(field)&&typeof value==='string'?formatCalendarDate(value,t('en','ar')):value===null?t('Not set','غير محدد'):typeof value==='boolean'?(value?t('Yes','نعم'):t('No','لا')):String(value);return <section className="chat-proposal"><h3 dir="auto">{t('Change preview','معاينة التعديل')} · {m.title}</h3><table className="change-table"><thead><tr><th>{t('Field','الحقل')}</th><th>{t('Before','قبل')}</th><th>{t('After','بعد')}</th></tr></thead><tbody>{Object.keys(m.patch).map(k=><tr key={k}><th>{({title:t('Title','العنوان'),plannedDate:t('Execution date','يوم التنفيذ'),dueDate:t('Due date','موعد التسليم'),detail:t('Details','التفاصيل'),archived:t('Archived','مؤرشف')} as Record<string,string>)[k]}</th><td dir="auto">{show(m.before[k],k)}</td><td dir="auto">{show(m.patch[k],k)}</td></tr>)}</tbody></table>{message.status==='pending'?<div className="proposal-actions"><Button disabled={busy} onClick={confirm}>{t('Confirm change','تأكيد التعديل')}</Button><Button variant="outline" disabled={busy} onClick={cancel}>{t('Cancel change','إلغاء التعديل')}</Button></div>:<p dir="auto" role="status">{message.status==='confirmed'?t('Change saved','تم حفظ التعديل'):message.status==='reverted'?t('Previous values restored','تمت استعادة القيم السابقة'):t('Cancelled without changes','تم الإلغاء بدون تغيير')}</p>}</section>;}
+export function MutationPreview({
+  message,
+  t,
+  busy,
+  confirm,
+  cancel,
+}: {
+  message: Message;
+  t: Translate;
+  busy: boolean;
+  confirm: () => void;
+  cancel: () => void;
+}) {
+  const m = message.mutation!;
+  const show = (value: unknown, field: string) =>
+    ['plannedDate', 'dueDate'].includes(field) && typeof value === 'string'
+      ? formatCalendarDate(value, t('en', 'ar'))
+      : value === null
+        ? t('Not set', 'غير محدد')
+        : typeof value === 'boolean'
+          ? value
+            ? t('Yes', 'نعم')
+            : t('No', 'لا')
+          : String(value);
+  return (
+    <section className="chat-proposal">
+      <h3 dir="auto">
+        {t('Change preview', 'معاينة التعديل')} · {m.title}
+      </h3>
+      <table className="change-table">
+        <thead>
+          <tr>
+            <th>{t('Field', 'الحقل')}</th>
+            <th>{t('Before', 'قبل')}</th>
+            <th>{t('After', 'بعد')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.keys(m.patch).map((k) => (
+            <tr key={k}>
+              <th>
+                {
+                  (
+                    {
+                      title: t('Title', 'العنوان'),
+                      plannedDate: t('Execution date', 'يوم التنفيذ'),
+                      dueDate: t('Due date', 'موعد التسليم'),
+                      detail: t('Details', 'التفاصيل'),
+                      archived: t('Archived', 'مؤرشف'),
+                    } as Record<string, string>
+                  )[k]
+                }
+              </th>
+              <td dir="auto">{show(m.before[k], k)}</td>
+              <td dir="auto">{show(m.patch[k], k)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {message.status === 'pending' ? (
+        <div className="proposal-actions">
+          <Button disabled={busy} onClick={confirm}>
+            {t('Confirm change', 'تأكيد التعديل')}
+          </Button>
+          <Button variant="outline" disabled={busy} onClick={cancel}>
+            {t('Cancel change', 'إلغاء التعديل')}
+          </Button>
+        </div>
+      ) : (
+        <p dir="auto" role="status">
+          {message.status === 'confirmed'
+            ? t('Change saved', 'تم حفظ التعديل')
+            : message.status === 'reverted'
+              ? t('Previous values restored', 'تمت استعادة القيم السابقة')
+              : t('Cancelled without changes', 'تم الإلغاء بدون تغيير')}
+        </p>
+      )}
+    </section>
+  );
+}

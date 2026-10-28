@@ -1,18 +1,128 @@
-import { readFileSync,lstatSync,writeFileSync,openSync,writeSync,fsyncSync,closeSync,renameSync,unlinkSync,existsSync,realpathSync } from 'node:fs';
-import { dirname,basename,join } from 'node:path';
+import {
+  readFileSync,
+  lstatSync,
+  writeFileSync,
+  openSync,
+  writeSync,
+  fsyncSync,
+  closeSync,
+  renameSync,
+  unlinkSync,
+  existsSync,
+  realpathSync,
+} from 'node:fs';
+import { dirname, basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { randomBytes,createECDH,timingSafeEqual } from 'node:crypto';
-export function provisionKeys(file,{dryRun=false}={}){
- const stat=lstatSync(file);if(!stat.isFile()||stat.isSymbolicLink()||stat.nlink!==1||stat.mode&0o077||typeof process.getuid==='function'&&stat.uid!==process.getuid())throw Error('Use a regular private 0600 environment file owned by the current administrator.');
- const original=readFileSync(file,'utf8');const values=Object.fromEntries(original.split(/\r?\n/).flatMap(line=>{const match=line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*?)\s*$/);if(!match)return [];let value=match[2];if(value.startsWith('"')&&value.endsWith('"')||value.startsWith("'")&&value.endsWith("'"))value=value.slice(1,-1);return [[match[1],value]];}));
- const publicKey=values.VAPID_PUBLIC_KEY,privateKey=values.VAPID_PRIVATE_KEY;if(!!publicKey!==!!privateKey)throw Error('Existing VAPID configuration is incomplete; no keys were changed.');
- if(values.INTEGRATION_ENCRYPTION_KEY&&!/^[a-f0-9]{64}$/i.test(values.INTEGRATION_ENCRYPTION_KEY))throw Error('Existing encryption key is invalid; it was not replaced.');
- if(publicKey&&privateKey){const curve=createECDH('prime256v1');curve.setPrivateKey(Buffer.from(privateKey,'base64url'));const expected=curve.getPublicKey();const actual=Buffer.from(publicKey,'base64url');if(expected.length!==actual.length||!timingSafeEqual(expected,actual))throw Error('Existing VAPID keys do not match; no keys were changed.');}
- const additions={};if(!values.INTEGRATION_ENCRYPTION_KEY)additions.INTEGRATION_ENCRYPTION_KEY=randomBytes(32).toString('hex');if(!publicKey){const curve=createECDH('prime256v1');curve.generateKeys();additions.VAPID_PUBLIC_KEY=curve.getPublicKey().toString('base64url');additions.VAPID_PRIVATE_KEY=curve.getPrivateKey().toString('base64url');}
- if(!values.VAPID_SUBJECT){const origin=new URL(values.APP_ORIGIN);if(origin.protocol!=='https:'||origin.username||origin.password||origin.origin!==values.APP_ORIGIN)throw Error('APP_ORIGIN must be an exact HTTPS origin before provisioning.');additions.VAPID_SUBJECT=origin.origin;}
- const names=Object.keys(additions);if(dryRun||!names.length)return {changed:false,names};
- const suffix=new Date().toISOString().replace(/[:.]/g,'-')+'-'+randomBytes(4).toString('hex');const backup=file+'.before-integrations-'+suffix;const temp=join(dirname(file),'.'+basename(file)+'.'+suffix+'.tmp');writeFileSync(backup,original,{mode:0o600,flag:'wx'});let fd;
- try{fd=openSync(temp,'wx',0o600);writeSync(fd,original+(original.endsWith('\n')?'':'\n')+'\n# Dailgo integration keys; keep this file private.\n'+Object.entries(additions).map(([name,value])=>name+'='+value).join('\n')+'\n');fsyncSync(fd);closeSync(fd);fd=undefined;renameSync(temp,file);}catch(error){if(fd!==undefined)closeSync(fd);if(existsSync(temp))unlinkSync(temp);throw error;}
- return {changed:true,names,backup};
+import { randomBytes, createECDH, timingSafeEqual } from 'node:crypto';
+export function provisionKeys(file, { dryRun = false } = {}) {
+  const stat = lstatSync(file);
+  if (
+    !stat.isFile() ||
+    stat.isSymbolicLink() ||
+    stat.nlink !== 1 ||
+    stat.mode & 0o077 ||
+    (typeof process.getuid === 'function' && stat.uid !== process.getuid())
+  )
+    throw Error('Use a regular private 0600 environment file owned by the current administrator.');
+  const original = readFileSync(file, 'utf8');
+  const values = Object.fromEntries(
+    original.split(/\r?\n/).flatMap((line) => {
+      const match = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*?)\s*$/);
+      if (!match) return [];
+      let value = match[2];
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      )
+        value = value.slice(1, -1);
+      return [[match[1], value]];
+    }),
+  );
+  const publicKey = values.VAPID_PUBLIC_KEY,
+    privateKey = values.VAPID_PRIVATE_KEY;
+  if (!!publicKey !== !!privateKey)
+    throw Error('Existing VAPID configuration is incomplete; no keys were changed.');
+  if (
+    values.INTEGRATION_ENCRYPTION_KEY &&
+    !/^[a-f0-9]{64}$/i.test(values.INTEGRATION_ENCRYPTION_KEY)
+  )
+    throw Error('Existing encryption key is invalid; it was not replaced.');
+  if (publicKey && privateKey) {
+    const curve = createECDH('prime256v1');
+    curve.setPrivateKey(Buffer.from(privateKey, 'base64url'));
+    const expected = curve.getPublicKey();
+    const actual = Buffer.from(publicKey, 'base64url');
+    if (expected.length !== actual.length || !timingSafeEqual(expected, actual))
+      throw Error('Existing VAPID keys do not match; no keys were changed.');
+  }
+  const additions = {};
+  if (!values.INTEGRATION_ENCRYPTION_KEY)
+    additions.INTEGRATION_ENCRYPTION_KEY = randomBytes(32).toString('hex');
+  if (!publicKey) {
+    const curve = createECDH('prime256v1');
+    curve.generateKeys();
+    additions.VAPID_PUBLIC_KEY = curve.getPublicKey().toString('base64url');
+    additions.VAPID_PRIVATE_KEY = curve.getPrivateKey().toString('base64url');
+  }
+  if (!values.VAPID_SUBJECT) {
+    const origin = new URL(values.APP_ORIGIN);
+    if (
+      origin.protocol !== 'https:' ||
+      origin.username ||
+      origin.password ||
+      origin.origin !== values.APP_ORIGIN
+    )
+      throw Error('APP_ORIGIN must be an exact HTTPS origin before provisioning.');
+    additions.VAPID_SUBJECT = origin.origin;
+  }
+  const names = Object.keys(additions);
+  if (dryRun || !names.length) return { changed: false, names };
+  const suffix =
+    new Date().toISOString().replace(/[:.]/g, '-') + '-' + randomBytes(4).toString('hex');
+  const backup = file + '.before-integrations-' + suffix;
+  const temp = join(dirname(file), '.' + basename(file) + '.' + suffix + '.tmp');
+  writeFileSync(backup, original, { mode: 0o600, flag: 'wx' });
+  let fd;
+  try {
+    fd = openSync(temp, 'wx', 0o600);
+    writeSync(
+      fd,
+      original +
+        (original.endsWith('\n') ? '' : '\n') +
+        '\n# Dailgo integration keys; keep this file private.\n' +
+        Object.entries(additions)
+          .map(([name, value]) => name + '=' + value)
+          .join('\n') +
+        '\n',
+    );
+    fsyncSync(fd);
+    closeSync(fd);
+    fd = undefined;
+    renameSync(temp, file);
+  } catch (error) {
+    if (fd !== undefined) closeSync(fd);
+    if (existsSync(temp)) unlinkSync(temp);
+    throw error;
+  }
+  return { changed: true, names, backup };
 }
-if(process.argv[1]&&existsSync(process.argv[1])&&realpathSync(process.argv[1])===realpathSync(fileURLToPath(import.meta.url))){try{const file=process.argv.slice(2).find(value=>!value.startsWith('--'));if(!file)throw Error('Usage: node server/provision.mjs /etc/personal-os.env [--dry-run]');const result=provisionKeys(file,{dryRun:process.argv.includes('--dry-run')});process.stdout.write((result.changed?'Provisioned: ':'Missing keys (no changes): ')+result.names.join(', ')+'\n');if(result.backup)process.stdout.write('Private environment backup: '+result.backup+'\n');}catch(error){process.stderr.write(error.message+'\n');process.exitCode=1;}}
+if (
+  process.argv[1] &&
+  existsSync(process.argv[1]) &&
+  realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))
+) {
+  try {
+    const file = process.argv.slice(2).find((value) => !value.startsWith('--'));
+    if (!file) throw Error('Usage: node server/provision.mjs /etc/personal-os.env [--dry-run]');
+    const result = provisionKeys(file, { dryRun: process.argv.includes('--dry-run') });
+    process.stdout.write(
+      (result.changed ? 'Provisioned: ' : 'Missing keys (no changes): ') +
+        result.names.join(', ') +
+        '\n',
+    );
+    if (result.backup) process.stdout.write('Private environment backup: ' + result.backup + '\n');
+  } catch (error) {
+    process.stderr.write(error.message + '\n');
+    process.exitCode = 1;
+  }
+}

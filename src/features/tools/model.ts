@@ -1,9 +1,108 @@
-import { parseCalendarDate,calendarDate } from '../planner/calendarModel';
-export type Finance={version:1;expenses:{id:string;title:string;date:string;cents:number;currency:string}[];budgets:Record<string,number>;savings:{id:string;title:string;currency:string;target:number;saved:number;goalId?:string}[]};
-export const emptyFinance:Finance={version:1,expenses:[],budgets:{},savings:[]};
-export const cents=(value:string)=>{const amount=Number(value);if(!value.trim()||!Number.isFinite(amount)||amount<0||amount>100000000)throw Error('invalid-amount');return Math.round(amount*100);};
-export function validFinance(v:any){const money=(n:any)=>Number.isSafeInteger(n)&&n>=0&&n<=10000000000;const currency=(c:any)=>typeof c==='string'&&/^[A-Z]{3}$/.test(c);return !!v&&v.version===1&&Array.isArray(v.expenses)&&v.expenses.length<=10000&&new Set(v.expenses.map((x:any)=>x.id)).size===v.expenses.length&&v.expenses.every((x:any)=>x&&typeof x.id==='string'&&typeof x.title==='string'&&x.title.length<=160&&!!parseCalendarDate(x.date)&&money(x.cents)&&currency(x.currency))&&v.budgets&&typeof v.budgets==='object'&&!Array.isArray(v.budgets)&&Object.entries(v.budgets).every(([k,n])=>/^\d{4}-(?:0[1-9]|1[0-2])\/[A-Z]{3}$/.test(k)&&money(n))&&Array.isArray(v.savings)&&v.savings.length<=100&&new Set(v.savings.map((x:any)=>x.id)).size===v.savings.length&&v.savings.every((x:any)=>x&&typeof x.id==='string'&&typeof x.title==='string'&&x.title.length<=160&&currency(x.currency)&&money(x.target)&&x.target>0&&money(x.saved)&&(x.goalId===undefined||typeof x.goalId==='string'));}
-export type PrayerPreferences={enabled:boolean;latitude:number;longitude:number;method:'Egyptian'|'MuslimWorldLeague'|'UmmAlQura';madhab:'Shafi'|'Hanafi'};
-export const defaultPrayer:PrayerPreferences={enabled:false,latitude:30.0444,longitude:31.2357,method:'Egyptian',madhab:'Shafi'};
-export function validPrayer(v:any){return !!v&&typeof v.enabled==='boolean'&&Number.isFinite(v.latitude)&&Math.abs(v.latitude)<=66&&Number.isFinite(v.longitude)&&Math.abs(v.longitude)<=180&&['Egyptian','MuslimWorldLeague','UmmAlQura'].includes(v.method)&&['Shafi','Hanafi'].includes(v.madhab);}
-export function routineStreak(doneDates:string[],scheduled:number[]|undefined,today:string){if(scheduled&&scheduled.length===0)return 0;const done=new Set(doneDates);const day=parseCalendarDate(today);if(!day)return 0;const due=(date:Date)=>scheduled===undefined||scheduled.includes(date.getDay());let count=0;let initial=true;for(let i=0;i<3660;i++){if(due(day)){if(done.has(calendarDate(day))){count++;initial=false;}else if(!initial||calendarDate(day)!==today)break;}day.setDate(day.getDate()-1);}return count;}
+import { parseCalendarDate, calendarDate } from '../planner/calendarModel';
+export type Finance = {
+  version: 1;
+  expenses: { id: string; title: string; date: string; cents: number; currency: string }[];
+  budgets: Record<string, number>;
+  savings: {
+    id: string;
+    title: string;
+    currency: string;
+    target: number;
+    saved: number;
+    goalId?: string;
+  }[];
+};
+export const emptyFinance: Finance = { version: 1, expenses: [], budgets: {}, savings: [] };
+export const cents = (value: string) => {
+  const amount = Number(value);
+  if (!value.trim() || !Number.isFinite(amount) || amount < 0 || amount > 100000000)
+    throw Error('invalid-amount');
+  return Math.round(amount * 100);
+};
+export function validFinance(v: any) {
+  const money = (n: any) => Number.isSafeInteger(n) && n >= 0 && n <= 10000000000;
+  const currency = (c: any) => typeof c === 'string' && /^[A-Z]{3}$/.test(c);
+  return (
+    !!v &&
+    v.version === 1 &&
+    Array.isArray(v.expenses) &&
+    v.expenses.length <= 10000 &&
+    new Set(v.expenses.map((x: any) => x.id)).size === v.expenses.length &&
+    v.expenses.every(
+      (x: any) =>
+        x &&
+        typeof x.id === 'string' &&
+        typeof x.title === 'string' &&
+        x.title.length <= 160 &&
+        !!parseCalendarDate(x.date) &&
+        money(x.cents) &&
+        currency(x.currency),
+    ) &&
+    v.budgets &&
+    typeof v.budgets === 'object' &&
+    !Array.isArray(v.budgets) &&
+    Object.entries(v.budgets).every(
+      ([k, n]) => /^\d{4}-(?:0[1-9]|1[0-2])\/[A-Z]{3}$/.test(k) && money(n),
+    ) &&
+    Array.isArray(v.savings) &&
+    v.savings.length <= 100 &&
+    new Set(v.savings.map((x: any) => x.id)).size === v.savings.length &&
+    v.savings.every(
+      (x: any) =>
+        x &&
+        typeof x.id === 'string' &&
+        typeof x.title === 'string' &&
+        x.title.length <= 160 &&
+        currency(x.currency) &&
+        money(x.target) &&
+        x.target > 0 &&
+        money(x.saved) &&
+        (x.goalId === undefined || typeof x.goalId === 'string'),
+    )
+  );
+}
+export type PrayerPreferences = {
+  enabled: boolean;
+  latitude: number;
+  longitude: number;
+  method: 'Egyptian' | 'MuslimWorldLeague' | 'UmmAlQura';
+  madhab: 'Shafi' | 'Hanafi';
+};
+export const defaultPrayer: PrayerPreferences = {
+  enabled: false,
+  latitude: 30.0444,
+  longitude: 31.2357,
+  method: 'Egyptian',
+  madhab: 'Shafi',
+};
+export function validPrayer(v: any) {
+  return (
+    !!v &&
+    typeof v.enabled === 'boolean' &&
+    Number.isFinite(v.latitude) &&
+    Math.abs(v.latitude) <= 66 &&
+    Number.isFinite(v.longitude) &&
+    Math.abs(v.longitude) <= 180 &&
+    ['Egyptian', 'MuslimWorldLeague', 'UmmAlQura'].includes(v.method) &&
+    ['Shafi', 'Hanafi'].includes(v.madhab)
+  );
+}
+export function routineStreak(doneDates: string[], scheduled: number[] | undefined, today: string) {
+  if (scheduled && scheduled.length === 0) return 0;
+  const done = new Set(doneDates);
+  const day = parseCalendarDate(today);
+  if (!day) return 0;
+  const due = (date: Date) => scheduled === undefined || scheduled.includes(date.getDay());
+  let count = 0;
+  let initial = true;
+  for (let i = 0; i < 3660; i++) {
+    if (due(day)) {
+      if (done.has(calendarDate(day))) {
+        count++;
+        initial = false;
+      } else if (!initial || calendarDate(day) !== today) break;
+    }
+    day.setDate(day.getDate() - 1);
+  }
+  return count;
+}

@@ -94,14 +94,14 @@ All routes except health, account status, setup and login require the existing
 HttpOnly session cookie. Writes require an accepted Origin and JSON content type.
 Production additionally enforces the configured HTTPS host/proxy checks.
 
-| Route | Methods | Body / result |
-| --- | --- | --- |
-| `/api/workspace` | GET | `{ revision, data }`; empty database returns `data: null` |
-| `/api/workspace` | PUT | `{ revision, data }`; explicit full replacement for migration/backups |
-| `/api/workspace/commit` | PUT | `{ revision, data }`; validated and audited atomic commit; returns `{ version: 3, revision, data }` |
-| `/api/records/:collection` | GET, POST | GET returns `{ revision, items }`; POST accepts `{ revision, item }` |
-| `/api/records/:collection/:id` | GET, PATCH, DELETE | GET returns `{ revision, item }`; writes accept `{ revision, item? }` |
-| `/api/state/:name` | GET, PUT | GET returns `{ revision, value }`; PUT accepts `{ revision, value }` |
+| Route                          | Methods            | Body / result                                                                                       |
+| ------------------------------ | ------------------ | --------------------------------------------------------------------------------------------------- |
+| `/api/workspace`               | GET                | `{ revision, data }`; empty database returns `data: null`                                           |
+| `/api/workspace`               | PUT                | `{ revision, data }`; explicit full replacement for migration/backups                               |
+| `/api/workspace/commit`        | PUT                | `{ revision, data }`; validated and audited atomic commit; returns `{ version: 3, revision, data }` |
+| `/api/records/:collection`     | GET, POST          | GET returns `{ revision, items }`; POST accepts `{ revision, item }`                                |
+| `/api/records/:collection/:id` | GET, PATCH, DELETE | GET returns `{ revision, item }`; writes accept `{ revision, item? }`                               |
+| `/api/state/:name`             | GET, PUT           | GET returns `{ revision, value }`; PUT accepts `{ revision, value }`                                |
 
 Record collections: `tasks`, `goals`, `projects`, `events`, `routines`, `memories`
 (notes, preferences, decisions and personal records), `conversations`, `sessions`.

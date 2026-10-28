@@ -1,7 +1,200 @@
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 import { apiRequest } from '../../lib/serverStorage';
-import { formatCalendarDate,formatNumber } from '../../i18n/format';
-export function InvitePage(){const token=decodeURIComponent(location.hash.slice(1));const [signed,setSigned]=useState(false);const [notice,setNotice]=useState('');const [busy,setBusy]=useState(false);useEffect(()=>{void apiRequest('account/status').then(x=>setSigned(x.signedIn)).catch(()=>setNotice('تعذر الاتصال بالسيرفر.'));},[]);return <main className="account-screen" dir="rtl"><section className="account-card"><h1 dir="auto">دعوة لمساحة عائلية</h1><p dir="auto">انضم للمساحة المشتركة. بيانات حسابك الشخصية مستقلة عن مهام العائلة.</p>{signed?<button disabled={busy} onClick={async()=>{setBusy(true);try{await apiRequest('family/join','POST',{token});location.assign('/tools?tab=family');}catch{setNotice('تعذر الانضمام. قد تكون الدعوة منتهية أو مستخدمة.');setBusy(false);}}}>انضم بحسابي الحالي</button>:<><form onSubmit={async e=>{e.preventDefault();setBusy(true);const form=new FormData(e.currentTarget);try{await apiRequest('account/accept-invite','POST',{token,username:String(form.get('username')),password:String(form.get('password'))});location.assign('/tools?tab=family');}catch{setNotice('تعذر إنشاء الحساب. راجع الاسم وكلمة المرور وصلاحية الدعوة.');setBusy(false);}}}><h2 dir="auto">إنشاء حساب للدعوة</h2><label>اسم المستخدم<input dir="auto" name="username" minLength={3} maxLength={80} required autoComplete="username"/></label><label>كلمة المرور (12 حرفًا على الأقل)<input name="password" type="password" minLength={12} maxLength={200} required autoComplete="new-password"/></label><button disabled={busy}>إنشاء الحساب والانضمام</button></form><p dir="auto">عندك حساب؟ <a href="/">سجل الدخول</a> وبعدها افتح رابط الدعوة مرة تانية.</p></>}{notice&&<p dir="auto" role="alert">{notice}</p>}</section></main>;}
-export function SharedGoalPage(){const token=decodeURIComponent(location.hash.slice(1));const [value,setValue]=useState<any>(null);const [notice,setNotice]=useState('');const [busy,setBusy]=useState(false);useEffect(()=>{void apiRequest('public/goal','POST',{token}).then(setValue).catch(()=>setNotice('الرابط منتهي أو ملغي، أو تعذر الاتصال.'));},[]);return <main className="account-screen" dir="rtl"><section className="account-card"><h1 dir="auto">متابعة هدف مشترك</h1>{value&&<><h2 dir="auto">{value.goal.title}</h2>{value.goal.date&&<p dir="auto">{formatCalendarDate(value.goal.date,'ar')}</p>}<p dir="auto">{formatNumber(value.goal.done,'ar')} / {formatNumber(value.goal.total,'ar')} من المهام مكتملة</p>{value.goal.detail&&<p dir="auto">{value.goal.detail}</p>}{value.goal.criteria&&<p dir="auto">{value.goal.criteria}</p>}<ul>{value.goal.milestones?.map((m:any,i:number)=><li key={i}><bdi>{m.title}</bdi>{m.date?' · '+formatCalendarDate(m.date,'ar'):''}</li>)}</ul><form onSubmit={async e=>{e.preventDefault();const form=e.currentTarget;setBusy(true);try{setValue(await apiRequest('public/goal','POST',{token,comment:String(new FormData(form).get('comment'))}));form.reset();}catch{setNotice('تعذر حفظ التعليق. راجع صلاحية الرابط أو حاول لاحقًا.');}setBusy(false);}}><label>رسالة لشريك المتابعة<textarea name="comment" maxLength={1000} dir="auto" required rows={3}/></label><button disabled={busy}>إضافة تعليق</button></form>{value.comments.map((comment:any)=><p dir="auto" key={comment.id}>{comment.text}</p>)}</>}{notice&&<p dir="auto" role="alert">{notice}</p>}<a href="/">افتح Dailgo</a></section></main>;}
+import { formatCalendarDate, formatNumber } from '../../i18n/format';
+export function InvitePage() {
+  const token = decodeURIComponent(location.hash.slice(1));
+  const [signed, setSigned] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    void apiRequest('account/status')
+      .then((x) => setSigned(x.signedIn))
+      .catch(() => setNotice('تعذر الاتصال بالسيرفر.'));
+  }, []);
+  return (
+    <main className="account-screen" dir="rtl">
+      <section className="account-card">
+        <h1 dir="auto">دعوة لمساحة عائلية</h1>
+        <p dir="auto">انضم للمساحة المشتركة. بيانات حسابك الشخصية مستقلة عن مهام العائلة.</p>
+        {signed ? (
+          <button
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await apiRequest('family/join', 'POST', { token });
+                location.assign('/tools?tab=family');
+              } catch {
+                setNotice('تعذر الانضمام. قد تكون الدعوة منتهية أو مستخدمة.');
+                setBusy(false);
+              }
+            }}
+          >
+            انضم بحسابي الحالي
+          </button>
+        ) : (
+          <>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setBusy(true);
+                const form = new FormData(e.currentTarget);
+                try {
+                  await apiRequest('account/accept-invite', 'POST', {
+                    token,
+                    username: String(form.get('username')),
+                    password: String(form.get('password')),
+                  });
+                  location.assign('/tools?tab=family');
+                } catch {
+                  setNotice('تعذر إنشاء الحساب. راجع الاسم وكلمة المرور وصلاحية الدعوة.');
+                  setBusy(false);
+                }
+              }}
+            >
+              <h2 dir="auto">إنشاء حساب للدعوة</h2>
+              <label>
+                اسم المستخدم
+                <input
+                  dir="auto"
+                  name="username"
+                  minLength={3}
+                  maxLength={80}
+                  required
+                  autoComplete="username"
+                />
+              </label>
+              <label>
+                كلمة المرور (12 حرفًا على الأقل)
+                <input
+                  name="password"
+                  type="password"
+                  minLength={12}
+                  maxLength={200}
+                  required
+                  autoComplete="new-password"
+                />
+              </label>
+              <button disabled={busy}>إنشاء الحساب والانضمام</button>
+            </form>
+            <p dir="auto">
+              عندك حساب؟ <a href="/">سجل الدخول</a> وبعدها افتح رابط الدعوة مرة تانية.
+            </p>
+          </>
+        )}
+        {notice && (
+          <p dir="auto" role="alert">
+            {notice}
+          </p>
+        )}
+      </section>
+    </main>
+  );
+}
+export function SharedGoalPage() {
+  const token = decodeURIComponent(location.hash.slice(1));
+  const [value, setValue] = useState<any>(null);
+  const [notice, setNotice] = useState('');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    void apiRequest('public/goal', 'POST', { token })
+      .then(setValue)
+      .catch(() => setNotice('الرابط منتهي أو ملغي، أو تعذر الاتصال.'));
+  }, []);
+  return (
+    <main className="account-screen" dir="rtl">
+      <section className="account-card">
+        <h1 dir="auto">متابعة هدف مشترك</h1>
+        {value && (
+          <>
+            <h2 dir="auto">{value.goal.title}</h2>
+            {value.goal.date && <p dir="auto">{formatCalendarDate(value.goal.date, 'ar')}</p>}
+            <p dir="auto">
+              {formatNumber(value.goal.done, 'ar')} / {formatNumber(value.goal.total, 'ar')} من
+              المهام مكتملة
+            </p>
+            {value.goal.detail && <p dir="auto">{value.goal.detail}</p>}
+            {value.goal.criteria && <p dir="auto">{value.goal.criteria}</p>}
+            <ul>
+              {value.goal.milestones?.map((m: any, i: number) => (
+                <li key={i}>
+                  <bdi>{m.title}</bdi>
+                  {m.date ? ' · ' + formatCalendarDate(m.date, 'ar') : ''}
+                </li>
+              ))}
+            </ul>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                setBusy(true);
+                try {
+                  setValue(
+                    await apiRequest('public/goal', 'POST', {
+                      token,
+                      comment: String(new FormData(form).get('comment')),
+                    }),
+                  );
+                  form.reset();
+                } catch {
+                  setNotice('تعذر حفظ التعليق. راجع صلاحية الرابط أو حاول لاحقًا.');
+                }
+                setBusy(false);
+              }}
+            >
+              <label>
+                رسالة لشريك المتابعة
+                <textarea name="comment" maxLength={1000} dir="auto" required rows={3} />
+              </label>
+              <button disabled={busy}>إضافة تعليق</button>
+            </form>
+            {value.comments.map((comment: any) => (
+              <p dir="auto" key={comment.id}>
+                {comment.text}
+              </p>
+            ))}
+          </>
+        )}
+        {notice && (
+          <p dir="auto" role="alert">
+            {notice}
+          </p>
+        )}
+        <a href="/">افتح Dailgo</a>
+      </section>
+    </main>
+  );
+}
 
-export function VerifyEmailPage(){const [notice,setNotice]=useState('افتح التأكيد لربط البريد بتذكيرات حسابك.');const [busy,setBusy]=useState(false);return <main className="account-screen" dir="rtl"><section className="account-card"><h1 dir="auto">تأكيد بريد Dailgo</h1><p dir="auto" role="status">{notice}</p><button disabled={busy} onClick={async()=>{setBusy(true);try{await apiRequest('public/verify-email','POST',{token:decodeURIComponent(location.hash.slice(1))});setNotice('البريد اتأكد. ارجع للإعدادات وحدّث الحالة لتفعيل التذكيرات.');}catch{setNotice('الرابط منتهي أو غير صالح. اطلب رسالة تأكيد جديدة من الإعدادات.');}setBusy(false);}}>تأكيد البريد</button><a href="/tools?tab=connections">العودة للإعدادات</a></section></main>;}
+export function VerifyEmailPage() {
+  const [notice, setNotice] = useState('افتح التأكيد لربط البريد بتذكيرات حسابك.');
+  const [busy, setBusy] = useState(false);
+  return (
+    <main className="account-screen" dir="rtl">
+      <section className="account-card">
+        <h1 dir="auto">تأكيد بريد Dailgo</h1>
+        <p dir="auto" role="status">
+          {notice}
+        </p>
+        <button
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await apiRequest('public/verify-email', 'POST', {
+                token: decodeURIComponent(location.hash.slice(1)),
+              });
+              setNotice('البريد اتأكد. ارجع للإعدادات وحدّث الحالة لتفعيل التذكيرات.');
+            } catch {
+              setNotice('الرابط منتهي أو غير صالح. اطلب رسالة تأكيد جديدة من الإعدادات.');
+            }
+            setBusy(false);
+          }}
+        >
+          تأكيد البريد
+        </button>
+        <a href="/tools?tab=connections">العودة للإعدادات</a>
+      </section>
+    </main>
+  );
+}

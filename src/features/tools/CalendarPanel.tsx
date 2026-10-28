@@ -1,22 +1,387 @@
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 import { apiRequest } from '../../lib/serverStorage';
-import { useStorageState,transactData } from '../../lib/storage';
-import { localDate,makeEntry } from '../../lib/workspace';
-import type { Entry,Translate,Area } from '../../lib/workspace';
+import { useStorageState, transactData } from '../../lib/storage';
+import { localDate, makeEntry } from '../../lib/workspace';
+import type { Entry, Translate, Area } from '../../lib/workspace';
 import { usePlanning } from '../../lib/preferences';
-import { workspaceEntries,nextDay } from '../journey/model';
-import { formatCalendarDate,formatTime,formatNumber } from '../../i18n/format';
+import { workspaceEntries, nextDay } from '../journey/model';
+import { formatCalendarDate, formatTime, formatNumber } from '../../i18n/format';
 import { Button } from '../../components/ui/button';
-type GoogleEvent={id:string;title:string;start:{dateTime?:string;date?:string};end?:{dateTime?:string;date?:string};updated?:string};
-export function importedEvent(item:GoogleEvent,zone:string):Entry{
- let date=item.start.date??'',time='00:00',duration=1440;if(item.start.dateTime){const start=new Date(item.start.dateTime);if(!Number.isFinite(start.getTime()))throw Error('invalid-google-date');const parts=new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(start);const part=(type:string)=>parts.find(x=>x.type===type)?.value;date=[part('year'),part('month'),part('day')].join('-');time=part('hour')+':'+part('minute');duration=item.end?.dateTime?Math.round((Date.parse(item.end.dateTime)-start.getTime())/60000):30;}
- if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(duration)||duration<=0||duration>1440)throw Error('unsupported-google-event');return {...makeEntry('event',item.title,'Work'),id:'google:'+item.id,date,time,durationMinutes:duration,source:{text:'Google Calendar · reviewed import',fragment:item.title,createdAt:new Date().toISOString(),batchId:'google:'+item.id}};
+type GoogleEvent = {
+  id: string;
+  title: string;
+  start: { dateTime?: string; date?: string };
+  end?: { dateTime?: string; date?: string };
+  updated?: string;
+};
+export function importedEvent(item: GoogleEvent, zone: string): Entry {
+  let date = item.start.date ?? '',
+    time = '00:00',
+    duration = 1440;
+  if (item.start.dateTime) {
+    const start = new Date(item.start.dateTime);
+    if (!Number.isFinite(start.getTime())) throw Error('invalid-google-date');
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: zone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(start);
+    const part = (type: string) => parts.find((x) => x.type === type)?.value;
+    date = [part('year'), part('month'), part('day')].join('-');
+    time = part('hour') + ':' + part('minute');
+    duration = item.end?.dateTime
+      ? Math.round((Date.parse(item.end.dateTime) - start.getTime()) / 60000)
+      : 30;
+  }
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+    !Number.isFinite(duration) ||
+    duration <= 0 ||
+    duration > 1440
+  )
+    throw Error('unsupported-google-event');
+  return {
+    ...makeEntry('event', item.title, 'Work'),
+    id: 'google:' + item.id,
+    date,
+    time,
+    durationMinutes: duration,
+    source: {
+      text: 'Google Calendar · reviewed import',
+      fragment: item.title,
+      createdAt: new Date().toISOString(),
+      batchId: 'google:' + item.id,
+    },
+  };
 }
-export function CalendarPanel({t}:{t:Translate}){
- const {data}=useStorageState();const [planning]=usePlanning();const [status,setStatus]=useState<{enabled:boolean;connected:boolean}|null>(null);const [from,setFrom]=useState(localDate());const [to,setTo]=useState(nextDay(localDate(),7));const [rows,setRows]=useState<Entry[]>([]);const [chosen,setChosen]=useState<string[]>([]);const [page,setPage]=useState<string|null>(null);const [notice,setNotice]=useState('');const [busy,setBusy]=useState(false);const [replace,setReplace]=useState(false);const [exportId,setExportId]=useState('');const [exportConsent,setExportConsent]=useState(false);const entries=workspaceEntries(data);const events=entries.filter(x=>x.kind==='event'&&!x.archived);const target=events.find(x=>x.id===exportId);const [expected,setExpected]=useState<Record<string,string|undefined>>({});
- useEffect(()=>{void apiRequest('calendar').then(setStatus).catch(()=>setNotice(t('Could not load Google connection status.','تعذر تحميل حالة ربط Google.')));},[]);
- async function fetchEvents(next=false){setBusy(true);try{const result=await apiRequest('calendar/events','POST',{from,to,...(next?{pageToken:page}:{})});let skipped=0;const imported=(result.events as GoogleEvent[]).flatMap(item=>{try{return [importedEvent(item,planning.timezone)];}catch{skipped++;return [];}});setRows(old=>next?[...old,...imported.filter(x=>!old.some(row=>row.id===x.id))]:imported);setPage(result.nextPageToken);setExpected(old=>({...(next?old:{}),...Object.fromEntries(imported.map(item=>[item.id,entries.find(x=>x.id===item.id)?.revision]))}));if(!next)setChosen([]);setNotice(skipped?t('Some long or unsupported events were excluded; nothing has been imported yet.','بعض المواعيد الطويلة أو غير المدعومة استُبعدت. لم يُستورد شيء بعد.'):t('Review the events and choose what to import. Nothing has changed yet.','راجع المواعيد واختار اللي تستورده. لم يتغير شيء بعد.'));}catch{setNotice(t('Could not read Google Calendar. Review the connection and date range (at most 90 days).','تعذر قراءة تقويم Google. راجع الربط والفترة (حتى ٩٠ يومًا).'));}setBusy(false);}
- return <section className="card tools-section editor-form"><h2 dir="auto">Google Calendar</h2><p dir="auto">{t('Connect your own primary calendar with Google consent. Imports and exports require an explicit review; there is no automatic two-way merge. Calendar access can be revoked here.','اربط تقويمك الأساسي بموافقة Google. الاستيراد والتصدير بعد مراجعة صريحة؛ مفيش دمج تلقائي في الاتجاهين. تقدر تلغي الوصول من هنا.')}</p><p dir="auto" className="integration-status">{status?.enabled?status.connected?t('Connected','متصل'):t('Not connected','غير متصل'):t('Google OAuth and server encryption setup required','يحتاج إعداد Google OAuth وتشفير السيرفر')}</p><div className="tools-tabs"><Button disabled={busy||!status?.enabled} onClick={async()=>{setBusy(true);try{location.assign((await apiRequest('calendar/start','POST',{})).url);}catch{setNotice(t('Could not start Google consent.','تعذر بدء موافقة Google.'));setBusy(false);}}}>{t('Connect Google Calendar','ربط Google Calendar')}</Button>{status?.connected&&<Button disabled={busy} variant="ghost" onClick={async()=>{if(!window.confirm(t('Revoke Google Calendar access?','إلغاء وصول Google Calendar؟')))return;setBusy(true);try{await apiRequest('calendar','DELETE',{});setStatus({...status,connected:false});setRows([]);setNotice(t('Google access revoked. Existing imported records remain in your workspace.','اتلغى وصول Google. السجلات اللي استوردتها سابقًا بتفضل في مساحتك.'));}catch{setNotice(t('Could not revoke Google access. Retry or revoke Dailgo from your Google account.','تعذر إلغاء الوصول. حاول تاني أو ألغِ Dailgo من حساب Google.'));}setBusy(false);}}>{t('Disconnect Google Calendar','فصل Google Calendar')}</Button>}</div>
- {status?.connected&&<><div className="form-pair"><label>{t('Import from','الاستيراد من')}<input type="date" value={from} disabled={busy} onInput={e=>setFrom(e.currentTarget.value)}/></label><label>{t('Import until','الاستيراد حتى')}<input type="date" value={to} disabled={busy} onInput={e=>setTo(e.currentTarget.value)}/></label></div><Button disabled={busy} variant="outline" onClick={()=>void fetchEvents()}>{t('Preview Google events','معاينة مواعيد Google')}</Button><ul className="tools-records">{rows.map(row=><li key={row.id}><label><input type="checkbox" disabled={busy} checked={chosen.includes(row.id)} onChange={e=>setChosen(old=>e.target.checked?[...old,row.id]:old.filter(id=>id!==row.id))}/><bdi>{row.title}</bdi> · {formatCalendarDate(row.date,t('en','ar'))} · {formatTime(row.time,t('en','ar'))}{entries.some(x=>x.id===row.id)?' · '+t('Already imported','مستورد سابقًا'):''}</label></li>)}</ul>{page&&<Button disabled={busy} variant="outline" onClick={()=>void fetchEvents(true)}>{t('Read next Google page','قراءة الصفحة التالية من Google')}</Button>}<label><input type="checkbox" checked={replace} onChange={e=>setReplace(e.target.checked)}/>{t('Update selected previously imported events, preserving revision checks','تحديث المواعيد المختارة المستوردة سابقًا مع حماية التعديلات الأحدث')}</label><Button disabled={busy||!chosen.length} onClick={async()=>{setBusy(true);const ok=await transactData(current=>{let all=workspaceEntries(current);for(const row of rows.filter(x=>chosen.includes(x.id))){const old=all.find(x=>x.id===row.id);if(old&&!replace)continue;if(old&&old.revision!==expected[row.id])throw Error('google-import-changed');if(!old&&expected[row.id])throw Error('google-import-deleted');all=old?all.map(x=>x.id===row.id?{...old,title:row.title,date:row.date,time:row.time,durationMinutes:row.durationMinutes}:x):[...all,row];}return {...current,'personal-os.entries.v1':{version:2,demoVersion:1,entries:all}};});setBusy(false);if(ok)setChosen([]);setNotice(ok?t('Reviewed Google events saved. Reopen the preview before further updates.','اتحفظت مواعيد Google اللي راجعتها. افتح المعاينة مجددًا قبل تحديثات تانية.'):t('An event changed or saving failed. Refresh the preview before replacing anything.','موعد اتغير أو تعذر الحفظ. حدّث المعاينة قبل استبدال أي شيء.'));}}>{t('Import selected events','استيراد المواعيد المختارة')} · {formatNumber(chosen.length,t('en','ar'))}</Button>
- <h3 dir="auto">{t('Export one reviewed appointment','تصدير موعد بعد مراجعته')}</h3><label>{t('Appointment to export','الموعد المطلوب تصديره')}<select value={exportId} onChange={e=>{setExportId(e.target.value);setExportConsent(false);}}><option value="">{t('Choose an appointment','اختار موعدًا')}</option>{events.map(event=><option key={event.id} value={event.id}>{event.title}</option>)}</select></label>{target&&<p dir="auto">{target.title} · {formatCalendarDate(target.date,t('en','ar'))} · {formatTime(target.time,t('en','ar'))}</p>}<label><input type="checkbox" checked={exportConsent} onChange={e=>setExportConsent(e.target.checked)}/>{t('Create or update this appointment in my primary Google calendar','إنشاء الموعد ده أو تحديثه في تقويم Google الأساسي')}</label><Button disabled={busy||!target||!exportConsent} onClick={async()=>{setBusy(true);try{await apiRequest('calendar/export','POST',{entryId:target!.id,entryRevision:target!.revision});setNotice(t('Appointment saved to Google Calendar.','اتحفظ الموعد في Google Calendar.'));setExportConsent(false);}catch{setNotice(t('Google export failed or the appointment changed. Review before retrying.','التصدير فشل أو الموعد اتغير. راجع قبل المحاولة.'));}setBusy(false);}}>{t('Confirm export to Google','تأكيد التصدير إلى Google')}</Button></>}{notice&&<p dir="auto" role="status">{notice}</p>}</section>;
+export function CalendarPanel({ t }: { t: Translate }) {
+  const { data } = useStorageState();
+  const [planning] = usePlanning();
+  const [status, setStatus] = useState<{ enabled: boolean; connected: boolean } | null>(null);
+  const [from, setFrom] = useState(localDate());
+  const [to, setTo] = useState(nextDay(localDate(), 7));
+  const [rows, setRows] = useState<Entry[]>([]);
+  const [chosen, setChosen] = useState<string[]>([]);
+  const [page, setPage] = useState<string | null>(null);
+  const [notice, setNotice] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [replace, setReplace] = useState(false);
+  const [exportId, setExportId] = useState('');
+  const [exportConsent, setExportConsent] = useState(false);
+  const entries = workspaceEntries(data);
+  const events = entries.filter((x) => x.kind === 'event' && !x.archived);
+  const target = events.find((x) => x.id === exportId);
+  const [expected, setExpected] = useState<Record<string, string | undefined>>({});
+  useEffect(() => {
+    void apiRequest('calendar')
+      .then(setStatus)
+      .catch(() =>
+        setNotice(t('Could not load Google connection status.', 'تعذر تحميل حالة ربط Google.')),
+      );
+  }, []);
+  async function fetchEvents(next = false) {
+    setBusy(true);
+    try {
+      const result = await apiRequest('calendar/events', 'POST', {
+        from,
+        to,
+        ...(next ? { pageToken: page } : {}),
+      });
+      let skipped = 0;
+      const imported = (result.events as GoogleEvent[]).flatMap((item) => {
+        try {
+          return [importedEvent(item, planning.timezone)];
+        } catch {
+          skipped++;
+          return [];
+        }
+      });
+      setRows((old) =>
+        next ? [...old, ...imported.filter((x) => !old.some((row) => row.id === x.id))] : imported,
+      );
+      setPage(result.nextPageToken);
+      setExpected((old) => ({
+        ...(next ? old : {}),
+        ...Object.fromEntries(
+          imported.map((item) => [item.id, entries.find((x) => x.id === item.id)?.revision]),
+        ),
+      }));
+      if (!next) setChosen([]);
+      setNotice(
+        skipped
+          ? t(
+              'Some long or unsupported events were excluded; nothing has been imported yet.',
+              'بعض المواعيد الطويلة أو غير المدعومة استُبعدت. لم يُستورد شيء بعد.',
+            )
+          : t(
+              'Review the events and choose what to import. Nothing has changed yet.',
+              'راجع المواعيد واختار اللي تستورده. لم يتغير شيء بعد.',
+            ),
+      );
+    } catch {
+      setNotice(
+        t(
+          'Could not read Google Calendar. Review the connection and date range (at most 90 days).',
+          'تعذر قراءة تقويم Google. راجع الربط والفترة (حتى ٩٠ يومًا).',
+        ),
+      );
+    }
+    setBusy(false);
+  }
+  return (
+    <section className="card tools-section editor-form">
+      <h2 dir="auto">Google Calendar</h2>
+      <p dir="auto">
+        {t(
+          'Connect your own primary calendar with Google consent. Imports and exports require an explicit review; there is no automatic two-way merge. Calendar access can be revoked here.',
+          'اربط تقويمك الأساسي بموافقة Google. الاستيراد والتصدير بعد مراجعة صريحة؛ مفيش دمج تلقائي في الاتجاهين. تقدر تلغي الوصول من هنا.',
+        )}
+      </p>
+      <p dir="auto" className="integration-status">
+        {status?.enabled
+          ? status.connected
+            ? t('Connected', 'متصل')
+            : t('Not connected', 'غير متصل')
+          : t(
+              'Google OAuth and server encryption setup required',
+              'يحتاج إعداد Google OAuth وتشفير السيرفر',
+            )}
+      </p>
+      <div className="tools-tabs">
+        <Button
+          disabled={busy || !status?.enabled}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              location.assign((await apiRequest('calendar/start', 'POST', {})).url);
+            } catch {
+              setNotice(t('Could not start Google consent.', 'تعذر بدء موافقة Google.'));
+              setBusy(false);
+            }
+          }}
+        >
+          {t('Connect Google Calendar', 'ربط Google Calendar')}
+        </Button>
+        {status?.connected && (
+          <Button
+            disabled={busy}
+            variant="ghost"
+            onClick={async () => {
+              if (
+                !window.confirm(t('Revoke Google Calendar access?', 'إلغاء وصول Google Calendar؟'))
+              )
+                return;
+              setBusy(true);
+              try {
+                await apiRequest('calendar', 'DELETE', {});
+                setStatus({ ...status, connected: false });
+                setRows([]);
+                setNotice(
+                  t(
+                    'Google access revoked. Existing imported records remain in your workspace.',
+                    'اتلغى وصول Google. السجلات اللي استوردتها سابقًا بتفضل في مساحتك.',
+                  ),
+                );
+              } catch {
+                setNotice(
+                  t(
+                    'Could not revoke Google access. Retry or revoke Dailgo from your Google account.',
+                    'تعذر إلغاء الوصول. حاول تاني أو ألغِ Dailgo من حساب Google.',
+                  ),
+                );
+              }
+              setBusy(false);
+            }}
+          >
+            {t('Disconnect Google Calendar', 'فصل Google Calendar')}
+          </Button>
+        )}
+      </div>
+      {status?.connected && (
+        <>
+          <div className="form-pair">
+            <label>
+              {t('Import from', 'الاستيراد من')}
+              <input
+                type="date"
+                value={from}
+                disabled={busy}
+                onInput={(e) => setFrom(e.currentTarget.value)}
+              />
+            </label>
+            <label>
+              {t('Import until', 'الاستيراد حتى')}
+              <input
+                type="date"
+                value={to}
+                disabled={busy}
+                onInput={(e) => setTo(e.currentTarget.value)}
+              />
+            </label>
+          </div>
+          <Button disabled={busy} variant="outline" onClick={() => void fetchEvents()}>
+            {t('Preview Google events', 'معاينة مواعيد Google')}
+          </Button>
+          <ul className="tools-records">
+            {rows.map((row) => (
+              <li key={row.id}>
+                <label>
+                  <input
+                    type="checkbox"
+                    disabled={busy}
+                    checked={chosen.includes(row.id)}
+                    onChange={(e) =>
+                      setChosen((old) =>
+                        e.target.checked ? [...old, row.id] : old.filter((id) => id !== row.id),
+                      )
+                    }
+                  />
+                  <bdi>{row.title}</bdi> · {formatCalendarDate(row.date, t('en', 'ar'))} ·{' '}
+                  {formatTime(row.time, t('en', 'ar'))}
+                  {entries.some((x) => x.id === row.id)
+                    ? ' · ' + t('Already imported', 'مستورد سابقًا')
+                    : ''}
+                </label>
+              </li>
+            ))}
+          </ul>
+          {page && (
+            <Button disabled={busy} variant="outline" onClick={() => void fetchEvents(true)}>
+              {t('Read next Google page', 'قراءة الصفحة التالية من Google')}
+            </Button>
+          )}
+          <label>
+            <input
+              type="checkbox"
+              checked={replace}
+              onChange={(e) => setReplace(e.target.checked)}
+            />
+            {t(
+              'Update selected previously imported events, preserving revision checks',
+              'تحديث المواعيد المختارة المستوردة سابقًا مع حماية التعديلات الأحدث',
+            )}
+          </label>
+          <Button
+            disabled={busy || !chosen.length}
+            onClick={async () => {
+              setBusy(true);
+              const ok = await transactData((current) => {
+                let all = workspaceEntries(current);
+                for (const row of rows.filter((x) => chosen.includes(x.id))) {
+                  const old = all.find((x) => x.id === row.id);
+                  if (old && !replace) continue;
+                  if (old && old.revision !== expected[row.id])
+                    throw Error('google-import-changed');
+                  if (!old && expected[row.id]) throw Error('google-import-deleted');
+                  all = old
+                    ? all.map((x) =>
+                        x.id === row.id
+                          ? {
+                              ...old,
+                              title: row.title,
+                              date: row.date,
+                              time: row.time,
+                              durationMinutes: row.durationMinutes,
+                            }
+                          : x,
+                      )
+                    : [...all, row];
+                }
+                return {
+                  ...current,
+                  'personal-os.entries.v1': { version: 2, demoVersion: 1, entries: all },
+                };
+              });
+              setBusy(false);
+              if (ok) setChosen([]);
+              setNotice(
+                ok
+                  ? t(
+                      'Reviewed Google events saved. Reopen the preview before further updates.',
+                      'اتحفظت مواعيد Google اللي راجعتها. افتح المعاينة مجددًا قبل تحديثات تانية.',
+                    )
+                  : t(
+                      'An event changed or saving failed. Refresh the preview before replacing anything.',
+                      'موعد اتغير أو تعذر الحفظ. حدّث المعاينة قبل استبدال أي شيء.',
+                    ),
+              );
+            }}
+          >
+            {t('Import selected events', 'استيراد المواعيد المختارة')} ·{' '}
+            {formatNumber(chosen.length, t('en', 'ar'))}
+          </Button>
+          <h3 dir="auto">{t('Export one reviewed appointment', 'تصدير موعد بعد مراجعته')}</h3>
+          <label>
+            {t('Appointment to export', 'الموعد المطلوب تصديره')}
+            <select
+              value={exportId}
+              onChange={(e) => {
+                setExportId(e.target.value);
+                setExportConsent(false);
+              }}
+            >
+              <option value="">{t('Choose an appointment', 'اختار موعدًا')}</option>
+              {events.map((event) => (
+                <option key={event.id} value={event.id}>
+                  {event.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          {target && (
+            <p dir="auto">
+              {target.title} · {formatCalendarDate(target.date, t('en', 'ar'))} ·{' '}
+              {formatTime(target.time, t('en', 'ar'))}
+            </p>
+          )}
+          <label>
+            <input
+              type="checkbox"
+              checked={exportConsent}
+              onChange={(e) => setExportConsent(e.target.checked)}
+            />
+            {t(
+              'Create or update this appointment in my primary Google calendar',
+              'إنشاء الموعد ده أو تحديثه في تقويم Google الأساسي',
+            )}
+          </label>
+          <Button
+            disabled={busy || !target || !exportConsent}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await apiRequest('calendar/export', 'POST', {
+                  entryId: target!.id,
+                  entryRevision: target!.revision,
+                });
+                setNotice(
+                  t('Appointment saved to Google Calendar.', 'اتحفظ الموعد في Google Calendar.'),
+                );
+                setExportConsent(false);
+              } catch {
+                setNotice(
+                  t(
+                    'Google export failed or the appointment changed. Review before retrying.',
+                    'التصدير فشل أو الموعد اتغير. راجع قبل المحاولة.',
+                  ),
+                );
+              }
+              setBusy(false);
+            }}
+          >
+            {t('Confirm export to Google', 'تأكيد التصدير إلى Google')}
+          </Button>
+        </>
+      )}
+      {notice && (
+        <p dir="auto" role="status">
+          {notice}
+        </p>
+      )}
+    </section>
+  );
 }

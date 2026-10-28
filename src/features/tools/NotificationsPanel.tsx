@@ -1,14 +1,281 @@
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 import { apiRequest } from '../../lib/serverStorage';
 import type { Translate } from '../../lib/workspace';
 import { Button } from '../../components/ui/button';
-type Settings={email:string;emailEnabled:boolean;pushEnabled:boolean;morning:boolean;evening:boolean;tasks:boolean;events:boolean;showDetails:boolean;verified:boolean};
-type Status={settings:Settings;pushAvailable:boolean;emailAvailable:boolean;vapidPublicKey:string|null;subscriptions:number};
-export function NotificationsPanel({t}:{t:Translate}){
- const [status,setStatus]=useState<Status|null>(null);const [settings,setSettings]=useState<Settings|null>(null);const [notice,setNotice]=useState('');const [busy,setBusy]=useState(false);
- async function load(){try{const value=await apiRequest('notifications');setStatus(value);setSettings(value.settings);}catch{setNotice(t('Could not load reminder settings.','تعذر تحميل إعدادات التذكيرات.'));}}
- useEffect(()=>{void load();},[]);
- async function subscribe(){setBusy(true);try{if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window))throw Error();if(await Notification.requestPermission()!=='granted')throw Error();const registration=await navigator.serviceWorker.ready;const raw=status!.vapidPublicKey!.replace(/-/g,'+').replace(/_/g,'/');const key=Uint8Array.from(atob(raw),char=>char.charCodeAt(0));const subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});try{await apiRequest('notifications/subscribe','POST',subscription.toJSON());}catch(error){await subscription.unsubscribe();throw error;}setNotice(t('This device is registered. Enable Push and save to receive reminders.','الجهاز اتسجل. فعّل Push واحفظ عشان تستقبل التذكيرات.'));await load();}catch{setNotice(t('Push registration failed or permission was declined. It requires an installed/supported browser over HTTPS; iPhone requires adding the web app to the home screen.','تعذر تسجيل Push أو إذنه مرفوض. محتاج متصفح داعم وHTTPS؛ على iPhone لازم إضافة نسخة الويب للشاشة الرئيسية.'));}setBusy(false);}
- return <section className="card tools-section editor-form"><h2 dir="auto">{t('Push and email reminders','تذكيرات Push والبريد')}</h2><p dir="auto">{t('External delivery is opt-in. Keep task details hidden for shared lock screens. The server checks reminders once a minute; delivery depends on the browser and email provider.','الإرسال الخارجي باختيارك. يفضل إخفاء تفاصيل المهام لو شاشة القفل مشتركة. السيرفر بيفحص التذكيرات كل دقيقة، والوصول بيعتمد على المتصفح ومزود البريد.')}</p>{settings&&status&&<><p dir="auto" className="integration-status">Push: {status.pushAvailable?t('available','متاح'):t('server setup required','يحتاج إعداد السيرفر')} · {t('Email','البريد')}: {status.emailAvailable?t('available','متاح'):t('server setup required','يحتاج إعداد السيرفر')}</p><label>{t('Reminder email','بريد التذكيرات')}<input type="email" value={settings.email} maxLength={254} onChange={e=>setSettings({...settings,email:e.target.value})}/></label><p dir="auto">{settings.verified?t('Email verified','البريد مؤكد'):t('Save your email, then request its confirmation link.','احفظ البريد، وبعدها اطلب رابط تأكيده.')}</p><div className="tools-tabs"><Button disabled={busy||!status.emailAvailable||!settings.email} variant="outline" onClick={async()=>{setBusy(true);try{await apiRequest('notifications','PUT',settings);await apiRequest('notifications/verify','POST',{});setNotice(t('Confirmation email sent. Open its link, then refresh these settings.','اترسلت رسالة التأكيد. افتح رابطها، وبعدها حدّث الإعدادات.'));}catch{setNotice(t('Could not send verification. Review the email and server mail setup, or wait a few minutes.','تعذر إرسال التأكيد. راجع البريد وإعداد السيرفر، أو انتظر دقائق.'));}setBusy(false);}}>{t('Send email confirmation','إرسال تأكيد البريد')}</Button><Button disabled={busy} variant="ghost" onClick={()=>void load()}>{t('Refresh reminder status','تحديث حالة التذكيرات')}</Button></div>
- {(['emailEnabled','pushEnabled','morning','evening','tasks','events','showDetails'] as const).map(key=><label key={key}><input type="checkbox" checked={settings[key]} disabled={key==='emailEnabled'&&!status.emailAvailable||key==='pushEnabled'&&!status.pushAvailable} onChange={e=>setSettings({...settings,[key]:e.target.checked})}/>{{emailEnabled:t('Email reminders','تذكيرات بالبريد'),pushEnabled:t('Push reminders','تذكيرات Push'),morning:t('Morning plan','خطة الصباح'),evening:t('Evening review','المراجعة المسائية'),tasks:t('Due and planned tasks (up to 10 per day)','المهام المستحقة والمخططة (حتى ١٠ يوميًا)'),events:t('Appointments starting now (up to 10 per day)','المواعيد اللي تبدأ الآن (حتى ١٠ يوميًا)'),showDetails:t('Include task titles in notifications','إظهار عناوين المهام في التذكيرات')}[key]}</label>)}<p dir="auto">{t('Morning and evening times follow your Daily cycle preferences and planning timezone. Task alerts use the execution time, or 09:00 when only a due date is set.','أوقات الصباح والمساء حسب إعدادات الدورة اليومية والمنطقة الزمنية. تنبيه المهمة يستخدم وقت التنفيذ أو ٠٩:٠٠ لو محدد تاريخ فقط.')}</p><div className="tools-tabs"><Button disabled={busy} onClick={async()=>{setBusy(true);try{const value=await apiRequest('notifications','PUT',settings);setStatus(value);setSettings(value.settings);setNotice(t('Reminder preferences saved.','اتحفظت تفضيلات التذكير.'));}catch{setNotice(t('Could not save reminders.','تعذر حفظ التذكيرات.'));}setBusy(false);}}>{t('Save reminder preferences','حفظ تفضيلات التذكير')}</Button><Button disabled={busy||!status.pushAvailable} variant="outline" onClick={()=>void subscribe()}>{t('Register this device for Push','تسجيل الجهاز لـPush')}</Button><Button disabled={busy} variant="ghost" onClick={async()=>{setBusy(true);try{const registration=await navigator.serviceWorker?.getRegistration();const subscription=await registration?.pushManager.getSubscription();if(subscription){await apiRequest('notifications/subscribe','DELETE',{endpoint:subscription.endpoint});await subscription.unsubscribe();}await load();setNotice(t('This device was unregistered.','اتلغى تسجيل الجهاز.'));}catch{setNotice(t('Could not unregister this device.','تعذر إلغاء تسجيل الجهاز.'));}setBusy(false);}}>{t('Unregister this device','إلغاء تسجيل الجهاز')}</Button><Button disabled={busy||!status.emailAvailable&&!status.pushAvailable} variant="outline" onClick={async()=>{setBusy(true);try{await apiRequest('notifications/test','POST',{});setNotice(t('Requested test notification sent.','اترسل التنبيه التجريبي اللي طلبته.'));}catch{setNotice(t('No verified destination or delivery failed. Check setup and try again after one minute.','مفيش وجهة مؤكدة أو تعذر الإرسال. راجع الإعدادات وحاول بعد دقيقة.'));}setBusy(false);}}>{t('Send one test reminder','إرسال تذكير تجريبي واحد')}</Button></div></>}{notice&&<p dir="auto" role="status">{notice}</p>}</section>;
+type Settings = {
+  email: string;
+  emailEnabled: boolean;
+  pushEnabled: boolean;
+  morning: boolean;
+  evening: boolean;
+  tasks: boolean;
+  events: boolean;
+  showDetails: boolean;
+  verified: boolean;
+};
+type Status = {
+  settings: Settings;
+  pushAvailable: boolean;
+  emailAvailable: boolean;
+  vapidPublicKey: string | null;
+  subscriptions: number;
+};
+export function NotificationsPanel({ t }: { t: Translate }) {
+  const [status, setStatus] = useState<Status | null>(null);
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [notice, setNotice] = useState('');
+  const [busy, setBusy] = useState(false);
+  async function load() {
+    try {
+      const value = await apiRequest('notifications');
+      setStatus(value);
+      setSettings(value.settings);
+    } catch {
+      setNotice(t('Could not load reminder settings.', 'تعذر تحميل إعدادات التذكيرات.'));
+    }
+  }
+  useEffect(() => {
+    void load();
+  }, []);
+  async function subscribe() {
+    setBusy(true);
+    try {
+      if (
+        !('serviceWorker' in navigator) ||
+        !('PushManager' in window) ||
+        !('Notification' in window)
+      )
+        throw Error();
+      if ((await Notification.requestPermission()) !== 'granted') throw Error();
+      const registration = await navigator.serviceWorker.ready;
+      const raw = status!.vapidPublicKey!.replace(/-/g, '+').replace(/_/g, '/');
+      const key = Uint8Array.from(atob(raw), (char) => char.charCodeAt(0));
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: key,
+      });
+      try {
+        await apiRequest('notifications/subscribe', 'POST', subscription.toJSON());
+      } catch (error) {
+        await subscription.unsubscribe();
+        throw error;
+      }
+      setNotice(
+        t(
+          'This device is registered. Enable Push and save to receive reminders.',
+          'الجهاز اتسجل. فعّل Push واحفظ عشان تستقبل التذكيرات.',
+        ),
+      );
+      await load();
+    } catch {
+      setNotice(
+        t(
+          'Push registration failed or permission was declined. It requires an installed/supported browser over HTTPS; iPhone requires adding the web app to the home screen.',
+          'تعذر تسجيل Push أو إذنه مرفوض. محتاج متصفح داعم وHTTPS؛ على iPhone لازم إضافة نسخة الويب للشاشة الرئيسية.',
+        ),
+      );
+    }
+    setBusy(false);
+  }
+  return (
+    <section className="card tools-section editor-form">
+      <h2 dir="auto">{t('Push and email reminders', 'تذكيرات Push والبريد')}</h2>
+      <p dir="auto">
+        {t(
+          'External delivery is opt-in. Keep task details hidden for shared lock screens. The server checks reminders once a minute; delivery depends on the browser and email provider.',
+          'الإرسال الخارجي باختيارك. يفضل إخفاء تفاصيل المهام لو شاشة القفل مشتركة. السيرفر بيفحص التذكيرات كل دقيقة، والوصول بيعتمد على المتصفح ومزود البريد.',
+        )}
+      </p>
+      {settings && status && (
+        <>
+          <p dir="auto" className="integration-status">
+            Push:{' '}
+            {status.pushAvailable
+              ? t('available', 'متاح')
+              : t('server setup required', 'يحتاج إعداد السيرفر')}{' '}
+            · {t('Email', 'البريد')}:{' '}
+            {status.emailAvailable
+              ? t('available', 'متاح')
+              : t('server setup required', 'يحتاج إعداد السيرفر')}
+          </p>
+          <label>
+            {t('Reminder email', 'بريد التذكيرات')}
+            <input
+              type="email"
+              value={settings.email}
+              maxLength={254}
+              onChange={(e) => setSettings({ ...settings, email: e.target.value })}
+            />
+          </label>
+          <p dir="auto">
+            {settings.verified
+              ? t('Email verified', 'البريد مؤكد')
+              : t(
+                  'Save your email, then request its confirmation link.',
+                  'احفظ البريد، وبعدها اطلب رابط تأكيده.',
+                )}
+          </p>
+          <div className="tools-tabs">
+            <Button
+              disabled={busy || !status.emailAvailable || !settings.email}
+              variant="outline"
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  await apiRequest('notifications', 'PUT', settings);
+                  await apiRequest('notifications/verify', 'POST', {});
+                  setNotice(
+                    t(
+                      'Confirmation email sent. Open its link, then refresh these settings.',
+                      'اترسلت رسالة التأكيد. افتح رابطها، وبعدها حدّث الإعدادات.',
+                    ),
+                  );
+                } catch {
+                  setNotice(
+                    t(
+                      'Could not send verification. Review the email and server mail setup, or wait a few minutes.',
+                      'تعذر إرسال التأكيد. راجع البريد وإعداد السيرفر، أو انتظر دقائق.',
+                    ),
+                  );
+                }
+                setBusy(false);
+              }}
+            >
+              {t('Send email confirmation', 'إرسال تأكيد البريد')}
+            </Button>
+            <Button disabled={busy} variant="ghost" onClick={() => void load()}>
+              {t('Refresh reminder status', 'تحديث حالة التذكيرات')}
+            </Button>
+          </div>
+          {(
+            [
+              'emailEnabled',
+              'pushEnabled',
+              'morning',
+              'evening',
+              'tasks',
+              'events',
+              'showDetails',
+            ] as const
+          ).map((key) => (
+            <label key={key}>
+              <input
+                type="checkbox"
+                checked={settings[key]}
+                disabled={
+                  (key === 'emailEnabled' && !status.emailAvailable) ||
+                  (key === 'pushEnabled' && !status.pushAvailable)
+                }
+                onChange={(e) => setSettings({ ...settings, [key]: e.target.checked })}
+              />
+              {
+                {
+                  emailEnabled: t('Email reminders', 'تذكيرات بالبريد'),
+                  pushEnabled: t('Push reminders', 'تذكيرات Push'),
+                  morning: t('Morning plan', 'خطة الصباح'),
+                  evening: t('Evening review', 'المراجعة المسائية'),
+                  tasks: t(
+                    'Due and planned tasks (up to 10 per day)',
+                    'المهام المستحقة والمخططة (حتى ١٠ يوميًا)',
+                  ),
+                  events: t(
+                    'Appointments starting now (up to 10 per day)',
+                    'المواعيد اللي تبدأ الآن (حتى ١٠ يوميًا)',
+                  ),
+                  showDetails: t(
+                    'Include task titles in notifications',
+                    'إظهار عناوين المهام في التذكيرات',
+                  ),
+                }[key]
+              }
+            </label>
+          ))}
+          <p dir="auto">
+            {t(
+              'Morning and evening times follow your Daily cycle preferences and planning timezone. Task alerts use the execution time, or 09:00 when only a due date is set.',
+              'أوقات الصباح والمساء حسب إعدادات الدورة اليومية والمنطقة الزمنية. تنبيه المهمة يستخدم وقت التنفيذ أو ٠٩:٠٠ لو محدد تاريخ فقط.',
+            )}
+          </p>
+          <div className="tools-tabs">
+            <Button
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  const value = await apiRequest('notifications', 'PUT', settings);
+                  setStatus(value);
+                  setSettings(value.settings);
+                  setNotice(t('Reminder preferences saved.', 'اتحفظت تفضيلات التذكير.'));
+                } catch {
+                  setNotice(t('Could not save reminders.', 'تعذر حفظ التذكيرات.'));
+                }
+                setBusy(false);
+              }}
+            >
+              {t('Save reminder preferences', 'حفظ تفضيلات التذكير')}
+            </Button>
+            <Button
+              disabled={busy || !status.pushAvailable}
+              variant="outline"
+              onClick={() => void subscribe()}
+            >
+              {t('Register this device for Push', 'تسجيل الجهاز لـPush')}
+            </Button>
+            <Button
+              disabled={busy}
+              variant="ghost"
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  const registration = await navigator.serviceWorker?.getRegistration();
+                  const subscription = await registration?.pushManager.getSubscription();
+                  if (subscription) {
+                    await apiRequest('notifications/subscribe', 'DELETE', {
+                      endpoint: subscription.endpoint,
+                    });
+                    await subscription.unsubscribe();
+                  }
+                  await load();
+                  setNotice(t('This device was unregistered.', 'اتلغى تسجيل الجهاز.'));
+                } catch {
+                  setNotice(t('Could not unregister this device.', 'تعذر إلغاء تسجيل الجهاز.'));
+                }
+                setBusy(false);
+              }}
+            >
+              {t('Unregister this device', 'إلغاء تسجيل الجهاز')}
+            </Button>
+            <Button
+              disabled={busy || (!status.emailAvailable && !status.pushAvailable)}
+              variant="outline"
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  await apiRequest('notifications/test', 'POST', {});
+                  setNotice(
+                    t('Requested test notification sent.', 'اترسل التنبيه التجريبي اللي طلبته.'),
+                  );
+                } catch {
+                  setNotice(
+                    t(
+                      'No verified destination or delivery failed. Check setup and try again after one minute.',
+                      'مفيش وجهة مؤكدة أو تعذر الإرسال. راجع الإعدادات وحاول بعد دقيقة.',
+                    ),
+                  );
+                }
+                setBusy(false);
+              }}
+            >
+              {t('Send one test reminder', 'إرسال تذكير تجريبي واحد')}
+            </Button>
+          </div>
+        </>
+      )}
+      {notice && (
+        <p dir="auto" role="status">
+          {notice}
+        </p>
+      )}
+    </section>
+  );
 }

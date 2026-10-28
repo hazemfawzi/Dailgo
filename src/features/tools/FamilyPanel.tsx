@@ -1,22 +1,374 @@
 import { FamilyTransfer } from './FamilyTransfer';
-import { useEffect,useRef,useState } from 'react';
-import { apiRequest,ApiError } from '../../lib/serverStorage';
+import { useEffect, useRef, useState } from 'react';
+import { apiRequest, ApiError } from '../../lib/serverStorage';
 import type { Task } from '../tasks/model';
 import type { Translate } from '../../lib/workspace';
 import { Button } from '../../components/ui/button';
 import { formatNumber } from '../../i18n/format';
-type Space={id:string;title:string;owner:string;role:string;revision:string;data:{'personal-os.tasks.v1':Task[]};members:{principal:string;username:string;role:string}[]};
-export function FamilyPanel({t}:{t:Translate}){
- const generation=useRef(0);const [busy,updateBusy]=useState(false);const setBusy=(value:boolean)=>{if(value)generation.current++;updateBusy(value);};
- const [undo,setUndo]=useState<{space:Space;before:Task[];expires:number}|null>(null);const [showArchive,setShowArchive]=useState(false);
- const [spaces,setSpaces]=useState<Space[]>([]);const [notice,setNotice]=useState('');const [invitation,setInvitation]=useState<{space:string;id:string;token:string}|null>(null);
- useEffect(()=>{if(!undo)return;const timer=setTimeout(()=>setUndo(null),Math.max(0,undo.expires-Date.now()));return()=>clearTimeout(timer);},[undo]);
- async function load(){const observed=++generation.current;try{const value=await apiRequest('family');if(observed===generation.current)setSpaces(value.spaces);}catch{setNotice(t('Could not load shared spaces.','تعذر تحميل المساحات المشتركة.'));}}
- useEffect(()=>{if(busy)return;void load();const id=setInterval(()=>{if(!document.hidden&&!busy)void load();},10000);return()=>clearInterval(id);},[busy]);
- async function write(space:Space,tasks:Task[]){setBusy(true);try{const saved=await apiRequest('family/'+space.id,'PUT',{revision:space.revision,data:{'personal-os.tasks.v1':tasks}});setSpaces(old=>old.map(x=>x.id===space.id?saved:x));if(tasks.some(task=>{const old=space.data['personal-os.tasks.v1'].find(x=>x.id===task.id);return old&&(!old.done&&task.done||!old.archived&&task.archived);}))setUndo({space:saved,before:space.data['personal-os.tasks.v1'],expires:Date.now()+20000});return true;}catch(error){setNotice(error instanceof ApiError&&error.status===409?t('Someone updated this space. The latest version has been loaded; review and retry.','حد عدّل المساحة. حمّلنا أحدث نسخة؛ راجع وحاول تاني.'):t('Could not save the shared task.','تعذر حفظ المهمة المشتركة.'));await load();return false;}finally{setBusy(false);}}
- return <section className="card tools-section"><h2 dir="auto">{t('Family spaces','المساحات العائلية')}</h2><p dir="auto">{t('Only tasks you add here are shared. Personal tasks, finances, memories and conversations remain private to each account. Everyone in a space can manage its shared tasks.','المشاركة للمهام اللي تضيفها هنا فقط. المهام الشخصية والمالية والذاكرة والمحادثات خاصة بكل حساب. أعضاء المساحة يقدروا ينظموا مهامها المشتركة.')}</p><form className="editor-form tools-inline" onSubmit={async e=>{e.preventDefault();setBusy(true);const form=e.currentTarget;try{const space=await apiRequest('family','POST',{title:String(new FormData(form).get('title'))});setSpaces(old=>[...old,space]);form.reset();}catch{setNotice(t('Could not create the family space.','تعذر إنشاء المساحة العائلية.'));}setBusy(false);}}><label>{t('Family space name','اسم المساحة العائلية')}<input name="title" maxLength={100} required dir="auto"/></label><Button disabled={busy}>{t('Create family space','إنشاء مساحة عائلية')}</Button></form>
- {spaces.map(space=><section className="saving-goal" key={space.id}><h3 dir="auto">{space.title}</h3><p dir="auto">{formatNumber(space.members.length,t('en','ar'))} {t('members','أعضاء')}</p><ul className="tools-records">{space.members.map(member=><li key={member.principal}><span dir="auto">{member.username}</span>{member.role==='owner'?t('Owner','المالك'):space.role==='owner'&&<Button disabled={busy} variant="ghost" onClick={async()=>{if(!window.confirm(t('Remove this member’s access?','إلغاء وصول العضو ده؟')))return;try{const next=await apiRequest(`family/${space.id}/members/${member.principal}`,'DELETE',{});setSpaces(old=>old.map(x=>x.id===space.id?next:x));}catch{setNotice(t('Could not remove access.','تعذر إلغاء الوصول.'));}}}>{t('Remove access','إلغاء الوصول')}</Button>}</li>)}</ul>{space.role==='owner'&&<Button disabled={busy} variant="outline" onClick={async()=>{try{const result=await apiRequest('family/'+space.id+'/invite','POST',{});setInvitation({space:space.id,...result});}catch{setNotice(t('Could not create the invitation.','تعذر إنشاء الدعوة.'));}}}>{t('Create one-use invitation','إنشاء دعوة لمرة واحدة')}</Button>}
- {invitation?.space===space.id&&<aside><p dir="auto">{t('This link grants access to this family space. It expires in seven days and works once. Share it only with the intended person.','الرابط بيدي وصول للمساحة العائلية دي. صالح لسبعة أيام ولمرة واحدة. شاركه مع الشخص المقصود فقط.')}</p><a className="tools-secret-link" href={location.origin+'/invite#'+invitation.token}>{location.origin+'/invite#'+invitation.token}</a><Button variant="outline" onClick={()=>void navigator.clipboard?.writeText(location.origin+'/invite#'+invitation.token)}>{t('Copy invitation','نسخ الدعوة')}</Button><Button variant="ghost" onClick={async()=>{try{await apiRequest(`family/${space.id}/invite/${invitation.id}`,'DELETE',{});setInvitation(null);}catch{setNotice(t('Could not revoke the invitation.','تعذر إلغاء الدعوة.'));}}}>{t('Revoke invitation','إلغاء الدعوة')}</Button></aside>}
- <form className="editor-form tools-inline" onSubmit={async e=>{e.preventDefault();const form=e.currentTarget;const fields=new FormData(form);const task:Task={id:crypto.randomUUID(),title:String(fields.get('title')).trim(),category:'Family',done:false,archived:false,dueDate:String(fields.get('due'))||undefined,assigneeId:String(fields.get('assignee'))||undefined};if(await write(space,[...space.data['personal-os.tasks.v1'],task]))form.reset();}}><label>{t('Shared task title','عنوان المهمة المشتركة')}<input name="title" maxLength={160} dir="auto" required/></label><label>{t('Shared task due date','موعد تسليم المهمة المشتركة')}<input name="due" type="date"/></label><label>{t('Assigned to','المسؤول')}<select name="assignee"><option value="">{t('Anyone','أي عضو')}</option>{space.members.map(member=><option value={member.principal} key={member.principal}>{member.username}</option>)}</select></label><Button disabled={busy}>{t('Add shared task','إضافة مهمة مشتركة')}</Button></form>
- <FamilyTransfer space={space} t={t} restore={tasks=>write(space,tasks)}/><label><input type="checkbox" checked={showArchive} onChange={e=>setShowArchive(e.target.checked)}/>{t('Show archived shared tasks','عرض المهام المشتركة المؤرشفة')}</label><ul className="tools-records">{space.data['personal-os.tasks.v1'].filter(x=>showArchive?x.archived:!x.archived).map(task=><li key={task.id}><button className="task-completion-control" disabled={busy} aria-pressed={task.done} aria-label={`${t('Complete shared task','إكمال المهمة المشتركة')}: ${task.title}`} onClick={()=>void write(space,space.data['personal-os.tasks.v1'].map(x=>x.id===task.id?{...x,done:!x.done,status:x.done?'todo':'done'}:x))}>{task.done?'●':'○'}</button><span dir="auto">{task.title}</span><small>{space.members.find(x=>x.principal===task.assigneeId)?.username??t('Anyone','أي عضو')}</small><Button disabled={busy} variant="ghost" onClick={()=>void write(space,space.data['personal-os.tasks.v1'].map(x=>x.id===task.id?{...x,archived:!x.archived}:x))}>{task.archived?t('Restore shared task','استعادة المهمة المشتركة'):t('Archive shared task','أرشفة المهمة المشتركة')}</Button></li>)}</ul></section>)}{!spaces.length&&<p dir="auto">{t('Create a family space, then invite someone to share household tasks.','أنشئ مساحة عائلية، وبعدها ادعُ حد يشاركك مهام البيت.')}</p>}{undo&&<aside className="undo-notice" role="status">{t('Shared change saved · 20 seconds to undo','اتحفظ التغيير المشترك · التراجع متاح ٢٠ ثانية')}<Button disabled={busy} variant="outline" onClick={async()=>{if(Date.now()>undo.expires){setUndo(null);return;}setBusy(true);try{const saved=await apiRequest('family/'+undo.space.id,'PUT',{revision:undo.space.revision,data:{'personal-os.tasks.v1':undo.before.map(item=>{const current=undo.space.data['personal-os.tasks.v1'].find(x=>x.id===item.id);return {...item,revision:current?.revision,history:current?.history};})}});setSpaces(old=>old.map(x=>x.id===saved.id?saved:x));}catch{setNotice(t('Someone changed the shared tasks. Undo was refused; review the latest space.','حد عدّل المهام المشتركة. التراجع اترفض؛ راجع أحدث نسخة.'));await load();}setUndo(null);setBusy(false);}}>{t('Undo shared change','تراجع عن التغيير المشترك')}</Button></aside>}{notice&&<p dir="auto" role="status">{notice}</p>}</section>;
+type Space = {
+  id: string;
+  title: string;
+  owner: string;
+  role: string;
+  revision: string;
+  data: { 'personal-os.tasks.v1': Task[] };
+  members: { principal: string; username: string; role: string }[];
+};
+export function FamilyPanel({ t }: { t: Translate }) {
+  const generation = useRef(0);
+  const [busy, updateBusy] = useState(false);
+  const setBusy = (value: boolean) => {
+    if (value) generation.current++;
+    updateBusy(value);
+  };
+  const [undo, setUndo] = useState<{ space: Space; before: Task[]; expires: number } | null>(null);
+  const [showArchive, setShowArchive] = useState(false);
+  const [spaces, setSpaces] = useState<Space[]>([]);
+  const [notice, setNotice] = useState('');
+  const [invitation, setInvitation] = useState<{ space: string; id: string; token: string } | null>(
+    null,
+  );
+  useEffect(() => {
+    if (!undo) return;
+    const timer = setTimeout(() => setUndo(null), Math.max(0, undo.expires - Date.now()));
+    return () => clearTimeout(timer);
+  }, [undo]);
+  async function load() {
+    const observed = ++generation.current;
+    try {
+      const value = await apiRequest('family');
+      if (observed === generation.current) setSpaces(value.spaces);
+    } catch {
+      setNotice(t('Could not load shared spaces.', 'تعذر تحميل المساحات المشتركة.'));
+    }
+  }
+  useEffect(() => {
+    if (busy) return;
+    void load();
+    const id = setInterval(() => {
+      if (!document.hidden && !busy) void load();
+    }, 10000);
+    return () => clearInterval(id);
+  }, [busy]);
+  async function write(space: Space, tasks: Task[]) {
+    setBusy(true);
+    try {
+      const saved = await apiRequest('family/' + space.id, 'PUT', {
+        revision: space.revision,
+        data: { 'personal-os.tasks.v1': tasks },
+      });
+      setSpaces((old) => old.map((x) => (x.id === space.id ? saved : x)));
+      if (
+        tasks.some((task) => {
+          const old = space.data['personal-os.tasks.v1'].find((x) => x.id === task.id);
+          return old && ((!old.done && task.done) || (!old.archived && task.archived));
+        })
+      )
+        setUndo({
+          space: saved,
+          before: space.data['personal-os.tasks.v1'],
+          expires: Date.now() + 20000,
+        });
+      return true;
+    } catch (error) {
+      setNotice(
+        error instanceof ApiError && error.status === 409
+          ? t(
+              'Someone updated this space. The latest version has been loaded; review and retry.',
+              'حد عدّل المساحة. حمّلنا أحدث نسخة؛ راجع وحاول تاني.',
+            )
+          : t('Could not save the shared task.', 'تعذر حفظ المهمة المشتركة.'),
+      );
+      await load();
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="card tools-section">
+      <h2 dir="auto">{t('Family spaces', 'المساحات العائلية')}</h2>
+      <p dir="auto">
+        {t(
+          'Only tasks you add here are shared. Personal tasks, finances, memories and conversations remain private to each account. Everyone in a space can manage its shared tasks.',
+          'المشاركة للمهام اللي تضيفها هنا فقط. المهام الشخصية والمالية والذاكرة والمحادثات خاصة بكل حساب. أعضاء المساحة يقدروا ينظموا مهامها المشتركة.',
+        )}
+      </p>
+      <form
+        className="editor-form tools-inline"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setBusy(true);
+          const form = e.currentTarget;
+          try {
+            const space = await apiRequest('family', 'POST', {
+              title: String(new FormData(form).get('title')),
+            });
+            setSpaces((old) => [...old, space]);
+            form.reset();
+          } catch {
+            setNotice(t('Could not create the family space.', 'تعذر إنشاء المساحة العائلية.'));
+          }
+          setBusy(false);
+        }}
+      >
+        <label>
+          {t('Family space name', 'اسم المساحة العائلية')}
+          <input name="title" maxLength={100} required dir="auto" />
+        </label>
+        <Button disabled={busy}>{t('Create family space', 'إنشاء مساحة عائلية')}</Button>
+      </form>
+      {spaces.map((space) => (
+        <section className="saving-goal" key={space.id}>
+          <h3 dir="auto">{space.title}</h3>
+          <p dir="auto">
+            {formatNumber(space.members.length, t('en', 'ar'))} {t('members', 'أعضاء')}
+          </p>
+          <ul className="tools-records">
+            {space.members.map((member) => (
+              <li key={member.principal}>
+                <span dir="auto">{member.username}</span>
+                {member.role === 'owner'
+                  ? t('Owner', 'المالك')
+                  : space.role === 'owner' && (
+                      <Button
+                        disabled={busy}
+                        variant="ghost"
+                        onClick={async () => {
+                          if (
+                            !window.confirm(
+                              t('Remove this member’s access?', 'إلغاء وصول العضو ده؟'),
+                            )
+                          )
+                            return;
+                          try {
+                            const next = await apiRequest(
+                              `family/${space.id}/members/${member.principal}`,
+                              'DELETE',
+                              {},
+                            );
+                            setSpaces((old) => old.map((x) => (x.id === space.id ? next : x)));
+                          } catch {
+                            setNotice(t('Could not remove access.', 'تعذر إلغاء الوصول.'));
+                          }
+                        }}
+                      >
+                        {t('Remove access', 'إلغاء الوصول')}
+                      </Button>
+                    )}
+              </li>
+            ))}
+          </ul>
+          {space.role === 'owner' && (
+            <Button
+              disabled={busy}
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const result = await apiRequest('family/' + space.id + '/invite', 'POST', {});
+                  setInvitation({ space: space.id, ...result });
+                } catch {
+                  setNotice(t('Could not create the invitation.', 'تعذر إنشاء الدعوة.'));
+                }
+              }}
+            >
+              {t('Create one-use invitation', 'إنشاء دعوة لمرة واحدة')}
+            </Button>
+          )}
+          {invitation?.space === space.id && (
+            <aside>
+              <p dir="auto">
+                {t(
+                  'This link grants access to this family space. It expires in seven days and works once. Share it only with the intended person.',
+                  'الرابط بيدي وصول للمساحة العائلية دي. صالح لسبعة أيام ولمرة واحدة. شاركه مع الشخص المقصود فقط.',
+                )}
+              </p>
+              <a
+                className="tools-secret-link"
+                href={location.origin + '/invite#' + invitation.token}
+              >
+                {location.origin + '/invite#' + invitation.token}
+              </a>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  void navigator.clipboard?.writeText(
+                    location.origin + '/invite#' + invitation.token,
+                  )
+                }
+              >
+                {t('Copy invitation', 'نسخ الدعوة')}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={async () => {
+                  try {
+                    await apiRequest(`family/${space.id}/invite/${invitation.id}`, 'DELETE', {});
+                    setInvitation(null);
+                  } catch {
+                    setNotice(t('Could not revoke the invitation.', 'تعذر إلغاء الدعوة.'));
+                  }
+                }}
+              >
+                {t('Revoke invitation', 'إلغاء الدعوة')}
+              </Button>
+            </aside>
+          )}
+          <form
+            className="editor-form tools-inline"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const form = e.currentTarget;
+              const fields = new FormData(form);
+              const task: Task = {
+                id: crypto.randomUUID(),
+                title: String(fields.get('title')).trim(),
+                category: 'Family',
+                done: false,
+                archived: false,
+                dueDate: String(fields.get('due')) || undefined,
+                assigneeId: String(fields.get('assignee')) || undefined,
+              };
+              if (await write(space, [...space.data['personal-os.tasks.v1'], task])) form.reset();
+            }}
+          >
+            <label>
+              {t('Shared task title', 'عنوان المهمة المشتركة')}
+              <input name="title" maxLength={160} dir="auto" required />
+            </label>
+            <label>
+              {t('Shared task due date', 'موعد تسليم المهمة المشتركة')}
+              <input name="due" type="date" />
+            </label>
+            <label>
+              {t('Assigned to', 'المسؤول')}
+              <select name="assignee">
+                <option value="">{t('Anyone', 'أي عضو')}</option>
+                {space.members.map((member) => (
+                  <option value={member.principal} key={member.principal}>
+                    {member.username}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Button disabled={busy}>{t('Add shared task', 'إضافة مهمة مشتركة')}</Button>
+          </form>
+          <FamilyTransfer space={space} t={t} restore={(tasks) => write(space, tasks)} />
+          <label>
+            <input
+              type="checkbox"
+              checked={showArchive}
+              onChange={(e) => setShowArchive(e.target.checked)}
+            />
+            {t('Show archived shared tasks', 'عرض المهام المشتركة المؤرشفة')}
+          </label>
+          <ul className="tools-records">
+            {space.data['personal-os.tasks.v1']
+              .filter((x) => (showArchive ? x.archived : !x.archived))
+              .map((task) => (
+                <li key={task.id}>
+                  <button
+                    className="task-completion-control"
+                    disabled={busy}
+                    aria-pressed={task.done}
+                    aria-label={`${t('Complete shared task', 'إكمال المهمة المشتركة')}: ${task.title}`}
+                    onClick={() =>
+                      void write(
+                        space,
+                        space.data['personal-os.tasks.v1'].map((x) =>
+                          x.id === task.id
+                            ? { ...x, done: !x.done, status: x.done ? 'todo' : 'done' }
+                            : x,
+                        ),
+                      )
+                    }
+                  >
+                    {task.done ? '●' : '○'}
+                  </button>
+                  <span dir="auto">{task.title}</span>
+                  <small>
+                    {space.members.find((x) => x.principal === task.assigneeId)?.username ??
+                      t('Anyone', 'أي عضو')}
+                  </small>
+                  <Button
+                    disabled={busy}
+                    variant="ghost"
+                    onClick={() =>
+                      void write(
+                        space,
+                        space.data['personal-os.tasks.v1'].map((x) =>
+                          x.id === task.id ? { ...x, archived: !x.archived } : x,
+                        ),
+                      )
+                    }
+                  >
+                    {task.archived
+                      ? t('Restore shared task', 'استعادة المهمة المشتركة')
+                      : t('Archive shared task', 'أرشفة المهمة المشتركة')}
+                  </Button>
+                </li>
+              ))}
+          </ul>
+        </section>
+      ))}
+      {!spaces.length && (
+        <p dir="auto">
+          {t(
+            'Create a family space, then invite someone to share household tasks.',
+            'أنشئ مساحة عائلية، وبعدها ادعُ حد يشاركك مهام البيت.',
+          )}
+        </p>
+      )}
+      {undo && (
+        <aside className="undo-notice" role="status">
+          {t(
+            'Shared change saved · 20 seconds to undo',
+            'اتحفظ التغيير المشترك · التراجع متاح ٢٠ ثانية',
+          )}
+          <Button
+            disabled={busy}
+            variant="outline"
+            onClick={async () => {
+              if (Date.now() > undo.expires) {
+                setUndo(null);
+                return;
+              }
+              setBusy(true);
+              try {
+                const saved = await apiRequest('family/' + undo.space.id, 'PUT', {
+                  revision: undo.space.revision,
+                  data: {
+                    'personal-os.tasks.v1': undo.before.map((item) => {
+                      const current = undo.space.data['personal-os.tasks.v1'].find(
+                        (x) => x.id === item.id,
+                      );
+                      return { ...item, revision: current?.revision, history: current?.history };
+                    }),
+                  },
+                });
+                setSpaces((old) => old.map((x) => (x.id === saved.id ? saved : x)));
+              } catch {
+                setNotice(
+                  t(
+                    'Someone changed the shared tasks. Undo was refused; review the latest space.',
+                    'حد عدّل المهام المشتركة. التراجع اترفض؛ راجع أحدث نسخة.',
+                  ),
+                );
+                await load();
+              }
+              setUndo(null);
+              setBusy(false);
+            }}
+          >
+            {t('Undo shared change', 'تراجع عن التغيير المشترك')}
+          </Button>
+        </aside>
+      )}
+      {notice && (
+        <p dir="auto" role="status">
+          {notice}
+        </p>
+      )}
+    </section>
+  );
 }
