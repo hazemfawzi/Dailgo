@@ -1,6 +1,6 @@
 // All writes are applied inside the workspace transaction in index.mjs.
 const specs={tasks:{key:'personal-os.tasks.v1'},goals:{key:'personal-os.entries.v1',kinds:['goal']},projects:{key:'personal-os.entries.v1',kinds:['project']},events:{key:'personal-os.entries.v1',kinds:['event']},routines:{key:'personal-os.entries.v1',kinds:['routine']},memories:{key:'personal-os.entries.v1',kinds:['note','preference','decision','personal']},conversations:{key:'personal-os.conversations.v1'},sessions:{key:'personal-os.sessions.v1'}};
-export const stateKeys={journey:'personal-os.journey.v1',language:'personal-os.language',theme:'personal-os.dark',planning:'personal-os.planning.v1',focus:'personal-os.focus.v1',weeks:'personal-os.weeks.v1',reviews:'personal-os.reviews.v1',suggestions:'personal-os.suggestions.v1',trial:'personal-os.trial.v1'};
+export const stateKeys={finance:'personal-os.finance.v1',prayer:'personal-os.prayer.v1',journey:'personal-os.journey.v1',language:'personal-os.language',theme:'personal-os.dark',planning:'personal-os.planning.v1',focus:'personal-os.focus.v1',weeks:'personal-os.weeks.v1',reviews:'personal-os.reviews.v1',suggestions:'personal-os.suggestions.v1',trial:'personal-os.trial.v1'};
 export function resource(name,data){
  const spec=Object.hasOwn(specs,name)?specs[name]:null;if(!spec)return null;
  const value=data[spec.key];const all=Array.isArray(value)?value:value?.entries??[];

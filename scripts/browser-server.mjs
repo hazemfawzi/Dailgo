@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { createServer } from 'vite';
 import { createLocalServer } from '../server/index.mjs';
 const directory=mkdtempSync(join(tmpdir(),'dailgo-browser-'));
-const backend=createLocalServer(join(directory,'test.sqlite'));
+const backend=createLocalServer(join(directory,'test.sqlite'),{assistant:{env:{}},notifications:{env:{}},calendar:{env:{}},billing:{env:{}}});
 await new Promise(resolve=>backend.server.listen(0,'127.0.0.1',resolve));
 const vite=await createServer({server:{host:'127.0.0.1',port:5187,strictPort:true,proxy:{'/api':`http://127.0.0.1:${backend.server.address().port}`}}});
 await vite.listen();

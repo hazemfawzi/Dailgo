@@ -11,19 +11,25 @@
     "preview": "vite preview --host 127.0.0.1",
     "test:server": "node scripts/build-server.mjs && node --test scripts/server.test.mjs",
     "test:browser": "node scripts/build-server.mjs && playwright test",
-    "test:deploy": "python3 -B -m unittest discover -s tests/deploy -v"
+    "test:deploy": "python3 -B -m unittest discover -s tests/deploy -v",
+    "test:features": "node scripts/build-server.mjs && node --test scripts/features.test.mjs",
+    "test:production": "node scripts/build-server.mjs && playwright test --config playwright.production.config.mjs"
   },
   "dependencies": {
     "@fontsource/tajawal": "^5.3.0",
+    "@js-temporal/polyfill": "^0.5.1",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.3",
+    "adhan": "^4.4.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.468.0",
+    "nodemailer": "^10.2.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.9.0",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",

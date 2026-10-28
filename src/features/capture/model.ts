@@ -5,7 +5,7 @@ import type { Task } from '../tasks/model';
 import type { Data } from '../../lib/storageCore';
 import { restoreWorkspace } from '../life/demoGoals';
 export type CaptureSource={text:string;fragment:string;createdAt:string;batchId:string};
-export type CaptureItem={id:string;kind:'task'|EntryKind;title:string;area:Area;date:string;time:string;detail:string;fragment:string;goalId?:string;estimate?:number;tags?:string[]};
+export type CaptureItem={id:string;kind:'task'|EntryKind;title:string;area:Area;date:string;time:string;detail:string;fragment:string;goalId?:string;estimate?:number;tags?:string[];timeAssumed?:boolean};
 export const validDate=(text:string)=>!!parseCalendarDate(text);
 const timeValid=(text:string)=>/^([01]\d|2[0-3]):[0-5]\d$/.test(text);
 const markers=/^(?:(task|مهمة|ذكرني|أراجع|اراجع|راجع|جهز)|(event|موعد|عندي موعد)|(idea|فكرة|عندي فكرة)|(goal|هدف)|(decision|قرار)|(routine|روتين)|(note|remember|ملاحظة|احفظ|تذكر))\s*[:：]?\s*/i;
@@ -17,7 +17,8 @@ const tagAreas:Record<string,Area>={'شغل':'Work','عمل':'Work','work':'Work
 function captureTime(fragment:string){
  const part=fragment.match(/(?:الساعة\s*)?(\d{1,2})(?::([0-5]\d))?\s*(صباحًا|صباحا|صباح|مساءً|مساءا|مساء|العصر|عصرًا|عصرا|بالليل|ليلًا|ليلا|ظهرًا|ظهرا|الظهر|am|pm)(?=\s|$|[#،,؛;])/iu);
  if(part){let hour=Number(part[1]);if(hour<1||hour>12)return {time:'invalid',text:part[0]};const pm=!/^(?:صباح|am)/iu.test(part[3]);hour=hour%12+(pm?12:0);return {time:`${String(hour).padStart(2,'0')}:${part[2]??'00'}`,text:part[0]};}
- const clock=fragment.match(/\b(\d{1,2}):([0-5]\d)\b/);return clock?{time:`${clock[1].padStart(2,'0')}:${clock[2]}`,text:clock[0]}:{time:'',text:''};
+ const clock=fragment.match(/\b(\d{1,2}):([0-5]\d)\b/);const unspecified=fragment.match(/الساعة\s*(\d{1,2})(?=\s|$|[#،,؛;])/u);if(!clock&&unspecified){const hour=Number(unspecified[1]);if(hour>=1&&hour<=12)return {time:`${String(hour%12+12).padStart(2,'0')}:00`,text:unspecified[0],assumed:true};}
+ return clock?{time:`${clock[1].padStart(2,'0')}:${clock[2]}`,text:clock[0]}:{time:'',text:''};
 }
 export function parseCapture(text:string,today=localDate()):CaptureItem[]{
  const fragments=text.split(/\n+|[;؛]+|[،,]\s*(?=(?:و\s*)?(?:مهمة|ذكرني|أراجع|اراجع|عندي موعد|موعد|فكرة|عندي فكرة|هدف|قرار|روتين|ملاحظة|احفظ|مشروع|project\b|task\b|event\b|idea\b|goal\b|decision\b|routine\b|note\b|remember\b))/i).map(s=>s.trim().replace(/^و(?=عندي|فكرة|مهمة|موعد|هدف|قرار|روتين|ملاحظة|احفظ)/,'')).filter(Boolean);
@@ -31,11 +32,11 @@ export function parseCapture(text:string,today=localDate()):CaptureItem[]{
  if(!explicit&&/(?:\btomorrow\b|بكرة|بكره|غدًا|غدا)/i.test(fragment)){const d=new Date(`${today}T12:00:00`);d.setDate(d.getDate()+1);date=calendarDate(d);}else if(!explicit&&/(?:\btoday\b|النهارده|اليوم)/i.test(fragment))date=today;
  if(!['task','event','project','goal'].includes(kind))date='';
  const parsedTime=['task','event','routine'].includes(kind)?captureTime(fragment):{time:'',text:''};const time=parsedTime.time;
- const tags=[...new Set([...fragment.matchAll(/#([\p{L}\p{N}_-]+)/gu)].map(match=>match[1]))].slice(0,10);const area=tags.map(tag=>tagAreas[tag.toLowerCase()]).find(Boolean)??'Personal';
+ const tags=[...new Set([...fragment.matchAll(/#([\p{L}\p{N}_-]+)/gu)].map(match=>match[1]))].slice(0,10);const area=tags.map(tag=>tagAreas[tag.toLowerCase()]).find(Boolean)??(/(?:ذاكر|أذاكر|اذاكر|دراسة|study|learn|تعلم)/iu.test(fragment)?'Learning':/(?:تمرن|تدرب|مشي|walk|exercise)/iu.test(fragment)?'Health':'Personal');
  title=title.replace(/#[\p{L}\p{N}_-]+/gu,'');
  if(date){if(explicit)title=title.replace(explicit,'');else title=title.replace(/\btomorrow\b|\btoday\b|بكرة|بكره|غدًا|غدا|النهارده|اليوم/ig,'');}
  if(parsedTime.text)title=title.replace(parsedTime.text,'');
- return {id:crypto.randomUUID(),kind,title:title.trim().replace(/\s+/g,' '),area,date,time,detail:'',fragment:original,...(tags.length?{tags}:{})};
+ return {id:crypto.randomUUID(),kind,title:title.trim().replace(/\s+/g,' '),area,date,time,detail:'',fragment:original,...('assumed' in parsedTime&&parsedTime.assumed?{timeAssumed:true}:{}),...(tags.length?{tags}:{})};
  });
 }
 export function captureErrors(items:CaptureItem[]):boolean{return !items.length||items.some(x=>!x.title.trim()||x.title.length>160||(!!x.date&&!validDate(x.date))||((x.kind==='event')&&(!validDate(x.date)||!timeValid(x.time)))||(x.kind==='routine'&&!timeValid(x.time))||(x.kind==='task'&&!!x.time&&(!timeValid(x.time)||!validDate(x.date)))||(x.tags!==undefined&&(!Array.isArray(x.tags)||x.tags.length>10||x.tags.some(tag=>typeof tag!=='string'||tag.length>100))));}

@@ -24,3 +24,12 @@ playwright-report/
 test-results/
 
 __pycache__/
+
+server/application.mjs
+native/android/.gradle/
+native/android/**/build/
+native/android/local.properties
+native/ios/*.xcodeproj/
+native/ios/App/Info.plist
+native/ios/Widget/Info.plist
+native/ios/**/*.entitlements
