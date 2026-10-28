@@ -1,3 +1,8 @@
+import { createWorkspaceEvents } from './events.mjs';
+import { createSessions } from './auth.mjs';
+import { reportError, RequestError } from './errors.mjs';
+import { createAccountRoutes } from './routes/account.mjs';
+import { createWorkspaceRoutes } from './routes/workspace.mjs';
 import { createWidgets } from './widgets.mjs';
 import { createNotifications } from './notifications.mjs';
 import { createBilling } from './billing.mjs';
@@ -26,8 +31,12 @@ export function createLocalServer(file = defaultDb, options = {}) {
   db.exec(
     'PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS account(id INTEGER PRIMARY KEY CHECK(id=1),username TEXT NOT NULL,salt TEXT NOT NULL,password TEXT NOT NULL); CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,expires INTEGER NOT NULL); CREATE TABLE IF NOT EXISTS workspace(id INTEGER PRIMARY KEY CHECK(id=1),revision TEXT NOT NULL,data TEXT NOT NULL);',
   );
-  const identities = identityStore(db);
-  const collaboration = createCollaboration(db, identities);
+  const identities = identityStore(db, {
+    recordsOnly: options.recordsOnly ?? process.env.WORKSPACE_RECORDS_ONLY === 'true',
+  });
+  const collaboration = createCollaboration(db, identities, {
+    recordsOnly: options.recordsOnly ?? process.env.WORKSPACE_RECORDS_ONLY === 'true',
+  });
   const widgets = createWidgets(db, identities);
   const assistant = createAssistantService(db, {
     ...options.assistant,
@@ -47,55 +56,42 @@ export function createLocalServer(file = defaultDb, options = {}) {
     res.end(JSON.stringify(body));
   };
   const configured = () => db.prepare('SELECT username FROM account WHERE id=1').get();
-  const session = (req) => {
-    const cookies = Object.fromEntries(
-      (req.headers.cookie ?? '').split(';').map((x) => x.trim().split('=')),
-    );
-    const member = cookies.dailgo_member_session;
-    if (member) {
-      const result = db
-        .prepare('SELECT token,principal FROM member_sessions WHERE token=? AND expires>?')
-        .get(hash(member), Date.now());
-      if (result && identities.user(result.principal)) return { ...result, member: true };
-    }
-    const token = cookies.personal_os_session;
-    const owner = token
-      ? db
-          .prepare('SELECT token FROM sessions WHERE token=? AND expires>?')
-          .get(hash(token), Date.now())
-      : undefined;
-    return owner ? { ...owner, principal: 'owner', member: false } : undefined;
-  };
-  const setSession = (res, principal = 'owner') => {
-    const token = randomBytes(32).toString('hex');
-    const member = principal !== 'owner';
-    const table = member ? 'member_sessions' : 'sessions';
-    db.prepare('DELETE FROM ' + table + ' WHERE expires<=?').run(Date.now());
-    if (member)
-      db.prepare('INSERT INTO member_sessions VALUES(?,?,?)').run(
-        hash(token),
-        principal,
-        Date.now() + 43200000,
-      );
-    else db.prepare('INSERT INTO sessions VALUES(?,?)').run(hash(token), Date.now() + 43200000);
-    const secure = config.cookieSecure ? '; Secure' : '';
-    res.setHeader('Set-Cookie', [
-      `${member ? 'dailgo_member_session' : 'personal_os_session'}=${token}; HttpOnly; SameSite=Strict; Path=/api; Max-Age=43200${secure}`,
-      `${member ? 'personal_os_session' : 'dailgo_member_session'}=; HttpOnly; SameSite=Strict; Path=/api; Max-Age=0${secure}`,
-    ]);
-  };
+  const sessions = createSessions(db, identities, config, options.now);
+  const session = (req, res) => sessions.find(req, res);
+  const setSession = sessions.create;
   const read = async (req, maxBytes = 10 * 1024 * 1024) => {
     if (!String(req.headers['content-type'] ?? '').startsWith('application/json'))
-      throw Error('content-type');
+      throw new RequestError('content-type');
     let bytes = 0;
     const chunks = [];
     for await (const chunk of req) {
       bytes += chunk.length;
-      if (bytes > maxBytes) throw Error('too-large');
+      if (bytes > maxBytes) throw new RequestError('too-large', 413);
       chunks.push(chunk);
     }
-    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    try {
+      return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    } catch {
+      throw new RequestError('invalid-json');
+    }
   };
+  const context = {
+    db,
+    configured,
+    identities,
+    session,
+    setSession,
+    read,
+    send,
+    config,
+    hash,
+    attempts,
+    collaboration,
+    report: (error, req, res) => reportError(error, req, res, send, options.logger),
+  };
+  const events = createWorkspaceEvents(identities, session);
+  const accountRoutes = createAccountRoutes(context);
+  const workspaceRoutes = createWorkspaceRoutes(context);
   const server = createServer(async (req, res) => {
     try {
       if (config.production) {
@@ -150,7 +146,7 @@ export function createLocalServer(file = defaultDb, options = {}) {
           const chunks = [];
           for await (const chunk of req) {
             bytes += chunk.length;
-            if (bytes > 262144) throw Error('too-large');
+            if (bytes > 262144) throw new RequestError('too-large', 413);
             chunks.push(chunk);
           }
           return send(
@@ -159,7 +155,7 @@ export function createLocalServer(file = defaultDb, options = {}) {
             await billing.webhook(Buffer.concat(chunks), req.headers['stripe-signature']),
           );
         } catch (error) {
-          return send(res, error.status ?? 400, { error: error.message });
+          return reportError(error, req, res, send, options.logger);
         }
       }
       if (req.method !== 'GET') {
@@ -176,64 +172,14 @@ export function createLocalServer(file = defaultDb, options = {}) {
           return send(res, 403, { error: 'origin-rejected' });
         }
       }
+      if (url.pathname.startsWith('/api/account/')) return await accountRoutes(req, res, url);
       if (url.pathname === '/api/health' && req.method === 'GET')
         return send(res, 200, {
           status: config.production ? 'production' : 'local-only',
           ai: assistant.status('owner').enabled ? 'available' : 'not-configured',
           integrations: [],
         });
-      if (url.pathname === '/api/account/status' && req.method === 'GET') {
-        const user = configured();
-        const active = session(req);
-        if (active) res.setHeader('X-Dailgo-Account', active.principal);
-        return send(res, 200, {
-          configured: !!user,
-          setupTokenRequired: config.production,
-          setupEnabled: !config.production || !!config.setupToken,
-          signedIn: !!session(req),
-          username: session(req) ? identities.user(session(req).principal)?.username : undefined,
-        });
-      }
-      if (url.pathname === '/api/account/setup' && req.method === 'POST') {
-        if (configured()) return send(res, 409, { error: 'already-configured' });
-        const body = await read(req, 16384);
-        if (
-          config.production &&
-          (!config.setupToken ||
-            typeof body.setupToken !== 'string' ||
-            !timingSafeEqual(
-              Buffer.from(hash(body.setupToken)),
-              Buffer.from(hash(config.setupToken)),
-            ))
-        )
-          return send(res, 403, { error: 'setup-token-required' });
-        if (
-          typeof body.username !== 'string' ||
-          body.username.trim().length < 3 ||
-          body.username.length > 80 ||
-          typeof body.password !== 'string' ||
-          body.password.length < 12 ||
-          body.password.length > 200
-        )
-          return send(res, 400, { error: 'invalid-credentials' });
-        const salt = randomBytes(16).toString('hex');
-        db.prepare('INSERT INTO account VALUES(1,?,?,?)').run(
-          body.username.trim(),
-          salt,
-          scryptSync(body.password, salt, 64).toString('hex'),
-        );
-        setSession(res);
-        return send(res, 201, { configured: true, signedIn: true });
-      }
-      if (url.pathname === '/api/account/accept-invite' && req.method === 'POST') {
-        try {
-          const principal = collaboration.accept(await read(req, 16384));
-          setSession(res, principal);
-          return send(res, 201, { signedIn: true });
-        } catch (error) {
-          return send(res, error.status ?? 400, { error: error.message });
-        }
-      }
+
       if (url.pathname === '/api/public/goal' && req.method === 'POST') {
         try {
           const body = await read(req, 16384);
@@ -245,53 +191,22 @@ export function createLocalServer(file = defaultDb, options = {}) {
               : collaboration.comment(body.token, body.comment),
           );
         } catch (error) {
-          return send(res, error.status ?? 400, { error: error.message });
+          return reportError(error, req, res, send, options.logger);
         }
       }
       if (url.pathname === '/api/public/verify-email' && req.method === 'POST') {
         try {
           return send(res, 200, notifications.verify((await read(req, 16384)).token));
         } catch (error) {
-          return send(res, error.status ?? 400, { error: error.message });
+          return reportError(error, req, res, send, options.logger);
         }
       }
-      if (url.pathname === '/api/account/login' && req.method === 'POST') {
-        for (const [address, value] of attempts)
-          if (value.until < Date.now()) attempts.delete(address);
-        const key = config.production
-          ? String(req.headers['x-real-ip'] ?? req.socket.remoteAddress)
-          : req.socket.remoteAddress;
-        if (!attempts.has(key) && attempts.size >= 10000)
-          return send(res, 429, { error: 'try-later' });
-        let rate = attempts.get(key);
-        if (!rate || rate.until < Date.now()) {
-          rate = { count: 0, until: Date.now() + 300000 };
-          attempts.set(key, rate);
-        }
-        if (rate.count >= 5) return send(res, 429, { error: 'try-later' });
-        rate.count++;
-        const body = await read(req, 16384);
-        const user = identities.byUsername(body.username);
-        if (
-          typeof body.password !== 'string' ||
-          body.password.length > 200 ||
-          !user ||
-          body.username !== user.username ||
-          !timingSafeEqual(
-            scryptSync(body.password, user.salt, 64),
-            Buffer.from(user.password, 'hex'),
-          )
-        )
-          return send(res, 401, { error: 'invalid-credentials' });
-        attempts.delete(key);
-        setSession(res, user.principal);
-        return send(res, 200, { signedIn: true });
-      }
+
       if (url.pathname === '/api/widgets/today' && req.method === 'GET') {
         try {
           return send(res, 200, widgets.today(req.headers.authorization));
         } catch (error) {
-          return send(res, error.status ?? 400, { error: error.message });
+          return reportError(error, req, res, send, options.logger);
         }
       }
       if (url.pathname === '/api/calendar/callback' && req.method === 'GET') {
@@ -315,15 +230,17 @@ export function createLocalServer(file = defaultDb, options = {}) {
           });
           return res.end();
         } catch (error) {
-          return send(res, error.status ?? 400, { error: error.message });
+          return reportError(error, req, res, send, options.logger);
         }
       }
-      const signed = session(req);
+      const signed = session(req, res);
       if (!signed) return send(res, 401, { error: 'sign-in-required' });
       const principal = signed.principal;
       res.setHeader('X-Dailgo-Account', principal);
       if (req.headers['x-dailgo-account'] && req.headers['x-dailgo-account'] !== principal)
         return send(res, 401, { error: 'account-changed' });
+      if (url.pathname === '/api/workspace/events' && req.method === 'GET')
+        return events.open(req, res, principal, url.searchParams.get('account'));
       if (url.pathname === '/api/widgets' && req.method === 'GET')
         return send(res, 200, { devices: widgets.list(principal) });
       if (url.pathname === '/api/widgets' && req.method === 'POST') {
@@ -331,7 +248,7 @@ export function createLocalServer(file = defaultDb, options = {}) {
           await read(req, 1024);
           return send(res, 201, widgets.create(principal));
         } catch (error) {
-          return send(res, error.status ?? 400, { error: error.message });
+          return reportError(error, req, res, send, options.logger);
         }
       }
       if (url.pathname.startsWith('/api/widgets/') && req.method === 'DELETE') {
@@ -388,7 +305,7 @@ export function createLocalServer(file = defaultDb, options = {}) {
           else return send(res, 404, { error: 'not-found' });
           return send(res, 200, result);
         } catch (error) {
-          return send(res, error.status ?? 400, { error: error.message });
+          return reportError(error, req, res, send, options.logger);
         }
       }
       if (url.pathname.startsWith('/api/family') || url.pathname.startsWith('/api/shares')) {
@@ -439,7 +356,7 @@ export function createLocalServer(file = defaultDb, options = {}) {
           } else return send(res, 404, { error: 'not-found' });
           return send(res, 200, result);
         } catch (error) {
-          return send(res, error.status ?? 400, { error: error.message });
+          return reportError(error, req, res, send, options.logger);
         }
       }
       if (url.pathname === '/api/assistant/status' && req.method === 'GET')
@@ -457,173 +374,34 @@ export function createLocalServer(file = defaultDb, options = {}) {
             ),
           );
         } catch (error) {
-          return send(res, error.status ?? 400, { error: error.message });
+          return reportError(error, req, res, send, options.logger);
         }
       }
-      if (url.pathname === '/api/account/password' && req.method === 'POST') {
-        const body = await read(req, 16384);
-        const user = identities.user(principal);
-        if (
-          typeof body.currentPassword !== 'string' ||
-          body.currentPassword.length > 200 ||
-          typeof body.newPassword !== 'string' ||
-          body.newPassword.length < 12 ||
-          body.newPassword.length > 200 ||
-          !user ||
-          !timingSafeEqual(
-            scryptSync(body.currentPassword, user.salt, 64),
-            Buffer.from(user.password, 'hex'),
-          )
-        )
-          return send(res, 400, { error: 'invalid-credentials' });
-        const salt = randomBytes(16).toString('hex');
-        db.exec('BEGIN IMMEDIATE');
-        try {
-          const password = scryptSync(body.newPassword, salt, 64).toString('hex');
-          if (principal === 'owner') {
-            db.prepare('UPDATE account SET salt=?,password=? WHERE id=1').run(salt, password);
-            db.prepare('DELETE FROM sessions').run();
-          } else {
-            db.prepare('UPDATE members SET salt=?,password=? WHERE id=?').run(
-              salt,
-              password,
-              principal,
-            );
-            db.prepare('DELETE FROM member_sessions WHERE principal=?').run(principal);
-          }
-          db.exec('COMMIT');
-        } catch (error) {
-          db.exec('ROLLBACK');
-          throw error;
-        }
-        setSession(res, principal);
-        return send(res, 200, { changed: true });
-      }
-      if (url.pathname === '/api/account/logout' && req.method === 'POST') {
-        db.prepare(
-          'DELETE FROM ' + (signed.member ? 'member_sessions' : 'sessions') + ' WHERE token=?',
-        ).run(signed.token);
-        res.setHeader('Set-Cookie', [
-          'personal_os_session=; HttpOnly; SameSite=Strict; Path=/api; Max-Age=0' +
-            (config.cookieSecure ? '; Secure' : ''),
-          'dailgo_member_session=; HttpOnly; SameSite=Strict; Path=/api; Max-Age=0' +
-            (config.cookieSecure ? '; Secure' : ''),
-        ]);
-        return send(res, 200, { signedIn: false });
-      }
-      if (url.pathname === '/api/workspace' && req.method === 'GET') {
-        const value = identities.workspace(principal);
-        return send(res, 200, {
-          revision: value.revision,
-          data: value.revision === 'empty' ? null : value.data,
-        });
-      }
-      const recordRoute = url.pathname.match(/^\/api\/records\/([a-z]+)(?:\/([^/]+))?$/);
-      const stateRoute = url.pathname.match(/^\/api\/state\/([a-z]+)$/);
-      if (recordRoute || stateRoute || url.pathname === '/api/workspace/commit') {
-        const current = () => identities.workspace(principal);
-        if (req.method === 'GET') {
-          const store = current();
-          if (recordRoute) {
-            const collection = resource(recordRoute[1], store.data);
-            if (!collection) return send(res, 404, { error: 'not-found' });
-            const id = recordRoute[2] ? decodeURIComponent(recordRoute[2]) : null;
-            const item = id ? collection.items.find((x) => x.id === id) : null;
-            if (id && !item) return send(res, 404, { error: 'record-not-found' });
-            return send(res, 200, {
-              revision: store.revision,
-              ...(id ? { item } : { items: collection.items }),
-            });
-          }
-          if (stateRoute && Object.hasOwn(stateKeys, stateRoute[1]))
-            return send(res, 200, {
-              revision: store.revision,
-              value: store.data[stateKeys[stateRoute[1]]] ?? null,
-            });
-          return send(res, 404, { error: 'not-found' });
-        }
-        const allowed = recordRoute ? ['POST', 'PATCH', 'DELETE'] : ['PUT'];
-        if (!allowed.includes(req.method)) return send(res, 405, { error: 'method-not-allowed' });
-        const body = await read(req);
-        if (typeof body.revision !== 'string') throw Error('invalid-revision');
-        db.exec('BEGIN IMMEDIATE');
-        try {
-          const store = current();
-          if (body.revision !== store.revision) {
-            db.exec('ROLLBACK');
-            return send(res, 409, { error: 'workspace-changed' });
-          }
-          let data;
-          if (recordRoute) {
-            const collection = resource(recordRoute[1], store.data);
-            if (!collection) {
-              db.exec('ROLLBACK');
-              return send(res, 404, { error: 'not-found' });
-            }
-            const id = recordRoute[2] ? decodeURIComponent(recordRoute[2]) : null;
-            if ((req.method === 'POST' && id) || (req.method !== 'POST' && !id))
-              throw Error('invalid-record-route');
-            data = collection.change(req.method, id, body.item);
-          } else if (stateRoute) {
-            const key = Object.hasOwn(stateKeys, stateRoute[1]) ? stateKeys[stateRoute[1]] : null;
-            if (!key) {
-              db.exec('ROLLBACK');
-              return send(res, 404, { error: 'not-found' });
-            }
-            data = { ...store.data, [key]: body.value };
-          } else data = body.data;
-          validateData(data);
-          validateGoalDateChanges(store.data, data);
-          data = auditWorkspace(store.data, data);
-          validateData(data);
-          const revision = randomUUID();
-          identities.save(principal, revision, data);
-          db.exec('COMMIT');
-          return send(res, 200, { version: 3, revision, data });
-        } catch (error) {
-          db.exec('ROLLBACK');
-          if (error.message === 'edit-conflict') return send(res, 409, { error: 'record-changed' });
-          if (error.message === 'record-not-found')
-            return send(res, 404, { error: 'record-not-found' });
-          throw error;
-        }
-      }
-      if (url.pathname === '/api/workspace' && req.method === 'PUT') {
-        const body = await read(req);
-        validateData(body.data);
-        if (typeof body.revision !== 'string') throw Error('invalid-revision');
-        db.exec('BEGIN IMMEDIATE');
-        try {
-          const current = identities.workspace(principal);
-          if ((current?.revision ?? 'empty') !== body.revision) {
-            db.exec('ROLLBACK');
-            return send(res, 409, { error: 'workspace-changed' });
-          }
-          const revision = randomUUID();
-          identities.save(principal, revision, body.data);
-          collaboration.forgetMissing(principal, body.data);
-          db.prepare(
-            "UPDATE assistant_requests SET result=NULL WHERE principal=? AND status='done'",
-          ).run(principal);
-          db.exec('COMMIT');
-          return send(res, 200, { revision });
-        } catch (error) {
-          db.exec('ROLLBACK');
-          throw error;
-        }
-      }
-      return send(res, 404, { error: 'not-found' });
-    } catch {
-      return send(res, 400, { error: 'request-rejected' });
+
+      return await workspaceRoutes(req, res, url, principal);
+    } catch (error) {
+      return reportError(error, req, res, send, options.logger);
     }
   });
   const timer = options.scheduler
-    ? setInterval(() => void notifications.tick().catch(() => {}), 60000)
+    ? setInterval(
+        () =>
+          void notifications.tick().catch((error) =>
+            (options.logger ?? ((event) => console.error(JSON.stringify(event))))({
+              level: 'error',
+              event: 'notification-scheduler-failed',
+              errorType: error.name,
+            }),
+          ),
+        60000,
+      )
     : undefined;
   timer?.unref();
   server.once('close', () => {
+    if (db.isOpen) identities.projectLegacy();
     if (timer) clearInterval(timer);
     notifications.close();
+    events.close();
   });
   return { server, db, notifications };
 }

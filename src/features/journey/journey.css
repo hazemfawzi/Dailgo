@@ -5,12 +5,12 @@
   min-width: 0;
 }
 .daily-cycle h2 {
-  font-size: 22px;
+  font-size: var(--text-lg);
   margin-block: 6px;
 }
 .daily-cycle p,
 .guided-weekly p {
-  font-size: 13px;
+  font-size: var(--text-xs);
   line-height: 1.8;
 }
 .morning-candidates {
@@ -80,7 +80,7 @@
   gap: 16px;
   flex-wrap: wrap;
   margin-top: 18px;
-  font-size: 13px;
+  font-size: var(--text-xs);
   color: var(--purple);
 }
 .evening-reminder {
@@ -156,7 +156,7 @@
   gap: 12px;
   padding: 12px;
   max-width: calc(100vw - 40px);
-  font-size: 13px;
+  font-size: var(--text-xs);
 }
 .focus-question {
   border: 1px solid var(--purple);
@@ -178,7 +178,7 @@
   flex-wrap: wrap;
 }
 .mood-picker button {
-  font-size: 25px;
+  font-size: var(--text-xl);
   min-width: 44px;
   min-height: 44px;
   background: var(--surface);
@@ -192,7 +192,7 @@
 .daily-review > label {
   display: grid;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--text-xs);
   margin-block: 12px;
 }
 .daily-review > label input {
@@ -212,7 +212,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 .life-wheel {
   max-width: 400px;
@@ -223,7 +223,7 @@
   height: auto;
 }
 .life-wheel figcaption {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--muted);
   line-height: 1.8;
 }
@@ -254,7 +254,7 @@
   padding: 12px;
   background: var(--soft);
   border-radius: 8px;
-  font-size: 13px;
+  font-size: var(--text-xs);
 }
 .weekly-goal-progress progress {
   width: 100%;
@@ -269,7 +269,7 @@
   margin-bottom: 8px;
 }
 .guided-weekly h4 {
-  font-size: 15px;
+  font-size: var(--text-sm);
 }
 .next-week-outcome input,
 .next-week-outcome select {
@@ -300,4 +300,39 @@
     scroll-behavior: auto;
     animation: none;
   }
+}
+.journey-onboarding label:has(input[type='checkbox']),
+.journey-onboarding fieldset label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.journey-onboarding fieldset {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.journey-onboarding input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+.dialog-content {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding-bottom: var(--space-6);
+}
+.journey-onboarding > .button:last-child {
+  margin-block: var(--space-3);
+}
+.week-review-steps {
+  display: flex;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+  flex-wrap: wrap;
+}
+.week-review-steps button[aria-current='step'] {
+  background: var(--soft);
+  font-weight: 700;
 }

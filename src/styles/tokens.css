@@ -1,0 +1,41 @@
+:root {
+  --text-xs: 13px;
+  --text-sm: 15px;
+  --text-md: 17px;
+  --text-lg: 20px;
+  --text-xl: 26px;
+  --text-2xl: 32px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-card: 16px;
+  --control-height: 44px;
+  --line-body: 1.8;
+}
+body {
+  font-size: var(--text-sm);
+  line-height: var(--line-body);
+}
+input,
+select,
+textarea {
+  font-size: max(16px, var(--text-sm));
+}
+small,
+.eyebrow {
+  font-size: var(--text-xs);
+}
+button,
+.button {
+  min-height: var(--control-height);
+}
+summary {
+  cursor: pointer;
+  min-height: var(--control-height);
+}
+[hidden] {
+  display: none !important;
+}

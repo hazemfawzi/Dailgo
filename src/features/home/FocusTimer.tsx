@@ -27,6 +27,10 @@ export function FocusTimer({ t, tasks }: { t: Translate; tasks: Task[] }) {
   const [notice, setNotice] = useState('');
   const finalizing = useRef(false);
   useEffect(() => {
+    if (timer.ends || timer.pendingCompletion)
+      document.getElementById('daily-focus')?.closest('details')?.setAttribute('open', '');
+  }, [timer.ends, timer.pendingCompletion?.sessionId]);
+  useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
@@ -40,11 +44,7 @@ export function FocusTimer({ t, tasks }: { t: Translate; tasks: Task[] }) {
     const ok = await transactData((data) =>
       finishFocus(data, timer.sessionId, Date.now(), askCompletion),
     );
-    setNotice(
-      ok
-        ? storageText(t, 'focusSaved')
-        : t('Time was not saved; retry.', 'الوقت لم يُحفظ؛ أعد المحاولة.'),
-    );
+    setNotice(ok ? storageText(t, 'focusSaved') : t('ui.timeWasNotSavedRetry.22fa81'));
     finalizing.current = false;
   }
   useEffect(() => {
@@ -68,17 +68,17 @@ export function FocusTimer({ t, tasks }: { t: Translate; tasks: Task[] }) {
   }
   return (
     <section id="daily-focus" className="focus-widget">
-      <h3 dir="auto">{t('Focus on one step', 'ركّز على خطوة واحدة')}</h3>
+      <h3 dir="auto">{t('ui.focusOnOneStep.8fccd3')}</h3>
       <select
         disabled={!!timer.ends}
-        aria-label={t('Focus task', 'مهمة التركيز')}
+        aria-label={t('ui.focusTask.5940c2')}
         value={timer.taskId ?? ''}
         onChange={(e) => setTimer({ ...timer, taskId: e.target.value || undefined })}
       >
-        <option value="">{t('Unlinked session', 'جلسة بدون مهمة')}</option>
+        <option value="">{t('ui.unlinkedSession.98d06f')}</option>
         {timer.taskId && !tasks.some((x) => x.id === timer.taskId && isActionable(x)) && (
           <option value={timer.taskId}>
-            {tasks.find((x) => x.id === timer.taskId)?.title ?? t('Task removed', 'المهمة محذوفة')}
+            {tasks.find((x) => x.id === timer.taskId)?.title ?? t('ui.taskRemoved.4c53bf')}
           </option>
         )}
         {tasks.filter(isActionable).map((task) => (
@@ -98,23 +98,23 @@ export function FocusTimer({ t, tasks }: { t: Translate; tasks: Task[] }) {
           variant="outline"
           onClick={() => (running ? void finish() : start())}
         >
-          {running ? t('Pause and record', 'إيقاف وتسجيل الوقت') : t('Start focus', 'ابدأ التركيز')}
+          {running ? t('ui.pauseAndRecord.070249') : t('ui.startFocus.98a925')}
         </Button>
         <Button
           variant="ghost"
           disabled={!!timer.ends}
           onClick={() => setTimer({ ...timer, remaining: 1500 })}
         >
-          {t('Reset', 'إعادة')}
+          {t('ui.reset.4bf2b4')}
         </Button>
       </div>
       {timer.pendingCompletion && (
         <section
           className="focus-question"
           role="group"
-          aria-label={t('Focus completion question', 'سؤال إكمال جلسة التركيز')}
+          aria-label={t('ui.focusCompletionQuestion.9622bf')}
         >
-          <h4 dir="auto">{t('Did you finish the task?', 'خلصت المهمة؟')}</h4>
+          <h4 dir="auto">{t('ui.didYouFinishTheTask.970982')}</h4>
           <p dir="auto">
             {tasks.find((task) => task.id === timer.pendingCompletion?.taskId)?.title}
           </p>
@@ -123,16 +123,10 @@ export function FocusTimer({ t, tasks }: { t: Translate; tasks: Task[] }) {
               const ok = await transactData((data) =>
                 answerFocusCompletion(data, timer.pendingCompletion!.sessionId, true),
               );
-              if (!ok)
-                setNotice(
-                  t(
-                    'The task changed; review it, or keep it open.',
-                    'المهمة اتغيرت؛ راجعها أو اختار تفضل مفتوحة.',
-                  ),
-                );
+              if (!ok) setNotice(t('ui.theTaskChangedReviewItOrKeep.86eb7e'));
             }}
           >
-            {t('Yes, mark complete', 'أيوه، علّمها مكتملة')}
+            {t('ui.yesMarkComplete.e30ff3')}
           </Button>
           <Button
             variant="outline"
@@ -142,15 +136,12 @@ export function FocusTimer({ t, tasks }: { t: Translate; tasks: Task[] }) {
               )
             }
           >
-            {t('Keep task open', 'خلي المهمة مفتوحة')}
+            {t('ui.keepTaskOpen.a435b2')}
           </Button>
         </section>
       )}
       <p dir="auto" className="muted">
-        {t(
-          'Focus sessions are saved to your workspace. Elapsed time does not prove task completion.',
-          'جلسات التركيز بتتحفظ في مساحتك. تسجيل الوقت مش معناه إن المهمة اكتملت.',
-        )}
+        {t('ui.focusSessionsAreSavedToYourWorkspace.65aa89')}
       </p>
       {notice && (
         <p dir="auto" role="status">
@@ -159,12 +150,12 @@ export function FocusTimer({ t, tasks }: { t: Translate; tasks: Task[] }) {
       )}
       {error && (
         <p dir="auto" role="alert">
-          {t('Timer storage failed.', 'تعذر حفظ المؤقت.')}
+          {t('ui.timerStorageFailed.bafb85')}
         </p>
       )}
       <details>
         <summary>
-          {t('Focus log', 'سجل التركيز')} · {localizedNumber(sessions.length, t('en', 'ar'))}
+          {t('ui.focusLog.331793')} · {localizedNumber(sessions.length, t('en', 'ar'))}
         </summary>
         {[...sessions]
           .reverse()
@@ -173,9 +164,9 @@ export function FocusTimer({ t, tasks }: { t: Translate; tasks: Task[] }) {
             <p dir="auto" key={s.id}>
               {tasks.find((x) => x.id === s.taskId)?.title ??
                 (s.taskId
-                  ? t('Task no longer available', 'المهمة لم تعد متاحة')
-                  : t('Unlinked session', 'جلسة بدون مهمة'))}{' '}
-              · <bdi>{formatDuration(s.seconds, t('en', 'ar'))}</bdi> {t('min:sec', 'د:ث')} ·{' '}
+                  ? t('ui.taskNoLongerAvailable.90ea24')
+                  : t('ui.unlinkedSession.98d06f'))}{' '}
+              · <bdi>{formatDuration(s.seconds, t('en', 'ar'))}</bdi> {t('ui.minSec.05be34')} ·{' '}
               {formatTimestamp(s.endedAt, t('en', 'ar'))}
             </p>
           ))}

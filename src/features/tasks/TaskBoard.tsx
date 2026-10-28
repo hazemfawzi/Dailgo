@@ -65,17 +65,17 @@ export function TaskBoard({
     setQuery(params.get('q') ?? '');
   }, [params.get('q')]);
   const filters = [
-    ['open', t('Open', 'مفتوحة')],
-    ['today', t('Due today', 'تسليم اليوم')],
-    ['overdue', t('Overdue', 'متأخرة')],
-    ['doing', t('In progress', 'قيد التنفيذ')],
-    ['waiting', t('Waiting', 'في انتظار')],
-    ['blocked', t('Blocked', 'متعطلة')],
-    ['deferred', t('Deferred', 'مؤجلة')],
-    ['cancelled', t('Cancelled', 'ملغاة')],
-    ['done', t('Completed', 'مكتملة')],
-    ['all', t('All', 'الكل')],
-    ['archived', t('Archive', 'الأرشيف')],
+    ['open', t('ui.open.ec80f4')],
+    ['today', t('ui.dueToday.6c50f4')],
+    ['overdue', t('ui.overdue.918363')],
+    ['doing', t('ui.inProgress.63d24b')],
+    ['waiting', t('ui.waiting.656ea8')],
+    ['blocked', t('ui.blocked.486a9f')],
+    ['deferred', t('ui.deferred.7d343e')],
+    ['cancelled', t('ui.cancelled.00a275')],
+    ['done', t('ui.completed.bba94f')],
+    ['all', t('ui.all.edbf9b')],
+    ['archived', t('ui.archive.468a31')],
   ];
   const filtered = tasks.filter(
     (task) =>
@@ -124,7 +124,7 @@ export function TaskBoard({
             <label className="task-selection">
               <input
                 type="checkbox"
-                aria-label={`${t('Select task', 'اختيار المهمة')}: ${task.title}`}
+                aria-label={`${t('ui.selectTask.32f3e7')}: ${task.title}`}
                 checked={selectedVisible.includes(task.id)}
                 onChange={(e) =>
                   setSelected(
@@ -134,7 +134,7 @@ export function TaskBoard({
                   )
                 }
               />
-              {t('Select', 'تحديد')}
+              {t('ui.select.726fbf')}
             </label>
           )}
           <button dir="auto" className="task-title-button" onClick={() => edit(task)}>
@@ -143,7 +143,7 @@ export function TaskBoard({
           <Button
             variant="ghost"
             size="icon"
-            aria-label={`${t('Pin', 'تثبيت')}: ${task.title}`}
+            aria-label={`${t('ui.pin.98b089')}: ${task.title}`}
             aria-pressed={!!task.pinned}
             onClick={() => update(task.id, { pinned: !task.pinned })}
           >
@@ -168,7 +168,7 @@ export function TaskBoard({
           {task.plannedDate && (
             <span>
               <CalendarDays size={12} />
-              {t('Planned', 'التنفيذ')}: {formatCalendarDate(task.plannedDate, t('en', 'ar'))}
+              {t('ui.planned.2b68c6')}: {formatCalendarDate(task.plannedDate, t('en', 'ar'))}
               {task.plannedTime && (
                 <>
                   {' '}
@@ -180,13 +180,13 @@ export function TaskBoard({
           {task.dueDate && (
             <span className={isOverdue(task) ? 'overdue-text' : ''}>
               <CalendarDays size={12} />
-              {t('Due', 'التسليم')}: {formatCalendarDate(task.dueDate, t('en', 'ar'))}
+              {t('ui.due.6c34a1')}: {formatCalendarDate(task.dueDate, t('en', 'ar'))}
             </span>
           )}
           {!!task.estimate && (
             <span>
               <Clock3 size={12} />
-              {localizedNumber(task.estimate, t('en', 'ar'))} {t('min', 'د')}
+              {localizedNumber(task.estimate, t('en', 'ar'))} {t('ui.min.bea689')}
             </span>
           )}
           {!!task.subtasks?.length && (
@@ -206,7 +206,7 @@ export function TaskBoard({
           <button
             className={`task-completion-control ${task.done ? 'is-complete' : ''}`}
             aria-pressed={task.done}
-            aria-label={`${t('Complete', 'إكمال')}: ${task.title}`}
+            aria-label={`${t('ui.complete.e721b1')}: ${task.title}`}
             onClick={() =>
               update(task.id, { done: !task.done, status: task.done ? 'todo' : 'done' })
             }
@@ -214,10 +214,10 @@ export function TaskBoard({
             <span className="task-completion-circle" aria-hidden="true">
               {task.done && <Check size={12} />}
             </span>
-            {task.done ? t('Completed', 'مكتملة') : t('Mark complete', 'إكمال المهمة')}
+            {task.done ? t('ui.completed.bba94f') : t('ui.markComplete.d41e6a')}
           </button>
           <select
-            aria-label={`${t('Status', 'الحالة')}: ${task.title}`}
+            aria-label={`${t('ui.status.7dafdc')}: ${task.title}`}
             value={statusOf(task)}
             onChange={(e) =>
               update(task.id, {
@@ -236,7 +236,7 @@ export function TaskBoard({
             <Button
               variant="ghost"
               size="icon"
-              aria-label={`${t('Duplicate', 'نسخ')}: ${task.title}`}
+              aria-label={`${t('ui.duplicate.da09ad')}: ${task.title}`}
               onClick={() =>
                 setTasks((old) => [
                   ...old,
@@ -249,7 +249,7 @@ export function TaskBoard({
                     updatedAt: undefined,
                     completedAt: undefined,
                     id: crypto.randomUUID(),
-                    title: `${task.title} ${t('(copy)', '(نسخة)')}`,
+                    title: `${task.title} ${t('ui.copy.a4c60f')}`,
                     done: false,
                     status: 'todo',
                     archived: false,
@@ -268,7 +268,7 @@ export function TaskBoard({
             <Button
               variant="ghost"
               size="icon"
-              aria-label={`${t('Edit', 'تعديل')}: ${task.title}`}
+              aria-label={`${t('ui.edit.c554f4')}: ${task.title}`}
               onClick={() => edit(task)}
             >
               <Pencil size={14} />
@@ -276,7 +276,7 @@ export function TaskBoard({
             <Button
               variant="ghost"
               size="icon"
-              aria-label={`${task.archived ? t('Restore', 'استعادة') : t('Archive', 'أرشفة')}: ${task.title}`}
+              aria-label={`${task.archived ? t('ui.restore.82172b') : t('ui.archive.b24a9a')}: ${task.title}`}
               onClick={() => update(task.id, { archived: !task.archived })}
             >
               {task.archived ? <RotateCcw size={14} /> : <Archive size={14} />}
@@ -284,7 +284,7 @@ export function TaskBoard({
             <Button
               variant="ghost"
               size="icon"
-              aria-label={`${t('Delete', 'حذف')}: ${task.title}`}
+              aria-label={`${t('ui.delete.010491')}: ${task.title}`}
               onClick={() => setRemove(task)}
             >
               <Trash2 size={14} />
@@ -299,16 +299,16 @@ export function TaskBoard({
       <div className="collection-top">
         <div>
           <h2 dir="auto">
-            {t('Tasks', 'المهام')}
+            {t('ui.tasks.19a9e5')}
             <span className="count">{localizedNumber(visible.length, t('en', 'ar'))}</span>
           </h2>
           <p dir="auto" className="muted">
-            {t('Organize the work. Protect your attention.', 'نظّم شغلك وخلّي تركيزك للي يستحق.')}
+            {t('ui.organizeTheWorkProtectYourAttention.2508ab')}
           </p>
         </div>
         <Button onClick={() => edit()}>
           <Plus size={16} />
-          {t('New task', 'مهمة جديدة')}
+          {t('ui.newTask.02b6c9')}
         </Button>
       </div>
       <div className="task-filter-chips">
@@ -330,18 +330,18 @@ export function TaskBoard({
           <Search size={16} />
           <input
             dir="auto"
-            aria-label={t('Search tasks', 'بحث في المهام')}
+            aria-label={t('ui.searchTasks.7e7b94')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('Search titles, notes, tags…', 'ابحث بالعنوان أو الوصف أو الوسوم…')}
+            placeholder={t('ui.searchTitlesNotesTags.d88319')}
           />
         </label>
         <select
-          aria-label={t('Filter life area', 'تصفية المجال')}
+          aria-label={t('ui.filterLifeArea.3e6905')}
           value={area}
           onChange={(e) => setArea(e.target.value)}
         >
-          <option value="all">{t('All areas', 'كل المجالات')}</option>
+          <option value="all">{t('ui.allAreas.e2d78b')}</option>
           {areas.map((a) => (
             <option value={a} key={a}>
               {areaLabel(a, t)}
@@ -349,11 +349,11 @@ export function TaskBoard({
           ))}
         </select>
         <select
-          aria-label={t('Filter priority', 'تصفية الأولوية')}
+          aria-label={t('ui.filterPriority.116d44')}
           value={priority}
           onChange={(e) => setPriority(e.target.value)}
         >
-          <option value="all">{t('All priorities', 'كل الأولويات')}</option>
+          <option value="all">{t('ui.allPriorities.04ea93')}</option>
           {['high', 'medium', 'low'].map((p) => (
             <option value={p} key={p}>
               {priorityLabel(p, t)}
@@ -361,13 +361,13 @@ export function TaskBoard({
           ))}
         </select>
         <select
-          aria-label={t('Sort tasks', 'ترتيب المهام')}
+          aria-label={t('ui.sortTasks.fb90f9')}
           value={sort}
           onChange={(e) => setSort(e.target.value)}
         >
-          <option value="smart">{t('Focus first', 'الأهم أولاً')}</option>
-          <option value="date">{t('Due date', 'موعد التسليم')}</option>
-          <option value="title">{t('Title', 'العنوان')}</option>
+          <option value="smart">{t('ui.focusFirst.1c8895')}</option>
+          <option value="date">{t('ui.dueDate.3146bb')}</option>
+          <option value="title">{t('ui.title.770d09')}</option>
         </select>
         <Button
           variant="outline"
@@ -377,14 +377,14 @@ export function TaskBoard({
             setSelected([]);
           }}
         >
-          {selectionMode ? t('Finish selection', 'إنهاء التحديد') : t('Select tasks', 'تحديد مهام')}
+          {selectionMode ? t('ui.finishSelection.18dd5c') : t('ui.selectTasks.8e0c6f')}
         </Button>
         <div className="view-toggle">
           <Button
             variant={view === 'list' ? 'default' : 'ghost'}
             size="icon"
             aria-pressed={view === 'list'}
-            aria-label={t('List view', 'عرض القائمة')}
+            aria-label={t('ui.listView.db70e6')}
             onClick={() => setView('list')}
           >
             <List size={16} />
@@ -393,7 +393,7 @@ export function TaskBoard({
             variant={view === 'board' ? 'default' : 'ghost'}
             size="icon"
             aria-pressed={view === 'board'}
-            aria-label={t('Board view', 'عرض اللوحة')}
+            aria-label={t('ui.boardView.328618')}
             onClick={() => setView('board')}
           >
             <Columns3 size={16} />
@@ -409,22 +409,22 @@ export function TaskBoard({
               onChange={(e) => setSelected(e.target.checked ? visible.map((x) => x.id) : [])}
             />
             {selectedVisible.length
-              ? `${localizedNumber(selectedVisible.length, t('en', 'ar'))} ${t('selected', 'محددة')}`
-              : t('Select all visible', 'اختيار المعروض')}
+              ? `${localizedNumber(selectedVisible.length, t('en', 'ar'))} ${t('ui.selected.fbd7e6')}`
+              : t('ui.selectAllVisible.d88acb')}
           </label>
           {selectedVisible.length > 0 && (
             <div>
               <Button variant="ghost" onClick={() => bulk({ done: true, status: 'done' })}>
                 <Check size={14} />
-                {t('Complete', 'إكمال')}
+                {t('ui.complete.e721b1')}
               </Button>
               <Button variant="ghost" onClick={() => bulk({ archived: filter !== 'archived' })}>
                 <Archive size={14} />
-                {filter === 'archived' ? t('Restore', 'استعادة') : t('Archive', 'أرشفة')}
+                {filter === 'archived' ? t('ui.restore.82172b') : t('ui.archive.b24a9a')}
               </Button>
               <Button variant="ghost" onClick={() => setBulkDelete(true)}>
                 <Trash2 size={14} />
-                {t('Delete', 'حذف')}
+                {t('ui.delete.010491')}
               </Button>
             </div>
           )}
@@ -464,16 +464,9 @@ export function TaskBoard({
         <div className="card collection-empty">
           <CheckCheck size={30} />
           <h3 dir="auto">
-            {tasks.length
-              ? t('No matching tasks', 'مفيش مهام مطابقة')
-              : t('No tasks yet', 'لسه مفيش مهام')}
+            {tasks.length ? t('ui.noMatchingTasks.2c9d91') : t('ui.noTasksYet.821fb5')}
           </h3>
-          <p dir="auto">
-            {t(
-              'No matching tasks. Adjust the filters or add your next step.',
-              'مفيش مهام مطابقة. غيّر التصفية أو أضف خطوتك الجاية.',
-            )}
-          </p>
+          <p dir="auto">{t('ui.noMatchingTasksAdjustTheFiltersOr.a8f4be')}</p>
           {tasks.length ? (
             <Button
               variant="outline"
@@ -484,28 +477,25 @@ export function TaskBoard({
                 setParams({});
               }}
             >
-              {t('Reset filters', 'إعادة التصفية')}
+              {t('ui.resetFilters.e12109')}
             </Button>
           ) : (
-            <Button onClick={() => edit()}>{t('Add your first task', 'أضف أول مهمة')}</Button>
+            <Button onClick={() => edit()}>{t('ui.addYourFirstTask.1556b0')}</Button>
           )}
         </div>
       )}
       <Dialog
         open={bulkDelete}
         onOpenChange={setBulkDelete}
-        title={t('Delete selected tasks?', 'حذف المهام المحددة؟')}
-        description={t(
-          'Only selected tasks visible in this view will be removed. Recover it in Data and backup.',
-          'سيتم حذف المهام المحددة الظاهرة هنا فقط. يمكن استعادتها من البيانات والنسخ الاحتياطي.',
-        )}
+        title={t('ui.deleteSelectedTasks.d6fc83')}
+        description={t('ui.onlySelectedTasksVisibleInThisView.b58ace')}
       >
         <p dir="auto">
-          {localizedNumber(selectedVisible.length, t('en', 'ar'))} {t('tasks', 'مهام')}
+          {localizedNumber(selectedVisible.length, t('en', 'ar'))} {t('ui.tasks.1c126f')}
         </p>
         <div className="dialog-actions">
           <Button variant="outline" onClick={() => setBulkDelete(false)}>
-            {t('Cancel', 'إلغاء')}
+            {t('ui.cancel.428808')}
           </Button>
           <Button
             onClick={() => {
@@ -514,7 +504,7 @@ export function TaskBoard({
               setBulkDelete(false);
             }}
           >
-            {t('Delete selected', 'حذف المحدد')}
+            {t('ui.deleteSelected.732de6')}
           </Button>
         </div>
       </Dialog>

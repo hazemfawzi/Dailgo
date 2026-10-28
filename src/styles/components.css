@@ -9,7 +9,7 @@
   margin-bottom: 20px;
 }
 .collection-top h2 {
-  font-size: 21px;
+  font-size: var(--text-lg);
   display: flex;
   gap: 10px;
   align-items: center;
@@ -19,7 +19,7 @@
   margin: 7px 0 0;
 }
 .collection-top h2 .count {
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 .collection-tools {
   display: flex;
@@ -50,7 +50,7 @@
   border: 0;
   background: none;
   outline: 0;
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 .collection-tools select,
 .date-picker input {
@@ -58,7 +58,7 @@
   border: 1px solid var(--border);
   padding: 9px 12px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 .entry-grid {
   display: grid;
@@ -76,7 +76,7 @@
   justify-content: space-between;
   gap: 10px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--text-xs);
   letter-spacing: 0.3px;
   margin-bottom: 17px;
 }
@@ -87,14 +87,14 @@
   padding: 3px 7px;
 }
 .entry-card h3 {
-  font-size: 16px;
+  font-size: var(--text-sm);
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
 .entry-detail {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.9;
   color: var(--muted);
   margin: 12px 0 17px;
@@ -114,14 +114,14 @@
   display: flex;
   gap: 8px;
   align-items: center;
-  font-size: 12px;
+  font-size: var(--text-xs);
   margin-top: 14px;
   color: var(--purple);
   flex-wrap: wrap;
 }
 .entry-date small {
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--text-xs);
 }
 .goal-progress {
   margin-top: auto;
@@ -130,7 +130,7 @@
 .goal-progress > div {
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--muted);
   margin-bottom: 7px;
 }
@@ -168,12 +168,12 @@ progress::-moz-progress-bar {
 }
 .collection-empty h3 {
   display: block;
-  font-size: 16px;
+  font-size: var(--text-sm);
   color: var(--text);
   line-height: 1.7;
 }
 .collection-empty p {
-  font-size: 12px;
+  font-size: var(--text-xs);
   margin: 12px 0 22px;
 }
 .editor-form textarea {
@@ -184,7 +184,7 @@ progress::-moz-progress-bar {
   border-radius: 8px;
   background: var(--bg);
   padding: 12px;
-  font-size: 13px;
+  font-size: var(--text-xs);
   color: var(--text);
   resize: vertical;
   line-height: 1.7;
@@ -215,7 +215,7 @@ progress::-moz-progress-bar {
   flex-shrink: 0;
 }
 .context-banner p {
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1.9;
   margin: 0;
 }
@@ -278,11 +278,11 @@ progress::-moz-progress-bar {
   background: var(--soft);
 }
 .life-area h3 {
-  font-size: 15px;
+  font-size: var(--text-sm);
   margin-top: 19px;
 }
 .life-area p {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--muted);
   margin: 8px 0 20px;
 }
@@ -299,14 +299,14 @@ progress::-moz-progress-bar {
   height: 100%;
 }
 .life-area small {
-  font-size: 9px;
+  font-size: var(--text-xs);
   color: var(--muted);
   display: block;
   margin-top: 8px;
 }
 .clear-filter {
   margin-top: 20px;
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--purple);
   min-height: 35px;
 }
@@ -329,7 +329,7 @@ progress::-moz-progress-bar {
   border-radius: 7px;
   color: var(--muted);
   background: none;
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 .segmented-tabs button[aria-selected='true'] {
   background: var(--soft);
@@ -354,10 +354,10 @@ progress::-moz-progress-bar {
   flex-shrink: 0;
 }
 .planner-task .task-info > span {
-  font-size: 13px;
+  font-size: var(--text-xs);
 }
 .planner-task .task-info small {
-  font-size: 10px;
+  font-size: var(--text-xs);
 }
 .calendar-card {
   padding: 23px;
@@ -372,7 +372,7 @@ progress::-moz-progress-bar {
   margin-bottom: 22px;
 }
 .calendar-heading h3 {
-  font-size: 16px;
+  font-size: var(--text-sm);
 }
 .calendar-heading > div {
   display: flex;
@@ -387,7 +387,7 @@ progress::-moz-progress-bar {
 .weekday {
   text-align: center;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--text-xs);
   padding: 12px 0;
 }
 .calendar-grid button {
@@ -397,7 +397,7 @@ progress::-moz-progress-bar {
   border-radius: 8px;
   background: var(--bg);
   color: var(--text);
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 .calendar-grid button.selected {
   background: var(--purple);
@@ -423,7 +423,7 @@ progress::-moz-progress-bar {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--muted);
   margin: 22px 0;
 }
@@ -437,7 +437,7 @@ progress::-moz-progress-bar {
   border: 1px solid var(--border);
   border-radius: 8px;
   margin-top: 20px;
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 .routine-check span {
   margin-inline-start: auto;
@@ -460,7 +460,7 @@ progress::-moz-progress-bar {
 }
 .conversation-list > .button {
   width: 100%;
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 .conversation-filter {
   display: flex;
@@ -472,7 +472,7 @@ progress::-moz-progress-bar {
   background: none;
   border: 0;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--text-xs);
   padding: 8px 2px;
   border-bottom: 2px solid transparent;
 }
@@ -500,7 +500,7 @@ progress::-moz-progress-bar {
   background: none;
   border: 0;
   color: var(--text);
-  font-size: 11px;
+  font-size: var(--text-xs);
   padding: 11px 7px;
 }
 .conversation-row > button:first-child > svg {
@@ -518,7 +518,7 @@ progress::-moz-progress-bar {
   flex-shrink: 0;
 }
 .conversation-list > .muted {
-  font-size: 10px;
+  font-size: var(--text-xs);
   padding: 10px 2px;
 }
 .chat-panel {
@@ -533,10 +533,10 @@ progress::-moz-progress-bar {
   border-bottom: 1px solid var(--border);
 }
 .chat-header h3 {
-  font-size: 13px;
+  font-size: var(--text-xs);
 }
 .chat-header p {
-  font-size: 9px;
+  font-size: var(--text-xs);
   color: var(--muted);
   margin: 5px 0 0;
   line-height: 1.7;
@@ -562,11 +562,11 @@ progress::-moz-progress-bar {
   color: var(--purple);
 }
 .chat-welcome h2 {
-  font-size: 24px;
+  font-size: var(--text-xl);
   color: var(--text);
 }
 .chat-welcome p {
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.9;
 }
 .suggestion-grid {
@@ -579,7 +579,7 @@ progress::-moz-progress-bar {
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--text-xs);
   padding: 12px;
   border-radius: 9px;
   text-align: start;
@@ -607,7 +607,7 @@ progress::-moz-progress-bar {
   padding: 12px 16px;
 }
 .message-role {
-  font-size: 9px;
+  font-size: var(--text-xs);
   color: var(--purple);
   font-weight: 600;
   display: block;
@@ -615,7 +615,7 @@ progress::-moz-progress-bar {
 }
 .chat-message > p {
   white-space: pre-wrap;
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.9;
   margin: 0;
 }
@@ -627,20 +627,20 @@ progress::-moz-progress-bar {
   background: var(--bg);
 }
 .chat-proposal > strong {
-  font-size: 14px;
+  font-size: var(--text-xs);
   font-weight: 500;
   display: block;
   margin: 14px 0 10px;
   white-space: pre-wrap;
 }
 .chat-proposal > span[dir] {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--purple);
   display: block;
   margin-bottom: 12px;
 }
 .chat-proposal p {
-  font-size: 10px;
+  font-size: var(--text-xs);
   line-height: 1.8;
   color: var(--muted);
   margin: 7px 0;
@@ -656,7 +656,7 @@ progress::-moz-progress-bar {
   align-items: center;
   gap: 7px;
   color: var(--purple);
-  font-size: 11px;
+  font-size: var(--text-xs);
   flex-wrap: wrap;
   line-height: 1.8;
 }
@@ -692,7 +692,7 @@ progress::-moz-progress-bar {
   min-height: 45px;
   color: var(--text);
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.8;
 }
 .chat-input .button {
@@ -700,7 +700,7 @@ progress::-moz-progress-bar {
 }
 .chat-disclaimer {
   color: var(--muted);
-  font-size: 8px;
+  font-size: var(--text-xs);
   line-height: 1.8;
   text-align: center;
   margin: 12px 20px 17px;
@@ -754,14 +754,14 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
     margin-top: 24px;
   }
   .collection-top h2 {
-    font-size: 18px;
+    font-size: var(--text-md);
   }
   .collection-top .button {
-    font-size: 10px;
+    font-size: var(--text-xs);
     padding: 0 12px;
   }
   .collection-top p {
-    font-size: 10px;
+    font-size: var(--text-xs);
   }
   .collection-tools {
     gap: 8px;
@@ -784,13 +784,13 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
     padding: 20px;
   }
   .entry-meta {
-    font-size: 10px;
+    font-size: var(--text-xs);
   }
   .entry-card h3 {
-    font-size: 16px;
+    font-size: var(--text-sm);
   }
   .entry-detail {
-    font-size: 12px;
+    font-size: var(--text-xs);
   }
   .entry-actions .button {
     width: 40px;
@@ -801,7 +801,7 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
     align-items: flex-start;
   }
   .context-banner p {
-    font-size: 10px;
+    font-size: var(--text-xs);
   }
   .life-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -824,15 +824,15 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
     width: 13px;
   }
   .life-area h3 {
-    font-size: 13px;
+    font-size: var(--text-xs);
     margin-top: 17px;
   }
   .life-area p {
-    font-size: 10px;
+    font-size: var(--text-xs);
     margin-bottom: 16px;
   }
   .life-area small {
-    font-size: 8px;
+    font-size: var(--text-xs);
   }
   .segmented-tabs {
     width: 100%;
@@ -843,7 +843,7 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
     justify-content: center;
     gap: 6px;
     padding: 12px 8px;
-    font-size: 11px;
+    font-size: var(--text-xs);
   }
   .planner-tasks {
     padding: 5px 17px;
@@ -866,7 +866,7 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
     padding: 17px;
   }
   .calendar-heading h3 {
-    font-size: 13px;
+    font-size: var(--text-xs);
   }
   .calendar-heading .button {
     padding: 0 9px;
@@ -876,11 +876,11 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
     gap: 4px;
   }
   .calendar-grid button {
-    font-size: 12px;
+    font-size: var(--text-xs);
     padding: 12px 0;
   }
   .weekday {
-    font-size: 9px;
+    font-size: var(--text-xs);
   }
   .conversation-layout {
     grid-template-columns: 1fr;
@@ -906,10 +906,10 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
     gap: 10px;
   }
   .chat-header h3 {
-    font-size: 12px;
+    font-size: var(--text-xs);
   }
   .chat-header p {
-    font-size: 8px;
+    font-size: var(--text-xs);
   }
   .chat-messages {
     padding: 18px 15px;
@@ -920,17 +920,17 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
     padding: 15px 0;
   }
   .chat-welcome h2 {
-    font-size: 22px;
+    font-size: var(--text-lg);
   }
   .suggestion-grid {
     grid-template-columns: 1fr;
   }
   .suggestion-grid button {
-    font-size: 11px;
+    font-size: var(--text-xs);
     min-height: 44px;
   }
   .chat-message > p {
-    font-size: 13px;
+    font-size: var(--text-xs);
   }
   .chat-input {
     margin-inline: 15px;
@@ -939,17 +939,17 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
     padding: 14px;
   }
   .chat-proposal .eyebrow {
-    font-size: 7px;
+    font-size: var(--text-xs);
     letter-spacing: 0.7px;
   }
   .chat-proposal > strong {
-    font-size: 13px;
+    font-size: var(--text-xs);
   }
   .chat-disclaimer {
-    font-size: 8px;
+    font-size: var(--text-xs);
   }
   .routine-check {
-    font-size: 12px;
+    font-size: var(--text-xs);
     min-height: 44px;
   }
 }
@@ -1045,14 +1045,14 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
 .capture-item-head {
   color: #8c7bb1;
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: var(--text-xs);
 }
 .capture-original {
   padding: 12px;
   border: 1px dashed #b8acd0;
   border-radius: 10px;
   margin: 12px 0;
-  font-size: 13px;
+  font-size: var(--text-xs);
 }
 .capture-original summary {
   cursor: pointer;
@@ -1062,7 +1062,7 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
   overflow-wrap: anywhere;
 }
 .capture-hint {
-  font-size: 13px;
+  font-size: var(--text-xs);
   color: #9a631c;
   line-height: 1.7;
 }
@@ -1182,11 +1182,11 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
   align-items: center;
   gap: 10px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.6;
 }
 .suggestion-reason .button {
-  font-size: 10px;
+  font-size: var(--text-xs);
   padding: 4px 7px;
   height: auto;
   white-space: nowrap;
@@ -1223,7 +1223,7 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
 .assistant-scope {
   display: block;
   padding: 16px;
-  font-size: 12px;
+  font-size: var(--text-xs);
   border-bottom: 1px solid var(--border);
 }
 .assistant-scope small {
@@ -1232,7 +1232,7 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
   color: var(--muted);
 }
 .message-time {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 .routine-days {
@@ -1333,4 +1333,24 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
   .suggestion-reason {
     flex-wrap: wrap;
   }
+}
+.localized-date-field {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.localized-date-preview {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.remember-choice {
+  display: flex !important;
+  align-items: center;
+  gap: var(--space-3);
+}
+.remember-choice input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  flex: none;
 }

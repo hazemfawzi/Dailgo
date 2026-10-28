@@ -13,14 +13,14 @@ export function UndoNotice({ t }: { t: Translate }) {
       <p dir="auto" className="undo-notice" role="status">
         {error}
         <Button variant="ghost" onClick={() => setError('')}>
-          {t('Dismiss', 'إغلاق')}
+          {t('ui.dismiss.f9e997')}
         </Button>
       </p>
     ) : null;
   return (
     <aside className="undo-notice" role="status">
       <span>
-        {t('Saved · Undo available for 20 seconds', 'اتحفظ · التراجع متاح لمدة ٢٠ ثانية')} ·{' '}
+        {t('ui.savedUndoAvailableFor20Seconds.ae5d9b')} ·{' '}
         {localizedNumber(ticket.rows.length, t('en', 'ar'))}
       </span>
       <Button
@@ -31,19 +31,12 @@ export function UndoNotice({ t }: { t: Translate }) {
           const ok = await transactData((data) => applyUndo(data, ticket));
           setBusy(false);
           clearUndo();
-          setError(
-            ok
-              ? ''
-              : t(
-                  'Could not undo: the item changed or the time elapsed. Review the latest state.',
-                  'تعذر التراجع: العنصر اتغير أو الوقت انتهى. راجع أحدث نسخة.',
-                ),
-          );
+          setError(ok ? '' : t('ui.couldNotUndoTheItemChangedOr.7053e0'));
         }}
       >
-        {t('Undo', 'تراجع')}
+        {t('ui.undo.cfb7bc')}
       </Button>
-      <Button variant="ghost" aria-label={t('Dismiss undo', 'إغلاق التراجع')} onClick={clearUndo}>
+      <Button variant="ghost" aria-label={t('ui.dismissUndo.9ebe1d')} onClick={clearUndo}>
         ×
       </Button>
     </aside>

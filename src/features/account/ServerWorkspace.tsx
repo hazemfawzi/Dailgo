@@ -1,9 +1,14 @@
+import { clearOffline, offlineEnabled } from '../../lib/offlineCache';
+import { getServerAccount } from '../../lib/serverStorage';
+import { createTranslator } from '../../i18n/translate';
+import { createPortal } from 'react-dom';
 import { formatNumber as localizedNumber } from '../../i18n/format';
 import { useEffect, useState } from 'react';
 import type { ReactNode, FormEvent } from 'react';
 import { apiRequest, ApiError, loadServerStore, replaceServerStore } from '../../lib/serverStorage';
 import {
   connectServerStorage,
+  connectOfflineStorage,
   disconnectServerStorage,
   startServerRefresh,
   useStorageState,
@@ -21,7 +26,12 @@ type Account = {
 };
 type Migration = { data: Data; token: string; revision: string };
 function ConnectionBar({ onLogout }: { onLogout: () => Promise<void> }) {
-  const { error, saving } = useStorageState();
+  const { data, error, saving, queued, offline } = useStorageState();
+  const [target, setTarget] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setTarget(document.getElementById('account-controls'));
+  }, []);
+  const t = createTranslator(data['personal-os.language'] === 'en' ? 'en' : 'ar');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   async function password(event: FormEvent<HTMLFormElement>) {
@@ -43,65 +53,75 @@ function ConnectionBar({ onLogout }: { onLogout: () => Promise<void> }) {
       setBusy(false);
     }
   }
-  return (
-    <div className="server-connection" dir="rtl">
-      <span role="status">
+  if (!target) return null;
+  return createPortal(
+    <div className="server-connection">
+      <span className={'save-status ' + (error ? 'needs-attention' : '')} role="status">
         {saving
-          ? 'جاري حفظ التعديلات على السيرفر…'
-          : error
-            ? 'الحفظ يحتاج مراجعة — راجع الخطأ قبل المتابعة'
-            : 'متصل بحساب السيرفر · الحفظ تلقائي · تحديث الأجهزة كل ١٠ ثوانٍ'}
+          ? t('ui.saving.5c017d')
+          : queued
+            ? t('ui.savedOnDevice.5ab857')
+            : offline || error
+              ? t('ui.notConnected.f7a562')
+              : t('ui.saved.ecdebe')}
       </span>
-      {error && <button onClick={refreshStorage}>إعادة الاتصال / تحميل أحدث نسخة</button>}
-      <details>
-        <summary>الحساب</summary>
-        <form onSubmit={password}>
-          <label>
-            كلمة المرور الحالية
-            <input
-              name="currentPassword"
-              type="password"
-              required
-              autoComplete="current-password"
-              maxLength={200}
-            />
-          </label>
-          <label>
-            كلمة المرور الجديدة
-            <input
-              name="newPassword"
-              type="password"
-              required
-              minLength={12}
-              maxLength={200}
-              autoComplete="new-password"
-            />
-          </label>
-          <button disabled={busy}>تغيير كلمة المرور</button>
-          {message && (
-            <p dir="auto" role="status">
-              {message}
-            </p>
-          )}
-        </form>
+      <details className="account-menu">
+        <summary aria-label={t('ui.accountMenu.6f3a09')}>
+          <span className="avatar small">Y</span>
+          <span className="sr-only">{t('ui.account.0626a3')}</span>
+        </summary>
+        <div className="account-panel">
+          <h3>{t('ui.yourAccount.d8ee63')}</h3>
+          {error && <button onClick={refreshStorage}>{t('ui.reconnectAndReview.9b77e9')}</button>}
+          <details>
+            <summary>{t('ui.changePassword.b51df8')}</summary>
+            <form onSubmit={password}>
+              <label>
+                {t('ui.currentPassword.08cdad')}
+                <input
+                  name="currentPassword"
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  maxLength={200}
+                />
+              </label>
+              <label>
+                {t('ui.newPassword.f7f4ac')}
+                <input
+                  name="newPassword"
+                  type="password"
+                  required
+                  minLength={12}
+                  maxLength={200}
+                  autoComplete="new-password"
+                />
+              </label>
+              <button disabled={busy}>{t('ui.changePassword.b51df8')}</button>
+            </form>
+          </details>
+          {queued && <p>{t('ui.syncPendingChangesBeforeSigningOut.8248f6')}</p>}
+          <button
+            className="account-logout"
+            disabled={busy || saving || queued}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await onLogout();
+              } catch {
+                setMessage(t('ui.couldNotSignOutTryAgain.59f5bf'));
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {t('ui.signOut.cc0fc3')}
+          </button>
+          {message && <p role="status">{message}</p>}
+        </div>
       </details>
-      <button
-        disabled={busy || saving}
-        onClick={async () => {
-          setBusy(true);
-          try {
-            await onLogout();
-          } catch {
-            setMessage('تعذر تسجيل الخروج؛ حاول مرة أخرى.');
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        تسجيل الخروج
-      </button>
-      {message && <span role="status">{message}</span>}
-    </div>
+    </div>,
+    target,
   );
 }
 export function ServerWorkspace({ children }: { children: ReactNode }) {
@@ -137,6 +157,10 @@ export function ServerWorkspace({ children }: { children: ReactNode }) {
   async function check() {
     setNotice('');
     setPhase('loading');
+    if (!navigator.onLine && (await connectOfflineStorage())) {
+      setPhase('ready');
+      return;
+    }
     try {
       const result = (await apiRequest('account/status')) as Account;
       setAccount(result);
@@ -146,6 +170,10 @@ export function ServerWorkspace({ children }: { children: ReactNode }) {
         setPhase('login');
       }
     } catch (error) {
+      if (!(error instanceof ApiError) && (await connectOfflineStorage())) {
+        setPhase('ready');
+        return;
+      }
       setPhase(error instanceof ApiError && error.status === 401 ? 'login' : 'error');
     }
   }
@@ -171,6 +199,7 @@ export function ServerWorkspace({ children }: { children: ReactNode }) {
         username: fields.get('username'),
         password: fields.get('password'),
         setupToken: fields.get('setupToken') || undefined,
+        remember: fields.get('remember') === 'on',
       });
       const result = await apiRequest('account/status');
       setAccount(result);
@@ -215,6 +244,8 @@ export function ServerWorkspace({ children }: { children: ReactNode }) {
   }
   async function logout() {
     await apiRequest('account/logout', 'POST', {});
+    const account = getServerAccount();
+    if (account && offlineEnabled()) await clearOffline(account);
     disconnectServerStorage();
     await check();
   }
@@ -280,6 +311,12 @@ export function ServerWorkspace({ children }: { children: ReactNode }) {
             )}
             {!account?.configured && account?.setupEnabled === false && (
               <p dir="auto">إنشاء الحساب معطّل حتى يضبط المشرف رمز التهيئة على السيرفر.</p>
+            )}
+            {account?.configured && (
+              <label className="remember-choice">
+                <input name="remember" type="checkbox" />
+                تذكرني على هذا الجهاز
+              </label>
             )}
             <button disabled={busy || (!account?.configured && account?.setupEnabled === false)}>
               {busy ? 'جاري التنفيذ…' : account?.configured ? 'دخول' : 'إنشاء الحساب'}

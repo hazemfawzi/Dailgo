@@ -1,3 +1,4 @@
+import { DateTimeInput } from '../../components/DateTimeInput';
 import { useEffect, useState } from 'react';
 import { apiRequest } from '../../lib/serverStorage';
 import { useStorageState, transactData } from '../../lib/storage';
@@ -79,9 +80,7 @@ export function CalendarPanel({ t }: { t: Translate }) {
   useEffect(() => {
     void apiRequest('calendar')
       .then(setStatus)
-      .catch(() =>
-        setNotice(t('Could not load Google connection status.', 'تعذر تحميل حالة ربط Google.')),
-      );
+      .catch(() => setNotice(t('ui.couldNotLoadGoogleConnectionStatus.d35ff0')));
   }, []);
   async function fetchEvents(next = false) {
     setBusy(true);
@@ -113,43 +112,24 @@ export function CalendarPanel({ t }: { t: Translate }) {
       if (!next) setChosen([]);
       setNotice(
         skipped
-          ? t(
-              'Some long or unsupported events were excluded; nothing has been imported yet.',
-              'بعض المواعيد الطويلة أو غير المدعومة استُبعدت. لم يُستورد شيء بعد.',
-            )
-          : t(
-              'Review the events and choose what to import. Nothing has changed yet.',
-              'راجع المواعيد واختار اللي تستورده. لم يتغير شيء بعد.',
-            ),
+          ? t('ui.someLongOrUnsupportedEventsWereExcluded.9e92f5')
+          : t('ui.reviewTheEventsAndChooseWhatTo.3538d9'),
       );
     } catch {
-      setNotice(
-        t(
-          'Could not read Google Calendar. Review the connection and date range (at most 90 days).',
-          'تعذر قراءة تقويم Google. راجع الربط والفترة (حتى ٩٠ يومًا).',
-        ),
-      );
+      setNotice(t('ui.couldNotReadGoogleCalendarReviewThe.22605b'));
     }
     setBusy(false);
   }
   return (
     <section className="card tools-section editor-form">
       <h2 dir="auto">Google Calendar</h2>
-      <p dir="auto">
-        {t(
-          'Connect your own primary calendar with Google consent. Imports and exports require an explicit review; there is no automatic two-way merge. Calendar access can be revoked here.',
-          'اربط تقويمك الأساسي بموافقة Google. الاستيراد والتصدير بعد مراجعة صريحة؛ مفيش دمج تلقائي في الاتجاهين. تقدر تلغي الوصول من هنا.',
-        )}
-      </p>
+      <p dir="auto">{t('ui.connectYourOwnPrimaryCalendarWithGoogle.d472d4')}</p>
       <p dir="auto" className="integration-status">
         {status?.enabled
           ? status.connected
-            ? t('Connected', 'متصل')
-            : t('Not connected', 'غير متصل')
-          : t(
-              'Google OAuth and server encryption setup required',
-              'يحتاج إعداد Google OAuth وتشفير السيرفر',
-            )}
+            ? t('ui.connected.be7abf')
+            : t('ui.notConnected.f7a562')
+          : t('ui.googleOauthAndServerEncryptionSetupRequired.cf3e71')}
       </p>
       <div className="tools-tabs">
         <Button
@@ -159,45 +139,32 @@ export function CalendarPanel({ t }: { t: Translate }) {
             try {
               location.assign((await apiRequest('calendar/start', 'POST', {})).url);
             } catch {
-              setNotice(t('Could not start Google consent.', 'تعذر بدء موافقة Google.'));
+              setNotice(t('ui.couldNotStartGoogleConsent.d5a912'));
               setBusy(false);
             }
           }}
         >
-          {t('Connect Google Calendar', 'ربط Google Calendar')}
+          {t('ui.connectGoogleCalendar.cf22f6')}
         </Button>
         {status?.connected && (
           <Button
             disabled={busy}
             variant="ghost"
             onClick={async () => {
-              if (
-                !window.confirm(t('Revoke Google Calendar access?', 'إلغاء وصول Google Calendar؟'))
-              )
-                return;
+              if (!window.confirm(t('ui.revokeGoogleCalendarAccess.f51646'))) return;
               setBusy(true);
               try {
                 await apiRequest('calendar', 'DELETE', {});
                 setStatus({ ...status, connected: false });
                 setRows([]);
-                setNotice(
-                  t(
-                    'Google access revoked. Existing imported records remain in your workspace.',
-                    'اتلغى وصول Google. السجلات اللي استوردتها سابقًا بتفضل في مساحتك.',
-                  ),
-                );
+                setNotice(t('ui.googleAccessRevokedExistingImportedRecordsRemain.d00e4e'));
               } catch {
-                setNotice(
-                  t(
-                    'Could not revoke Google access. Retry or revoke Dailgo from your Google account.',
-                    'تعذر إلغاء الوصول. حاول تاني أو ألغِ Dailgo من حساب Google.',
-                  ),
-                );
+                setNotice(t('ui.couldNotRevokeGoogleAccessRetryOr.f50930'));
               }
               setBusy(false);
             }}
           >
-            {t('Disconnect Google Calendar', 'فصل Google Calendar')}
+            {t('ui.disconnectGoogleCalendar.9fd8f8')}
           </Button>
         )}
       </div>
@@ -205,26 +172,28 @@ export function CalendarPanel({ t }: { t: Translate }) {
         <>
           <div className="form-pair">
             <label>
-              {t('Import from', 'الاستيراد من')}
-              <input
+              {t('ui.importFrom.c6031d')}
+              <DateTimeInput
                 type="date"
                 value={from}
                 disabled={busy}
                 onInput={(e) => setFrom(e.currentTarget.value)}
+                aria-label={t('ui.importFrom.c6031d')}
               />
             </label>
             <label>
-              {t('Import until', 'الاستيراد حتى')}
-              <input
+              {t('ui.importUntil.ce65cf')}
+              <DateTimeInput
                 type="date"
                 value={to}
                 disabled={busy}
                 onInput={(e) => setTo(e.currentTarget.value)}
+                aria-label={t('ui.importUntil.ce65cf')}
               />
             </label>
           </div>
           <Button disabled={busy} variant="outline" onClick={() => void fetchEvents()}>
-            {t('Preview Google events', 'معاينة مواعيد Google')}
+            {t('ui.previewGoogleEvents.7988b5')}
           </Button>
           <ul className="tools-records">
             {rows.map((row) => (
@@ -243,7 +212,7 @@ export function CalendarPanel({ t }: { t: Translate }) {
                   <bdi>{row.title}</bdi> · {formatCalendarDate(row.date, t('en', 'ar'))} ·{' '}
                   {formatTime(row.time, t('en', 'ar'))}
                   {entries.some((x) => x.id === row.id)
-                    ? ' · ' + t('Already imported', 'مستورد سابقًا')
+                    ? ' · ' + t('ui.alreadyImported.261ebb')
                     : ''}
                 </label>
               </li>
@@ -251,7 +220,7 @@ export function CalendarPanel({ t }: { t: Translate }) {
           </ul>
           {page && (
             <Button disabled={busy} variant="outline" onClick={() => void fetchEvents(true)}>
-              {t('Read next Google page', 'قراءة الصفحة التالية من Google')}
+              {t('ui.readNextGooglePage.14c42b')}
             </Button>
           )}
           <label>
@@ -260,10 +229,7 @@ export function CalendarPanel({ t }: { t: Translate }) {
               checked={replace}
               onChange={(e) => setReplace(e.target.checked)}
             />
-            {t(
-              'Update selected previously imported events, preserving revision checks',
-              'تحديث المواعيد المختارة المستوردة سابقًا مع حماية التعديلات الأحدث',
-            )}
+            {t('ui.updateSelectedPreviouslyImportedEventsPreservingRevision.997383')}
           </label>
           <Button
             disabled={busy || !chosen.length}
@@ -300,23 +266,16 @@ export function CalendarPanel({ t }: { t: Translate }) {
               if (ok) setChosen([]);
               setNotice(
                 ok
-                  ? t(
-                      'Reviewed Google events saved. Reopen the preview before further updates.',
-                      'اتحفظت مواعيد Google اللي راجعتها. افتح المعاينة مجددًا قبل تحديثات تانية.',
-                    )
-                  : t(
-                      'An event changed or saving failed. Refresh the preview before replacing anything.',
-                      'موعد اتغير أو تعذر الحفظ. حدّث المعاينة قبل استبدال أي شيء.',
-                    ),
+                  ? t('ui.reviewedGoogleEventsSavedReopenThePreview.416a9b')
+                  : t('ui.anEventChangedOrSavingFailedRefresh.b10c99'),
               );
             }}
           >
-            {t('Import selected events', 'استيراد المواعيد المختارة')} ·{' '}
-            {formatNumber(chosen.length, t('en', 'ar'))}
+            {t('ui.importSelectedEvents.86531a')} · {formatNumber(chosen.length, t('en', 'ar'))}
           </Button>
-          <h3 dir="auto">{t('Export one reviewed appointment', 'تصدير موعد بعد مراجعته')}</h3>
+          <h3 dir="auto">{t('ui.exportOneReviewedAppointment.231c63')}</h3>
           <label>
-            {t('Appointment to export', 'الموعد المطلوب تصديره')}
+            {t('ui.appointmentToExport.268655')}
             <select
               value={exportId}
               onChange={(e) => {
@@ -324,7 +283,7 @@ export function CalendarPanel({ t }: { t: Translate }) {
                 setExportConsent(false);
               }}
             >
-              <option value="">{t('Choose an appointment', 'اختار موعدًا')}</option>
+              <option value="">{t('ui.chooseAnAppointment.c3ab8d')}</option>
               {events.map((event) => (
                 <option key={event.id} value={event.id}>
                   {event.title}
@@ -344,10 +303,7 @@ export function CalendarPanel({ t }: { t: Translate }) {
               checked={exportConsent}
               onChange={(e) => setExportConsent(e.target.checked)}
             />
-            {t(
-              'Create or update this appointment in my primary Google calendar',
-              'إنشاء الموعد ده أو تحديثه في تقويم Google الأساسي',
-            )}
+            {t('ui.createOrUpdateThisAppointmentInMy.b35c1b')}
           </label>
           <Button
             disabled={busy || !target || !exportConsent}
@@ -358,22 +314,15 @@ export function CalendarPanel({ t }: { t: Translate }) {
                   entryId: target!.id,
                   entryRevision: target!.revision,
                 });
-                setNotice(
-                  t('Appointment saved to Google Calendar.', 'اتحفظ الموعد في Google Calendar.'),
-                );
+                setNotice(t('ui.appointmentSavedToGoogleCalendar.b43314'));
                 setExportConsent(false);
               } catch {
-                setNotice(
-                  t(
-                    'Google export failed or the appointment changed. Review before retrying.',
-                    'التصدير فشل أو الموعد اتغير. راجع قبل المحاولة.',
-                  ),
-                );
+                setNotice(t('ui.googleExportFailedOrTheAppointmentChanged.c43ef7'));
               }
               setBusy(false);
             }}
           >
-            {t('Confirm export to Google', 'تأكيد التصدير إلى Google')}
+            {t('ui.confirmExportToGoogle.f3640c')}
           </Button>
         </>
       )}

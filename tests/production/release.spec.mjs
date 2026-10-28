@@ -49,3 +49,46 @@ test('packaged production build loads, saves data, and recovers one stale lazy c
   expect(data['personal-os.tasks.v1'].map((x) => x.title)).toEqual(['مهمة API في حزمة النشر']);
   expect(errors).toEqual([]);
 });
+
+test.describe('installed offline copy', () => {
+  test.use({ serviceWorkers: 'allow' });
+  test('a cached production shell reopens offline and later uploads its queued edit', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await page.getByLabel('اسم المستخدم', { exact: true }).fill('packaged-fixture');
+    await page
+      .getByLabel('كلمة المرور (12 حرفًا على الأقل)', { exact: true })
+      .fill('packaged-test-password');
+    await page.getByRole('button', { name: 'دخول', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'مهمة جديدة', exact: true })).toBeVisible();
+    await page.evaluate(() => navigator.serviceWorker.ready);
+    await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+    await page.getByRole('button', { name: 'البيانات والنسخ الاحتياطي', exact: true }).click();
+    await page
+      .getByRole('checkbox', {
+        name: 'احتفظ بنسخة على هذا الجهاز واحفظ التعديلات دون اتصال',
+        exact: true,
+      })
+      .check();
+    await page.getByRole('button', { name: 'Close / إغلاق', exact: true }).click();
+    await page.context().setOffline(true);
+    await page.getByRole('button', { name: 'مهمة جديدة', exact: true }).click();
+    await page.getByLabel('عنوان المهمة', { exact: true }).fill('مهمة محفوظة دون اتصال');
+    await page.getByRole('button', { name: 'حفظ المهمة', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.locator('.save-status')).toHaveText('محفوظ على الجهاز');
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'مهمة جديدة', exact: true })).toBeVisible();
+    await expect(page.locator('.save-status')).toHaveText('محفوظ على الجهاز');
+    await page.context().setOffline(false);
+    await expect
+      .poll(async () => {
+        const data = (await (await page.request.get('/api/workspace')).json()).data;
+        return data['personal-os.tasks.v1'].filter((task) => task.title === 'مهمة محفوظة دون اتصال')
+          .length;
+      })
+      .toBe(1);
+    await expect(page.locator('.save-status')).toHaveText('محفوظ ✓');
+  });
+});

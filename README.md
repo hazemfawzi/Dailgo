@@ -45,7 +45,7 @@ include Android and iOS companion sources and separate CI builds.
 
 ## Data protection
 
-The authoritative store is now the authenticated SQLite server workspace: one validated snapshot with a revision. The frontend uses atomic server commits, checks for changes from other devices every 10 seconds, and rejects conflicting writes. The legacy browser store is `personal-os.workspace.v3`. The following browser migration/recovery details describe that preserved legacy copy. Existing known LocalStorage keys migrate without resetting records. Legacy keys remain historical recovery material until a permanent purge clears them; they are not read after the authoritative snapshot exists.
+The authoritative store is the authenticated SQLite server workspace, with per-record tables and atomic revision-protected delta commits. SSE announces changes from other devices. A legacy snapshot projection is retained by default for rollback. The legacy browser store is `personal-os.workspace.v3`. The following browser migration/recovery details describe that preserved legacy copy. Existing known LocalStorage keys migrate without resetting records. Legacy keys remain historical recovery material until a permanent purge clears them; they are not read after the authoritative snapshot exists.
 
 Writes validate data and retain the last saved snapshot when storage fails. Corrupt JSON/data blocks normal writes instead of silently overwriting it with defaults. The data dialog offers a raw recovery download. Supported browsers use Web Locks to serialize writes, and storage events refresh open tabs. Per-item revisions reject stale task/entry/goal editor saves and keep their draft visible on failure. On browsers without Web Locks, revision checks alone cannot guarantee protection against precisely simultaneous writes. Text fields with immediate autosave are not a collaborative text editor.
 
@@ -61,7 +61,7 @@ The local reliability, capture, task lifecycle, daily/weekly review, scheduling,
 
 Manual UI checks covered Arabic mobile/desktop rendering, waiting-state editing and source links, focus session logging and daily review persistence after reload, global search, assistant preview edits and confirmation after reload, deletion and restoration, appointment overlap warnings, and project creation with a linked goal and task.
 
-Optional services (Claude, email, Push, Google Calendar and billing) require administrator configuration; tests use mocked providers and do not establish live vendor delivery. Billing remains disabled by default and is independent of Claude. Native widgets have companion sources and CI build definitions; signing and physical-device acceptance remain separate release gates. Offline writes and Notion integration are outside this release.
+Optional services (Claude, email, Push, Google Calendar and billing) require administrator configuration; tests use mocked providers and do not establish live vendor delivery. Billing remains disabled by default and is independent of Claude. Native widgets have companion sources and CI build definitions; signing and physical-device acceptance remain separate release gates. Personal offline editing is an explicit trusted-device opt-in; Notion integration remains outside this release.
 
 New accounts start without seeded sample goals. Goal templates create records only after explicit confirmation. A real full-week trial remains necessary to assess usefulness with actual commitments.
 
@@ -82,7 +82,7 @@ New accounts start without seeded sample goals. Goal templates create records on
 
 The Node 24 server is required for normal application use. Start it with `npm run server`; use Vite at port 5173 during development, or the built frontend served by the application server at port 8787. Both frontend origins access the same server account and workspace. Sign-in uses HttpOnly SameSite cookies; sessions retain the existing password and origin protections.
 
-All existing feature data saves through the shared server adapter. First use offers explicit migration of browser data or an empty server workspace; setup does not create a personal account. Other devices refresh every 10 seconds and on window focus. Conflicting changes are rejected rather than merged. Offline saves are unavailable, with no silent browser fallback.
+All existing feature data saves through the shared server adapter. First use offers explicit migration of browser data or an empty server workspace; setup does not create a personal account. Other devices refresh through SSE and on window focus. Stale online writes are rejected. Opt-in offline edits persist in an account-scoped IndexedDB outbox; reconnection merges independent changes and requires explicit choices for conflicts. Family boards remain online-only.
 
 JSON backup restore replaces the active server workspace after preview and revision checks. SQLite files stay in ignored `.local-data/`, unencrypted at rest. See [Connected workspace](docs/server-workspace.md) for the CRUD/state API, failure behavior, account management and isolated tests.
 
@@ -102,3 +102,18 @@ Build the frontend and server validators before running `node scripts/package-vp
 verified release packages, backups and rollback for `dailgo.decoderz.dev`. Deployment
 is disabled until repository/environment settings and the existing VPS are prepared.
 `npm run test:deploy` validates the deployment controller without changing system services.
+
+## Readability and core-flow release
+
+The Home screen prioritizes quick capture, three next steps and today's agenda.
+Planning, focus and reviews remain available in collapsed sections. Mobile navigation
+has five destinations; Settings holds appearance and account data controls. Typography
+uses shared tokens with a 13px minimum, and keyed Arabic/English catalogs live in
+`src/i18n/`. Backend account/workspace routes, authentication, events and record
+storage have separate modules.
+
+Run `npm run lint`, `npm run format:check`, `npm run test:core` and
+`npm run test:components` alongside the existing build, domain, server, feature,
+browser, production and deployment suites. Formatting is isolated in its own commit.
+[Rollout, compatibility and remaining server configuration](docs/readability-rollout.md)
+describes offline privacy, migration, backups and Claude activation.

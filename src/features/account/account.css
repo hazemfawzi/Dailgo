@@ -73,42 +73,46 @@
 .server-connection {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 8px 16px;
-  background: var(--soft);
-  color: var(--text);
-  font-size: 13px;
-  position: relative;
-  z-index: 35;
-  margin-inline-start: 248px;
-  border-bottom: 1px solid var(--border);
-  min-width: 0;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
 }
-.server-connection details[open] {
+.save-status {
+  white-space: nowrap;
+  color: var(--muted);
+}
+.save-status.needs-attention {
+  color: #a12828;
+}
+.account-menu {
   position: relative;
 }
-.server-connection form {
-  padding: 12px;
-  background: var(--surface);
-  color: var(--text);
+.account-menu > summary {
+  display: flex;
+  align-items: center;
+  list-style: none;
+}
+.account-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.account-panel {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 100%;
+  width: min(340px, 88vw);
+  padding: var(--space-4);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  width: min(85vw, 320px);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: 0 12px 35px #0002;
+  z-index: 90;
 }
-
-.server-connection > span {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  flex: 1 1 260px;
+.account-panel form {
+  margin-block: var(--space-3);
 }
-@media (max-width: 1150px) {
-  .server-connection {
-    margin-inline-start: 215px;
-  }
-}
-@media (max-width: 850px) {
-  .server-connection {
-    margin-inline-start: 0;
-  }
+.account-panel .account-logout {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
+  width: 100%;
+  margin-top: var(--space-4);
 }

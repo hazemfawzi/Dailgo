@@ -1,3 +1,4 @@
+import { DateTimeInput } from '../../components/DateTimeInput';
 import {
   formatNumber,
   formatCalendarDate as localizedDate,
@@ -60,11 +61,7 @@ export function TaskEditor({
     <Dialog
       open
       onOpenChange={onClose}
-      title={
-        task.title
-          ? t('Task details', 'تفاصيل المهمة')
-          : t('Make the next step clear.', 'خلّي الخطوة الجاية واضحة.')
-      }
+      title={task.title ? t('ui.taskDetails.7ddfad') : t('ui.makeTheNextStepClear.5c5bd1')}
       description={storageText(t, 'taskEditor')}
     >
       <form
@@ -97,7 +94,7 @@ export function TaskEditor({
         }}
       >
         <label>
-          {t('Task title', 'عنوان المهمة')}
+          {t('ui.taskTitle.f8f17b')}
           <input
             dir="auto"
             autoFocus
@@ -108,8 +105,8 @@ export function TaskEditor({
           />
         </label>
         <label>
-          {t('Due date', 'موعد التسليم')}
-          <input
+          {t('ui.dueDate.3146bb')}
+          <DateTimeInput
             type="date"
             value={draft.dueDate}
             onInput={(e) => {
@@ -120,6 +117,7 @@ export function TaskEditor({
               const dueDate = e.target.value;
               setDraft((old) => ({ ...old, dueDate }));
             }}
+            aria-label={t('ui.dueDate.3146bb')}
           />
         </label>
         <div className="quick-dates">
@@ -128,7 +126,7 @@ export function TaskEditor({
             variant="outline"
             onClick={() => setDraft({ ...draft, dueDate: localDate() })}
           >
-            {t('Today', 'اليوم')}
+            {t('ui.today.7981a9')}
           </Button>
           <Button
             type="button"
@@ -139,15 +137,15 @@ export function TaskEditor({
               setDraft({ ...draft, dueDate: localDate(date) });
             }}
           >
-            {t('Tomorrow', 'بكرة')}
+            {t('ui.tomorrow.af67ab')}
           </Button>
           <Button type="button" variant="ghost" onClick={() => setDraft({ ...draft, dueDate: '' })}>
-            {t('No due date', 'بدون موعد')}
+            {t('ui.noDueDate.95170e')}
           </Button>
         </div>
         <label>
-          {t('Planned execution day', 'يوم التنفيذ المخطط')}
-          <input
+          {t('ui.plannedExecutionDay.40e5a8')}
+          <DateTimeInput
             type="date"
             value={draft.plannedDate ?? ''}
             onInput={(e) => {
@@ -166,28 +164,20 @@ export function TaskEditor({
                 plannedTime: value ? old.plannedTime : undefined,
               }));
             }}
+            aria-label={t('ui.plannedExecutionDay.40e5a8')}
           />
-          <small className="muted">
-            {t(
-              'Separate from the due date. Used in the weekly plan.',
-              'مستقل عن موعد التسليم. بيظهر في خطة الأسبوع.',
-            )}
-          </small>
+          <small className="muted">{t('ui.separateFromTheDueDateUsedIn.f900d5')}</small>
         </label>
         <label>
-          {t('Execution time (optional)', 'وقت التنفيذ (اختياري)')}
-          <input
+          {t('ui.executionTimeOptional.a87ad6')}
+          <DateTimeInput
             type="time"
             disabled={!draft.plannedDate}
             value={draft.plannedTime ?? ''}
             onChange={(e) => setDraft({ ...draft, plannedTime: e.target.value || undefined })}
+            aria-label={t('ui.executionTimeOptional.a87ad6')}
           />
-          <small className="muted">
-            {t(
-              'Used for planning and for reminders if you enable them in Life tools.',
-              'للتخطيط والتذكير لو فعّلته من أدوات حياتك.',
-            )}
-          </small>
+          <small className="muted">{t('ui.usedForPlanningAndForRemindersIf.b87beb')}</small>
         </label>
         <Button
           type="button"
@@ -195,10 +185,10 @@ export function TaskEditor({
           disabled={!draft.plannedDate}
           onClick={() => setDraft({ ...draft, plannedDate: undefined, plannedTime: undefined })}
         >
-          {t('Clear planned day', 'إلغاء يوم التنفيذ')}
+          {t('ui.clearPlannedDay.a32e4e')}
         </Button>
         <label>
-          {t('Life area', 'مجال الحياة')}
+          {t('ui.lifeArea.d4e236')}
           <select
             value={draft.category}
             onChange={(e) => setDraft({ ...draft, category: e.target.value })}
@@ -212,14 +202,14 @@ export function TaskEditor({
         </label>
         {draft.goalId && (
           <p dir="auto" className="muted">
-            {t('Linked goal', 'الهدف المرتبط')}:{' '}
+            {t('ui.linkedGoal.2bb775')}:{' '}
             <bdi>{goals.find((goal) => goal.id === draft.goalId)?.title ?? draft.goalId}</bdi>
           </p>
         )}
         <label>
-          {t('Repeat', 'التكرار')}
+          {t('ui.repeat.3d5468')}
           <select
-            aria-label={t('Repeat', 'التكرار')}
+            aria-label={t('ui.repeat.3d5468')}
             value={draft.recurrence?.frequency ?? 'none'}
             onChange={(e) =>
               setDraft({
@@ -231,22 +221,19 @@ export function TaskEditor({
               })
             }
           >
-            <option value="none">{t('Does not repeat', 'بدون تكرار')}</option>
-            <option value="daily">{t('Daily', 'يومي')}</option>
-            <option value="weekly">{t('Weekly', 'أسبوعي')}</option>
-            <option value="monthly">{t('Monthly', 'شهري')}</option>
+            <option value="none">{t('ui.doesNotRepeat.905b48')}</option>
+            <option value="daily">{t('ui.daily.6084d0')}</option>
+            <option value="weekly">{t('ui.weekly.6a00fc')}</option>
+            <option value="monthly">{t('ui.monthly.4c43ac')}</option>
           </select>
         </label>
         {draft.recurrence && (
           <>
             <p dir="auto" className="capture-hint">
-              {t(
-                'Completing this task creates the next occurrence with the same details. Choose an execution day or due date first. Missed occurrences are not silently skipped.',
-                'إكمال المهمة بيضيف المرة الجاية بنفس التفاصيل. حدد يوم تنفيذ أو موعد تسليم أولًا. المرات المتأخرة لا يتم تخطيها تلقائيًا.',
-              )}
+              {t('ui.completingThisTaskCreatesTheNextOccurrence.02dc5b')}
             </p>
             <label>
-              {t('Repeat interval', 'كل عدد من الفترات')}
+              {t('ui.repeatInterval.03f93f')}
               <input
                 type="number"
                 min={1}
@@ -261,8 +248,8 @@ export function TaskEditor({
               />
             </label>
             <label>
-              {t('Repeat until (optional)', 'التكرار حتى (اختياري)')}
-              <input
+              {t('ui.repeatUntilOptional.1c08f9')}
+              <DateTimeInput
                 type="date"
                 value={draft.recurrence.until ?? ''}
                 onInput={(e) =>
@@ -271,14 +258,15 @@ export function TaskEditor({
                     recurrence: { ...draft.recurrence!, until: e.currentTarget.value || undefined },
                   })
                 }
+                aria-label={t('ui.repeatUntilOptional.1c08f9')}
               />
             </label>
           </>
         )}
         <details className="task-extra-details">
-          <summary>{t('More details', 'تفاصيل أكثر')}</summary>
+          <summary>{t('ui.moreDetails.813428')}</summary>
           <label>
-            {t('Linked goal', 'الهدف المرتبط')}
+            {t('ui.linkedGoal.2bb775')}
             <select
               value={draft.goalId ?? ''}
               onChange={(e) =>
@@ -290,28 +278,26 @@ export function TaskEditor({
                 })
               }
             >
-              <option value="">{t('No linked goal', 'بدون هدف')}</option>
+              <option value="">{t('ui.noLinkedGoal.3790c7')}</option>
               {draft.goalId && !goals.some((g) => g.id === draft.goalId) && (
-                <option value={draft.goalId}>
-                  {t('Goal no longer available', 'الهدف لم يعد متاحاً')}
-                </option>
+                <option value={draft.goalId}>{t('ui.goalNoLongerAvailable.daff54')}</option>
               )}
               {goals.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.title}
-                  {g.archived ? t(' (archived)', ' (مؤرشف)') : ''}
+                  {g.archived ? t('ui.archived.96d166') : ''}
                 </option>
               ))}
             </select>
           </label>
           {!!draft.goalId && (
             <label>
-              {t('Milestone', 'المرحلة')}
+              {t('ui.milestone.6bd186')}
               <select
                 value={draft.milestoneId ?? ''}
                 onChange={(e) => setDraft({ ...draft, milestoneId: e.target.value || undefined })}
               >
-                <option value="">{t('No milestone', 'بدون مرحلة')}</option>
+                <option value="">{t('ui.noMilestone.f8706d')}</option>
                 {goals
                   .find((g) => g.id === draft.goalId)
                   ?.milestones?.map((m) => (
@@ -323,7 +309,7 @@ export function TaskEditor({
             </label>
           )}
           <label>
-            {t('Project (optional)', 'المشروع (اختياري)')}
+            {t('ui.projectOptional.ba0c0f')}
             <select
               value={draft.projectId ?? ''}
               onChange={(e) => {
@@ -337,11 +323,9 @@ export function TaskEditor({
                 });
               }}
             >
-              <option value="">{t('No project', 'بدون مشروع')}</option>
+              <option value="">{t('ui.noProject.c8c76a')}</option>
               {draft.projectId && !projects.some((p) => p.id === draft.projectId) && (
-                <option value={draft.projectId}>
-                  {t('Project no longer available', 'المشروع لم يعد متاحًا')}
-                </option>
+                <option value={draft.projectId}>{t('ui.projectNoLongerAvailable.7f22c1')}</option>
               )}
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -351,34 +335,34 @@ export function TaskEditor({
             </select>
           </label>
           <label>
-            {t('Description', 'الوصف')}
+            {t('ui.description.35a3fa')}
             <textarea
               dir="auto"
               rows={3}
               maxLength={3000}
-              placeholder={t('What does done look like?', 'إيه المطلوب لإنجاز المهمة؟')}
+              placeholder={t('ui.whatDoesDoneLookLike.d511f9')}
               value={draft.description}
               onChange={(e) => setDraft({ ...draft, description: e.target.value })}
             />
           </label>
           <div className="form-pair">
             <label>
-              {t('Priority', 'الأولوية')}
+              {t('ui.priority.2125f8')}
               <select
                 value={draft.priority}
                 onChange={(e) =>
                   setDraft({ ...draft, priority: e.target.value as Task['priority'] })
                 }
               >
-                <option value="high">{t('High', 'عالية')}</option>
-                <option value="medium">{t('Medium', 'متوسطة')}</option>
-                <option value="low">{t('Low', 'منخفضة')}</option>
+                <option value="high">{t('ui.high.ae9b8c')}</option>
+                <option value="medium">{t('ui.medium.c5f506')}</option>
+                <option value="low">{t('ui.low.929517')}</option>
               </select>
             </label>
           </div>
           <div className="form-pair">
             <label>
-              {t('Estimate (minutes)', 'المدة المتوقعة (دقيقة)')}
+              {t('ui.estimateMinutes.5958ee')}
               <input
                 type="number"
                 min={0}
@@ -389,18 +373,18 @@ export function TaskEditor({
             </label>
           </div>
           <label>
-            {t('Tags (comma separated)', 'الوسوم (افصل بفاصلة)')}
+            {t('ui.tagsCommaSeparated.1ffb77')}
             <input
               dir="auto"
               maxLength={200}
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              placeholder={t('Project, deep work', 'مشروع، تركيز')}
+              placeholder={t('ui.projectDeepWork.ab1d0f')}
             />
           </label>
           <div className="subtasks-editor">
             <h3 dir="auto">
-              {t('Break it into steps', 'قسّمها لخطوات')}
+              {t('ui.breakItIntoSteps.cfdbb2')}
               <span className="count">
                 {formatNumber(draft.subtasks?.filter((x) => x.done).length ?? 0, t('en', 'ar'))}/
                 {formatNumber(draft.subtasks?.length ?? 0, t('en', 'ar'))}
@@ -411,7 +395,7 @@ export function TaskEditor({
                 <button
                   type="button"
                   className={`checkbox ${sub.done ? 'checked' : ''}`}
-                  aria-label={`${t('Complete step', 'إكمال الخطوة')}: ${sub.title}`}
+                  aria-label={`${t('ui.completeStep.d6fbca')}: ${sub.title}`}
                   aria-pressed={sub.done}
                   onClick={() =>
                     setDraft({
@@ -429,7 +413,7 @@ export function TaskEditor({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  aria-label={`${t('Remove step', 'إزالة الخطوة')}: ${sub.title}`}
+                  aria-label={`${t('ui.removeStep.caa804')}: ${sub.title}`}
                   onClick={() =>
                     setDraft({ ...draft, subtasks: draft.subtasks?.filter((x) => x.id !== sub.id) })
                   }
@@ -441,7 +425,7 @@ export function TaskEditor({
             <div className="subtask-add">
               <input
                 dir="auto"
-                aria-label={t('New step', 'خطوة جديدة')}
+                aria-label={t('ui.newStep.da6bac')}
                 maxLength={160}
                 value={subtask}
                 onChange={(e) => setSubtask(e.target.value)}
@@ -451,7 +435,7 @@ export function TaskEditor({
                     addSubtask();
                   }
                 }}
-                placeholder={t('Add a small step…', 'أضف خطوة صغيرة…')}
+                placeholder={t('ui.addASmallStep.4c7777')}
               />
               <Button
                 type="button"
@@ -460,7 +444,7 @@ export function TaskEditor({
                 onClick={addSubtask}
               >
                 <Plus size={15} />
-                {t('Add', 'إضافة')}
+                {t('ui.add.552844')}
               </Button>
             </div>
           </div>
@@ -470,10 +454,10 @@ export function TaskEditor({
               checked={!!draft.pinned}
               onChange={(e) => setDraft({ ...draft, pinned: e.target.checked })}
             />
-            {t('Pin to my daily focus', 'تثبيت ضمن تركيز اليوم')}
+            {t('ui.pinToMyDailyFocus.2907c8')}
           </label>
           <label>
-            {t('Work or project context (optional)', 'سياق الشغل أو المشروع (اختياري)')}
+            {t('ui.workOrProjectContextOptional.971064')}
             <input
               dir="auto"
               maxLength={300}
@@ -482,7 +466,7 @@ export function TaskEditor({
             />
           </label>
           <label>
-            {t('Task status', 'حالة المهمة')}
+            {t('ui.taskStatus.c394f5')}
             <select
               value={statusOf(draft)}
               onChange={(e) =>
@@ -503,7 +487,7 @@ export function TaskEditor({
           {['waiting', 'blocked', 'deferred', 'cancelled'].includes(statusOf(draft)) && (
             <>
               <label>
-                {t('Reason (optional)', 'السبب (اختياري)')}
+                {t('ui.reasonOptional.babe52')}
                 <textarea
                   dir="auto"
                   rows={2}
@@ -513,7 +497,7 @@ export function TaskEditor({
                 />
               </label>
               <label>
-                {t('Waiting for (optional)', 'بانتظار مين أو إيه؟ (اختياري)')}
+                {t('ui.waitingForOptional.4e9a29')}
                 <input
                   dir="auto"
                   maxLength={160}
@@ -522,8 +506,8 @@ export function TaskEditor({
                 />
               </label>
               <label>
-                {t('Review on (no notification)', 'تاريخ المراجعة (بدون إشعار)')}
-                <input
+                {t('ui.reviewOnNoNotification.5d8959')}
+                <DateTimeInput
                   type="date"
                   value={draft.reviewDate ?? ''}
                   onInput={(e) => {
@@ -534,21 +518,20 @@ export function TaskEditor({
                     const reviewDate = e.target.value;
                     setDraft((old) => ({ ...old, reviewDate }));
                   }}
+                  aria-label={t('ui.reviewOnNoNotification.5d8959')}
                 />
               </label>
             </>
           )}
           <label>
-            {t('Related note or decision', 'ملاحظة أو قرار مرتبط')}
+            {t('ui.relatedNoteOrDecision.7649a5')}
             <select
               value={draft.memoryId ?? ''}
               onChange={(e) => setDraft({ ...draft, memoryId: e.target.value || undefined })}
             >
-              <option value="">{t('None', 'بدون')}</option>
+              <option value="">{t('ui.none.4b278e')}</option>
               {draft.memoryId && !memories.some((m) => m.id === draft.memoryId) && (
-                <option value={draft.memoryId}>
-                  {t('Source no longer available', 'المصدر لم يعد متاحًا')}
-                </option>
+                <option value={draft.memoryId}>{t('ui.sourceNoLongerAvailable.e6c4cd')}</option>
               )}
               {memories.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -564,7 +547,7 @@ export function TaskEditor({
           )}
           {draft.result && (
             <section className="result-summary">
-              <h3 dir="auto">{t('Recorded result', 'الحصيلة المسجلة')}</h3>
+              <h3 dir="auto">{t('ui.recordedResult.99c831')}</h3>
               <p dir="auto">{draft.result.note}</p>
               <small>{localizedDate(draft.result.date, t('en', 'ar'))}</small>
             </section>
@@ -575,17 +558,14 @@ export function TaskEditor({
         </details>
         {saveError && (
           <p dir="auto" role="alert">
-            {t(
-              'Could not save, or another editor changed this item. Your draft is still here. Copy it, reopen the latest item and review your changes.',
-              'تعذر الحفظ أو العنصر اتعدل في مكان تاني. مسودتك موجودة؛ انسخها وافتح النسخة الأحدث وراجع تعديلاتك.',
-            )}
+            {t('ui.couldNotSaveOrAnotherEditorChanged.299dd2')}
           </p>
         )}
         <div className="dialog-actions">
           <Button type="button" variant="outline" onClick={onClose}>
-            {t('Cancel', 'إلغاء')}
+            {t('ui.cancel.428808')}
           </Button>
-          <Button disabled={saving || !draft.title.trim()}>{t('Save task', 'حفظ المهمة')}</Button>
+          <Button disabled={saving || !draft.title.trim()}>{t('ui.saveTask.72af9a')}</Button>
         </div>
       </form>
     </Dialog>

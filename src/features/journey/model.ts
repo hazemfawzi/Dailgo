@@ -1,3 +1,4 @@
+import { messagePair } from '../../i18n/translate';
 import type { Data } from '../../lib/storageCore';
 import { areas, localDate } from '../../lib/workspace';
 import type { Area, Entry } from '../../lib/workspace';
@@ -69,8 +70,8 @@ export const goalTemplates = [
   {
     id: 'custom',
     area: 'Work' as Area,
-    en: 'My own goal',
-    ar: 'هدف من اختياري',
+    en: messagePair('content.bedd34b567fd').en,
+    ar: messagePair('content.bedd34b567fd').ar,
     titles: [
       'Define a clear success criterion',
       'Choose a first small step',
@@ -81,8 +82,8 @@ export const goalTemplates = [
   {
     id: 'health',
     area: 'Health' as Area,
-    en: 'Lose 5 kg — editable goal',
-    ar: 'خسارة ٥ كجم — هدف قابل للتعديل',
+    en: messagePair('content.125b34f24cff').en,
+    ar: messagePair('content.125b34f24cff').ar,
     titles: [
       'Choose a suitable way to track progress',
       'Try one manageable movement habit',
@@ -97,8 +98,8 @@ export const goalTemplates = [
   {
     id: 'language',
     area: 'Learning' as Area,
-    en: 'Learn a language',
-    ar: 'تعلم لغة',
+    en: messagePair('content.7e7211468a96').en,
+    ar: messagePair('content.7e7211468a96').ar,
     titles: [
       'Choose a language and a small learning target',
       'Practice the first lesson for 15 minutes',
@@ -113,8 +114,8 @@ export const goalTemplates = [
   {
     id: 'saving',
     area: 'Finance' as Area,
-    en: 'Save a chosen amount',
-    ar: 'ادخار مبلغ من اختيارك',
+    en: messagePair('content.7706c8879f87').en,
+    ar: messagePair('content.7706c8879f87').ar,
     titles: [
       'Choose the amount and target date',
       'List current income and essential spending',

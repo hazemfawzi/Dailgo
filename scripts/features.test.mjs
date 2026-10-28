@@ -17,7 +17,7 @@ import { secretBox } from '../server/secret.mjs';
 const result = await build({
   stdin: {
     contents:
-      "export * as rec from './src/features/tasks/recurrence'; export { restoreWorkspace } from './src/features/life/demoGoals'; export { planningFor } from './src/lib/planningConfig'; export * as fmt from './src/i18n/format'; export * as tools from './src/features/tools/model'; export * as ai from './src/features/assistant/ai/plan'; export * as undo from './src/lib/undoStore'; export { loadView } from './src/lib/lazyView'; export { shortcutAction } from './src/lib/shortcuts'; export { titleKey } from './src/lib/text'; export { auditWorkspace,validateData,makeBackup,parseBackup } from './src/lib/storageCore'; export { respond,messageText } from './src/features/assistant/engine';",
+      "export * as rec from './src/features/tasks/recurrence'; export { restoreWorkspace } from './src/features/life/demoGoals'; export { planningFor } from './src/lib/planningConfig'; export * as fmt from './src/i18n/format'; export * as tools from './src/features/tools/model'; export * as ai from './src/features/assistant/ai/plan'; export * as undo from './src/lib/undoStore'; export { loadView } from './src/lib/lazyView'; export { shortcutAction } from './src/lib/shortcuts'; export { titleKey } from './src/lib/text'; export { auditWorkspace,validateData,makeBackup,parseBackup } from './src/lib/storageCore'; export { respond,messageText,createTranslator } from './src/features/assistant/engine';",
     resolveDir: process.cwd(),
   },
   bundle: true,
@@ -124,14 +124,17 @@ test('Arabic display formatting uses one numeral system and correct singular, du
   assert.equal(domain.fmt.counted(3, 'goal', 'ar'), '٣ أهداف');
   assert.equal(domain.fmt.activeGoals(1, 'ar'), 'هدف نشط (غير مؤرشف)');
   assert.equal(domain.fmt.counted(1, 'item', 'en'), '1 item');
-  const reply = domain.respond('Show my memories', (en) => en, [], []);
+  const reply = domain.respond('Show my memories', domain.createTranslator('en'), [], []);
   assert.match(reply.text, /Your memory is empty/);
   assert.match(
-    domain.messageText({ role: 'assistant', ...reply }, (_, ar) => ar),
+    domain.messageText({ role: 'assistant', ...reply }, domain.createTranslator('ar')),
     /ذاكرتك فارغة/,
   );
   assert.equal(
-    domain.messageText({ role: 'user', text: 'Move task: API => 2026-10-30' }, (_, ar) => ar),
+    domain.messageText(
+      { role: 'user', text: 'Move task: API => 2026-10-30' },
+      domain.createTranslator('ar'),
+    ),
     'Move task: API => 2026-10-30',
   );
 });

@@ -1,3 +1,4 @@
+import { DateTimeInput } from '../../components/DateTimeInput';
 import {
   formatCalendarDate as localizedDate,
   formatTime as localizedTime,
@@ -72,14 +73,8 @@ export function MyDay({
     setBusy(false);
     setNotice(
       ok
-        ? t(
-            'Focus started. Pause and record it in the focus timer.',
-            'بدأ التركيز. تقدر توقف وتسجّل الوقت من مؤقت التركيز.',
-          )
-        : t(
-            'Could not start. Record any active focus session first, or check that the task is still available.',
-            'تعذر البدء. سجّل جلسة التركيز الحالية أولًا، أو راجع إن المهمة لسه متاحة.',
-          ),
+        ? t('ui.focusStartedPauseAndRecordItIn.b267b9')
+        : t('ui.couldNotStartRecordAnyActiveFocus.b8a6c9'),
     );
   }
   async function save() {
@@ -92,45 +87,33 @@ export function MyDay({
     if (ok) {
       setResultTask(null);
       setNotice(storageText(t, 'resultSaved'));
-    } else
-      setNotice(
-        t(
-          'Could not save. Reopen the latest task and review your draft.',
-          'تعذر الحفظ. افتح أحدث نسخة من المهمة وراجع مسودتك.',
-        ),
-      );
+    } else setNotice(t('ui.couldNotSaveReopenTheLatestTask.3c9796'));
   }
   return (
     <section className="card my-day">
       <div className="home-section-title">
         <div>
-          <div className="eyebrow">{t('FROM PLAN TO PRACTICE', 'من الخطة للفعل')}</div>
-          <h2 dir="auto">{day === today ? t('My day', 'يومي') : t('Day plan', 'خطة اليوم')}</h2>
+          <div className="eyebrow">{t('ui.fromPlanToPractice.5cb7de')}</div>
+          <h2 dir="auto">{day === today ? t('ui.myDay.e6e785') : t('ui.dayPlan.36095d')}</h2>
           <p dir="auto" className="muted">
             {day > today
-              ? t(
-                  'Preview of a future day. Execution and results are recorded on the actual day.',
-                  'معاينة يوم قادم. التنفيذ والحصيلة بيتسجلوا في يومهم الفعلي.',
-                )
-              : t(
-                  'Small steps, with a record of what actually moved forward.',
-                  'خطوات صغيرة، وسجل للي اتقدم فعلًا.',
-                )}
+              ? t('ui.previewOfAFutureDayExecutionAnd.4c51ae')
+              : t('ui.smallStepsWithARecordOfWhat.1c84c8')}
           </p>
         </div>
-        <Link to={`/planner?tab=week&week=${day}`}>{t('Week plan', 'خطة الأسبوع')}</Link>
+        <Link to={`/planner?tab=week&week=${day}`}>{t('ui.weekPlan.10c604')}</Link>
       </div>
       <div className="my-day-navigation">
         <Button
           variant="outline"
           size="icon"
-          aria-label={t('Previous day', 'اليوم السابق')}
+          aria-label={t('ui.previousDay.3434e3')}
           onClick={() => selectDay(addDays(day, -1))}
         >
           <ArrowRight size={16} />
         </Button>
-        <input
-          aria-label={t('My day date', 'تاريخ يومي')}
+        <DateTimeInput
+          aria-label={t('ui.myDayDate.8e21e7')}
           type="date"
           value={day}
           onChange={(e) => selectDay(e.target.value)}
@@ -139,31 +122,31 @@ export function MyDay({
         <Button
           variant="outline"
           size="icon"
-          aria-label={t('Next day', 'اليوم التالي')}
+          aria-label={t('ui.nextDay.ac4ded')}
           onClick={() => selectDay(addDays(day, 1))}
         >
           <ArrowLeft size={16} />
         </Button>
         {day !== today && (
           <Button variant="ghost" onClick={() => selectDay(today)}>
-            {t('Today', 'النهارده')}
+            {t('ui.today.448511')}
           </Button>
         )}
       </div>
       <div className="my-day-totals">
         <span>
           {localizedNumber(done, t('en', 'ar'))}/{localizedNumber(planned.length, t('en', 'ar'))}{' '}
-          {t('completed', 'مكتملة')}
+          {t('ui.completed.ff1564')}
         </span>
         <span>
-          {localizedNumber(minutes, t('en', 'ar'))} {t('planned minutes', 'دقيقة مخططة')}
+          {localizedNumber(minutes, t('en', 'ar'))} {t('ui.plannedMinutes.3a4007')}
           {unknown > 0
-            ? ` · ${localizedNumber(unknown, t('en', 'ar'))} ${t('without estimates', 'بدون تقدير')}`
+            ? ` · ${localizedNumber(unknown, t('en', 'ar'))} ${t('ui.withoutEstimates.a3bb53')}`
             : ''}
         </span>
         <span>
           {localizedNumber(planned.filter((x) => x.result?.note).length, t('en', 'ar'))}{' '}
-          {t('recorded results', 'حصيلة مسجلة')}
+          {t('ui.recordedResults.b39cf4')}
         </span>
       </div>
       <div className="my-day-list">
@@ -180,8 +163,8 @@ export function MyDay({
               </div>
               <small className="muted">
                 {task.estimate
-                  ? `${localizedNumber(task.estimate, t('en', 'ar'))} ${t('min suggested', 'دقيقة مقترحة')}`
-                  : t('No time estimate', 'بدون تقدير وقت')}
+                  ? `${localizedNumber(task.estimate, t('en', 'ar'))} ${t('ui.minSuggested.67a0f7')}`
+                  : t('ui.noTimeEstimate.974a26')}
               </small>
               {task.result && (
                 <blockquote>
@@ -196,7 +179,7 @@ export function MyDay({
                   onClick={() => void start(task)}
                 >
                   <Play size={14} />
-                  {t('Start & focus', 'ابدأ وركّز')}
+                  {t('ui.startFocus.d7ee4c')}
                 </Button>
                 <Button
                   variant={task.done ? 'ghost' : 'default'}
@@ -204,12 +187,10 @@ export function MyDay({
                   onClick={() => openResult(task)}
                 >
                   <NotebookPen size={14} />
-                  {task.result
-                    ? t('Edit result', 'تعديل الحصيلة')
-                    : t('Record result', 'سجّل الحصيلة')}
+                  {task.result ? t('ui.editResult.c0594b') : t('ui.recordResult.488dee')}
                 </Button>
                 <Button variant="ghost" onClick={() => edit(task)}>
-                  {t('Edit / replan', 'عدّل / أجّل')}
+                  {t('ui.editReplan.d7d39f')}
                 </Button>
               </div>
             </article>
@@ -218,11 +199,10 @@ export function MyDay({
       </div>
       {!planned.length && (
         <div className="home-empty">
-          <p dir="auto">{t('No tasks planned for this day.', 'مفيش مهام مخططة لليوم ده.')}</p>
+          <p dir="auto">{t('ui.noTasksPlannedForThisDay.d98af2')}</p>
           {next && (
             <Button variant="outline" onClick={() => selectDay(next)}>
-              {t('View next planned day', 'شوف أول يوم مخطط')} ·{' '}
-              {localizedDate(next, t('en', 'ar'))}
+              {t('ui.viewNextPlannedDay.9a05a4')} · {localizedDate(next, t('en', 'ar'))}
             </Button>
           )}
           <Button
@@ -238,14 +218,14 @@ export function MyDay({
               })
             }
           >
-            {t('Plan a step', 'خطط خطوة')}
+            {t('ui.planAStep.382972')}
           </Button>
         </div>
       )}
       {planned.length > 3 && (
         <Button variant="ghost" onClick={() => setExpanded(!expanded)}>
           {expanded
-            ? t('Show three', 'اعرض ثلاثة')
+            ? t('ui.showThree.2efbab')
             : t(
                 `Show all ${localizedNumber(planned.length, t('en', 'ar'))} tasks`,
                 `اعرض كل المهام (${localizedNumber(planned.length, t('en', 'ar'))})`,
@@ -256,7 +236,7 @@ export function MyDay({
         <p dir="auto" role="status">
           {notice}{' '}
           <a className="text-button" href="#daily-focus">
-            {t('Open focus timer', 'افتح مؤقت التركيز')}
+            {t('ui.openFocusTimer.62eb1f')}
           </a>
         </p>
       )}
@@ -265,7 +245,7 @@ export function MyDay({
         onOpenChange={(open) => {
           if (!open && !busy) setResultTask(null);
         }}
-        title={t('What moved forward?', 'إيه اللي اتقدم فعلًا؟')}
+        title={t('ui.whatMovedForward.cadc5a')}
         description={resultTask?.title ?? ''}
       >
         <form
@@ -276,29 +256,27 @@ export function MyDay({
           }}
         >
           <label>
-            {t('Actual result', 'الحصيلة الفعلية')}
+            {t('ui.actualResult.245175')}
             <textarea
               dir="auto"
               autoFocus
               rows={5}
               maxLength={3000}
-              placeholder={t(
-                'What did you learn, memorize, review or finish?',
-                'إيه اللي اتعلمته أو حفظته أو راجعته أو أنجزته؟',
-              )}
+              placeholder={t('ui.whatDidYouLearnMemorizeReviewOr.4b9e01')}
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
           </label>
           <label>
-            {t('Result date', 'تاريخ الحصيلة')}
-            <input
+            {t('ui.resultDate.b3e31f')}
+            <DateTimeInput
               type="date"
               required
               max={today}
               value={date}
               onChange={(e) => setDate(e.target.value)}
               onInput={(e) => setDate(e.currentTarget.value)}
+              aria-label={t('ui.resultDate.b3e31f')}
             />
           </label>
           {!resultTask?.done && (
@@ -309,14 +287,11 @@ export function MyDay({
                 onChange={(e) => setComplete(e.target.checked)}
               />
               <Check size={14} />
-              {t('Also mark the task complete', 'كمان علّم المهمة مكتملة')}
+              {t('ui.alsoMarkTheTaskComplete.a03f1e')}
             </label>
           )}
           <p dir="auto" className="muted">
-            {t(
-              'A result note does not complete a task or prove the goal is achieved. Clear the text to remove the current note; earlier edits remain in task history.',
-              'تسجيل الحصيلة مش بيكمل المهمة تلقائيًا ولا يثبت تحقيق الهدف. امسح النص لإزالة الحصيلة الحالية؛ التعديلات السابقة بتفضل في سجل المهمة.',
-            )}
+            {t('ui.aResultNoteDoesNotCompleteA.c858c9')}
           </p>
           {notice && (
             <p dir="auto" role="alert">
@@ -330,9 +305,9 @@ export function MyDay({
               disabled={busy}
               onClick={() => setResultTask(null)}
             >
-              {t('Cancel', 'إلغاء')}
+              {t('ui.cancel.428808')}
             </Button>
-            <Button disabled={busy || !date}>{t('Save result', 'حفظ الحصيلة')}</Button>
+            <Button disabled={busy || !date}>{t('ui.saveResult.9ae5d5')}</Button>
           </div>
         </form>
       </Dialog>

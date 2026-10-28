@@ -1,3 +1,4 @@
+import { DateTimeInput } from '../../components/DateTimeInput';
 import { formatNumber } from '../../i18n/format';
 import { useRef, useState } from 'react';
 import { Dialog } from '../../components/ui/dialog';
@@ -44,22 +45,19 @@ export function GoalTemplates({ t }: { t: Translate }) {
           setOpen(true);
         }}
       >
-        {t('Use a goal template', 'استخدم قالب هدف')}
+        {t('ui.useAGoalTemplate.a9c3be')}
       </Button>
       <Dialog
         open={open}
         onOpenChange={(value) => {
           if (!busy) setOpen(value);
         }}
-        title={t('Goal templates', 'قوالب الأهداف')}
-        description={t(
-          'Review one goal, two milestones and three first tasks. Nothing is added until confirmation.',
-          'راجع هدفًا ومرحلتين وثلاث مهام أولى. لن يُضاف شيء قبل التأكيد.',
-        )}
+        title={t('ui.goalTemplates.10e084')}
+        description={t('ui.reviewOneGoalTwoMilestonesAndThree.ec7775')}
       >
         <div className="editor-form">
           <label>
-            {t('Goal template', 'قالب الهدف')}
+            {t('ui.goalTemplate.4dc54f')}
             <select value={template} onChange={(e) => choose(e.target.value)}>
               {goalTemplates.map((value) => (
                 <option key={value.id} value={value.id}>
@@ -69,7 +67,7 @@ export function GoalTemplates({ t }: { t: Translate }) {
             </select>
           </label>
           <label>
-            {t('Template goal title', 'عنوان الهدف من القالب')}
+            {t('ui.templateGoalTitle.d23b34')}
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -78,7 +76,7 @@ export function GoalTemplates({ t }: { t: Translate }) {
             />
           </label>
           <label>
-            {t('Template life area', 'مجال القالب')}
+            {t('ui.templateLifeArea.1d4c22')}
             <select value={area} onChange={(e) => setArea(e.target.value as Area)}>
               {areas.map((value) => (
                 <option key={value} value={value}>
@@ -88,11 +86,16 @@ export function GoalTemplates({ t }: { t: Translate }) {
             </select>
           </label>
           <label>
-            {t('Template target date', 'موعد الهدف من القالب')}
-            <input type="date" value={date} onInput={(e) => setDate(e.currentTarget.value)} />
+            {t('ui.templateTargetDate.45ad3b')}
+            <DateTimeInput
+              type="date"
+              value={date}
+              onInput={(e) => setDate(e.currentTarget.value)}
+              aria-label={t('ui.templateTargetDate.45ad3b')}
+            />
           </label>
           <label>
-            {t('Template success criterion', 'معيار نجاح القالب')}
+            {t('ui.templateSuccessCriterion.2e4049')}
             <textarea
               dir="auto"
               rows={2}
@@ -101,15 +104,10 @@ export function GoalTemplates({ t }: { t: Translate }) {
               onChange={(e) => setCriteria(e.target.value)}
             />
           </label>
-          <p dir="auto">
-            {t(
-              'Milestones: first step, then progress review. Tasks remain unplanned until you choose execution days.',
-              'المراحل: الخطوة الأولى ثم مراجعة التقدم. المهام تفضل بدون يوم تنفيذ لحد ما تختاره.',
-            )}
-          </p>
+          <p dir="auto">{t('ui.milestonesFirstStepThenProgressReviewTasks.7679d9')}</p>
           {tasks.map((task, index) => (
             <label key={index}>
-              {t(`Suggested task ${index + 1}`, `المهمة المقترحة ${formatNumber(index + 1, 'ar')}`)}
+              {t('ui.suggestedTask.916a83', { en0: index + 1, ar0: formatNumber(index + 1, 'ar') })}
               <input
                 dir="auto"
                 value={task.title}
@@ -143,16 +141,10 @@ export function GoalTemplates({ t }: { t: Translate }) {
               );
               setBusy(false);
               if (ok) setOpen(false);
-              else
-                setNotice(
-                  t(
-                    'Nothing added. Review storage and retry this preview.',
-                    'لم يُضف شيء. راجع التخزين وأعد نفس المعاينة.',
-                  ),
-                );
+              else setNotice(t('ui.nothingAddedReviewStorageAndRetryThis.509685'));
             }}
           >
-            {t('Create reviewed goal and tasks', 'إنشاء الهدف والمهام بعد المراجعة')}
+            {t('ui.createReviewedGoalAndTasks.d26d51')}
           </Button>
           {notice && (
             <p dir="auto" role="alert">

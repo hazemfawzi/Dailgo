@@ -1,3 +1,4 @@
+import { DateTimeInput } from '../../components/DateTimeInput';
 import { formatCalendarDate, formatNumber as localizedNumber } from '../../i18n/format';
 import { canRolloverTask, rolloverDay, journeyState, JOURNEY_KEY } from '../journey/model';
 import { transactData } from '../../lib/storage';
@@ -51,9 +52,9 @@ export function DailyReview({
   return (
     <section id="daily-review" tabIndex={-1} className="card daily-review">
       <div className="home-section-title">
-        <h3 dir="auto">{t('Evening review · two minutes', 'مراجعة آخر اليوم · دقيقتين')}</h3>
-        <input
-          aria-label={t('Review day', 'يوم المراجعة')}
+        <h3 dir="auto">{t('ui.eveningReviewTwoMinutes.5e8cf6')}</h3>
+        <DateTimeInput
+          aria-label={t('ui.reviewDay.a7ccf6')}
           type="date"
           max={localDate()}
           value={day}
@@ -64,16 +65,12 @@ export function DailyReview({
       </div>
       <p dir="auto" className="muted">
         {localizedNumber(completed.length, t('en', 'ar'))}{' '}
-        {t(
-          'completed on this date (recorded completions only).',
-          'اكتملت في اليوم ده (من سجل الإنجاز المتاح).',
-        )}
+        {t('ui.completedOnThisDateRecordedCompletionsOnly.0192cb')}
       </p>
       <ResultSummary tasks={tasks} start={day} end={day} t={t} />
       <details>
         <summary>
-          {t('Review unfinished steps', 'راجع الخطوات اللي لسه')} ·{' '}
-          {localizedNumber(pending.length, t('en', 'ar'))}
+          {t('ui.reviewUnfinishedSteps.0deede')} · {localizedNumber(pending.length, t('en', 'ar'))}
         </summary>
         {pending.map((task) => (
           <div className="review-task" key={task.id}>
@@ -82,7 +79,7 @@ export function DailyReview({
               <label>
                 <input
                   type="checkbox"
-                  aria-label={`${t('Move tomorrow', 'ترحيل لبكرة')}: ${task.title}`}
+                  aria-label={`${t('ui.moveTomorrow.e5dfff')}: ${task.title}`}
                   checked={selected.includes(task.id)}
                   onChange={(e) =>
                     setSelected((old) =>
@@ -90,7 +87,7 @@ export function DailyReview({
                     )
                   }
                 />
-                {t('Include in tomorrow preview', 'ضم لمعاينة بكرة')}
+                {t('ui.includeInTomorrowPreview.e6fa53')}
               </label>
             )}
             <small>
@@ -99,7 +96,7 @@ export function DailyReview({
             </small>
             <div className="dialog-actions">
               <Button variant="outline" onClick={() => edit(task)}>
-                {t('Review / make smaller', 'مراجعة / تقسيم المهمة')}
+                {t('ui.reviewMakeSmaller.b4bb88')}
               </Button>
               <Button
                 variant="ghost"
@@ -112,7 +109,7 @@ export function DailyReview({
                   })
                 }
               >
-                {t('Plan tomorrow', 'خطط لبكرة')}
+                {t('ui.planTomorrow.73248a')}
               </Button>
               <Button
                 variant="ghost"
@@ -120,32 +117,23 @@ export function DailyReview({
                   update(task.id, { status: 'deferred', reviewDate: addDays(day, 1), done: false })
                 }
               >
-                {t('Defer for review', 'أجّل للمراجعة')}
+                {t('ui.deferForReview.eb9019')}
               </Button>
               <Button
                 variant="ghost"
                 onClick={() => update(task.id, { status: 'cancelled', done: false })}
               >
-                {t('Cancel task', 'إلغاء المهمة')}
+                {t('ui.cancelTask.0a5a17')}
               </Button>
             </div>
           </div>
         ))}
-        {!pending.length && (
-          <p dir="auto">
-            {t('Nothing needs a decision for this day.', 'مفيش خطوات محتاجة قرار لليوم ده.')}
-          </p>
-        )}
+        {!pending.length && <p dir="auto">{t('ui.nothingNeedsADecisionForThisDay.95ba1e')}</p>}
       </details>
       <section className="rollover-day">
+        <p dir="auto">{t('ui.selectedTasksMoveToTomorrowOnlyAfter.6824d4')}</p>
         <p dir="auto">
-          {t(
-            'Selected tasks move to tomorrow only after your confirmation. Their deadlines stay unchanged.',
-            'المهام المختارة هتتنقل لبكرة بعد تأكيدك فقط. مواعيد التسليم هتفضل زي ما هي.',
-          )}
-        </p>
-        <p dir="auto">
-          {localizedNumber(selected.length, t('en', 'ar'))} {t('selected tasks', 'مهام مختارة')} ·{' '}
+          {localizedNumber(selected.length, t('en', 'ar'))} {t('ui.selectedTasks.ff0f93')} ·{' '}
           <bdi>{formatCalendarDate(addDays(day, 1), t('en', 'ar'))}</bdi>
         </p>
         <Button
@@ -157,26 +145,20 @@ export function DailyReview({
             if (ok) setSelected([]);
             setNotice(
               ok
-                ? t(
-                    'Selected execution days moved to tomorrow.',
-                    'اتنقلت أيام التنفيذ المختارة لبكرة.',
-                  )
-                : t(
-                    'Tasks changed or could not be moved. Review the selection.',
-                    'المهام اتغيرت أو تعذر ترحيلها. راجع الاختيار.',
-                  ),
+                ? t('ui.selectedExecutionDaysMovedToTomorrow.c53eca')
+                : t('ui.tasksChangedOrCouldNotBeMoved.755aef'),
             );
           }}
         >
-          {t('Confirm selected tasks for tomorrow', 'تأكيد ترحيل المختار لبكرة')}
+          {t('ui.confirmSelectedTasksForTomorrow.6f1ed7')}
         </Button>
       </section>
       <fieldset className="mood-picker">
-        <legend>{t('How did today feel?', 'إحساسك باليوم؟')}</legend>
+        <legend>{t('ui.howDidTodayFeel.b22629')}</legend>
         {['😞', '😕', '😐', '🙂', '😄'].map((emoji, index) => (
           <button
             type="button"
-            aria-label={`${t('Mood', 'المزاج')} ${localizedNumber(index + 1, t('en', 'ar'))}`}
+            aria-label={`${t('ui.mood.a0c2c0')} ${localizedNumber(index + 1, t('en', 'ar'))}`}
             aria-pressed={review.mood === index + 1}
             key={emoji}
             onClick={() =>
@@ -188,10 +170,10 @@ export function DailyReview({
         ))}
       </fieldset>
       <label>
-        {t('One-line evening note', 'ملاحظة مسائية في سطر')}
+        {t('ui.oneLineEveningNote.0f9fdf')}
         <input
           dir="auto"
-          aria-label={t('Evening note', 'ملاحظة مسائية')}
+          aria-label={t('ui.eveningNote.3fd2ea')}
           maxLength={1000}
           value={review.note ?? ''}
           onChange={(e) => {
@@ -205,9 +187,9 @@ export function DailyReview({
           <label key={field}>
             {
               [
-                t('What moved forward?', 'إيه اللي اتقدم؟'),
-                t('What changed or got in the way?', 'إيه اللي اتغير أو عطّلك؟'),
-                t('What will you adjust?', 'إيه اللي هتعدّله؟'),
+                t('ui.whatMovedForward.b334a6'),
+                t('ui.whatChangedOrGotInTheWay.3388e5'),
+                t('ui.whatWillYouAdjust.f8275f'),
               ][i]
             }
             <textarea
@@ -235,15 +217,12 @@ export function DailyReview({
           }));
           setNotice(
             ok
-              ? t(
-                  'Evening review finished. You can revisit it at any time.',
-                  'انتهت المراجعة المسائية. تقدر ترجع لها في أي وقت.',
-                )
-              : t('Could not save the review status.', 'تعذر حفظ حالة المراجعة.'),
+              ? t('ui.eveningReviewFinishedYouCanRevisitIt.afe61c')
+              : t('ui.couldNotSaveTheReviewStatus.16d241'),
           );
         }}
       >
-        {t('Finish evening review', 'إنهاء المراجعة المسائية')}
+        {t('ui.finishEveningReview.b1e4d9')}
       </Button>
       {notice && (
         <p dir="auto" role="status">
@@ -251,7 +230,7 @@ export function DailyReview({
         </p>
       )}
       <p dir="auto" className="muted" role={error ? 'alert' : undefined}>
-        {error ? t('Could not save the review.', 'تعذر حفظ المراجعة.') : storageText(t, 'review')}
+        {error ? t('ui.couldNotSaveTheReview.2ead08') : storageText(t, 'review')}
       </p>
     </section>
   );

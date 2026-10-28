@@ -15,14 +15,11 @@ export function MergeMemories({ entries, t }: { entries: Entry[]; t: Translate }
     <>
       <section className="card merge-panel">
         <h3 dir="auto">
-          {t('Review duplicate memories', 'راجع الذاكرة المتكررة')} ·{' '}
+          {t('ui.reviewDuplicateMemories.9361c1')} ·{' '}
           {localizedNumber(duplicates.length, t('en', 'ar'))}
         </h3>
         <p dir="auto" className="muted">
-          {t(
-            'Matching titles, type and scope only. Review conflicting details before merging. Nothing merges automatically.',
-            'نفس العنوان والنوع والنطاق فقط. راجع أي تعارض في التفاصيل قبل الدمج. مفيش دمج تلقائي.',
-          )}
+          {t('ui.matchingTitlesTypeAndScopeOnlyReview.d12383')}
         </p>
         {duplicates.map(({ a, b }) => (
           <div className="attachment-row" key={a.id + b.id}>
@@ -35,7 +32,7 @@ export function MergeMemories({ entries, t }: { entries: Entry[]; t: Translate }
                 setNotice('');
               }}
             >
-              {t('Preview merge', 'معاينة الدمج')}
+              {t('ui.previewMerge.423f90')}
             </Button>
           </div>
         ))}
@@ -45,11 +42,8 @@ export function MergeMemories({ entries, t }: { entries: Entry[]; t: Translate }
         onOpenChange={(v) => {
           if (!v && !busy) setPair(null);
         }}
-        title={t('Review memory merge', 'راجع دمج الذاكرة')}
-        description={t(
-          'The first record stays active; the second is archived, including its original files. Task references move to the first. Its attachments and source metadata stay unchanged.',
-          'السجل الأول يفضل نشط، والتاني يتأرشف بملفاته الأصلية. روابط المهام تتحوّل للأول. مرفقات وبيانات مصدر السجل الأول لا تتغير.',
-        )}
+        title={t('ui.reviewMemoryMerge.e3bbf2')}
+        description={t('ui.theFirstRecordStaysActiveTheSecond.c72e53')}
       >
         <div className="editor-form">
           <h3 dir="auto">{pair?.a.title}</h3>
@@ -58,7 +52,7 @@ export function MergeMemories({ entries, t }: { entries: Entry[]; t: Translate }
             <p dir="auto">{pair?.b.detail}</p>
           </div>
           <label>
-            {t('Reviewed merged details', 'التفاصيل المدموجة بعد المراجعة')}
+            {t('ui.reviewedMergedDetails.117783')}
             <textarea
               dir="auto"
               rows={6}
@@ -74,7 +68,7 @@ export function MergeMemories({ entries, t }: { entries: Entry[]; t: Translate }
           )}
           <div className="dialog-actions">
             <Button variant="outline" disabled={busy} onClick={() => setPair(null)}>
-              {t('Cancel', 'إلغاء')}
+              {t('ui.cancel.428808')}
             </Button>
             <Button
               disabled={busy || !pair}
@@ -86,16 +80,10 @@ export function MergeMemories({ entries, t }: { entries: Entry[]; t: Translate }
                 );
                 setBusy(false);
                 if (ok) setPair(null);
-                else
-                  setNotice(
-                    t(
-                      'Nothing changed. Reopen the latest records and preview again.',
-                      'لم يتغير شيء. افتح أحدث السجلات وراجع المعاينة تاني.',
-                    ),
-                  );
+                else setNotice(t('ui.nothingChangedReopenTheLatestRecordsAnd.54e2d3'));
               }}
             >
-              {t('Confirm merge', 'تأكيد الدمج')}
+              {t('ui.confirmMerge.921685')}
             </Button>
           </div>
         </div>

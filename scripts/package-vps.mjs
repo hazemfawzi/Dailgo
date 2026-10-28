@@ -31,6 +31,8 @@ for (const file of [
   'maintenance.mjs',
   'resources.mjs',
   'provision.mjs',
+  'backupCrypto.mjs',
+  'recordStore.mjs',
 ])
   copyFileSync(
     join('server', file === 'index.mjs' ? 'application.mjs' : file),
@@ -45,7 +47,7 @@ writeFileSync(
       private: true,
       version: '0.1.0',
       type: 'module',
-      engines: { node: '24.x' },
+      engines: { node: '24.19.x' },
       scripts: { start: 'node server/index.mjs' },
     },
     null,

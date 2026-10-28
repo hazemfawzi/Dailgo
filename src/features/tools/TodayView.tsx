@@ -14,7 +14,7 @@ export function TodayView({ t }: { t: Translate }) {
   );
   return (
     <section className="card tools-section today-compact">
-      <h1 dir="auto">{t('Today at a glance', 'يومك في نظرة')}</h1>
+      <h1 dir="auto">{t('ui.todayAtAGlance.3cb992')}</h1>
       <p dir="auto">{formatCalendarDate(today, t('en', 'ar'))}</p>
       {tasks.map((task) => (
         <button
@@ -36,15 +36,8 @@ export function TodayView({ t }: { t: Translate }) {
           <span dir="auto">{task.title}</span>
         </button>
       ))}
-      {!tasks.length && (
-        <p dir="auto">
-          {t(
-            'No tasks need a decision today. Open your plan to choose a next step.',
-            'مفيش مهام محتاجة قرار النهارده. افتح الخطة لاختيار خطوتك الجاية.',
-          )}
-        </p>
-      )}
-      <Link to="/">{t('Open my full plan', 'افتح خطتي كاملة')}</Link>
+      {!tasks.length && <p dir="auto">{t('ui.noTasksNeedADecisionTodayOpen.25ecf9')}</p>}
+      <Link to="/">{t('ui.openMyFullPlan.06ad85')}</Link>
     </section>
   );
 }

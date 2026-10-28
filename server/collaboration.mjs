@@ -1,13 +1,41 @@
+import { recordStore } from './recordStore.mjs';
 import { randomBytes, randomUUID, createHash } from 'node:crypto';
-import { validateData, auditWorkspace } from './domain.mjs';
+import { validateData, auditWorkspace, applyWorkspaceDelta, diffWorkspace } from './domain.mjs';
 const hash = (token) => createHash('sha256').update(token).digest('hex');
 const fail = (message, status = 400) => {
   throw Object.assign(Error(message), { status });
 };
-export function createCollaboration(db, identities) {
+export function createCollaboration(db, identities, options = {}) {
   db.exec(
     'CREATE TABLE IF NOT EXISTS family_spaces(id TEXT PRIMARY KEY,owner TEXT NOT NULL,title TEXT NOT NULL,revision TEXT NOT NULL,data TEXT NOT NULL); CREATE TABLE IF NOT EXISTS family_members(space TEXT NOT NULL,principal TEXT NOT NULL,role TEXT NOT NULL,PRIMARY KEY(space,principal)); CREATE TABLE IF NOT EXISTS family_invites(id TEXT PRIMARY KEY,space TEXT NOT NULL,token TEXT NOT NULL UNIQUE,expires INTEGER NOT NULL,used INTEGER NOT NULL DEFAULT 0); CREATE TABLE IF NOT EXISTS goal_shares(id TEXT PRIMARY KEY,owner TEXT NOT NULL,goal TEXT NOT NULL,token TEXT NOT NULL UNIQUE,expires INTEGER NOT NULL,notes INTEGER NOT NULL DEFAULT 0); CREATE TABLE IF NOT EXISTS goal_comments(id TEXT PRIMARY KEY,share TEXT NOT NULL,text TEXT NOT NULL,created INTEGER NOT NULL);',
   );
+  const boards = recordStore(db, options);
+  function currentSpace(row) {
+    const principal = 'family:' + row.id;
+    const stored = boards.read(principal);
+    const mark = db
+      .prepare('SELECT revision FROM workspace_legacy_marks WHERE principal=?')
+      .get(principal);
+    const legacy = db.prepare('SELECT revision,data FROM family_spaces WHERE id=?').get(row.id);
+    if (stored && legacy.revision === mark?.revision)
+      return { ...row, revision: stored.revision, data: JSON.stringify(stored.data) };
+    const data = JSON.parse(legacy.data);
+    boards.save(principal, legacy.revision, data);
+    boards.noteLegacy(principal, legacy.revision);
+    return { ...row, revision: legacy.revision, data: legacy.data };
+  }
+  function announce(id, revision, extra = []) {
+    identities.notify(
+      [
+        ...db
+          .prepare('SELECT principal FROM family_members WHERE space=?')
+          .all(id)
+          .map((row) => row.principal),
+        ...extra,
+      ],
+      { familyId: id, revision },
+    );
+  }
   const requireMember = (principal, id) => {
     const space = db
       .prepare(
@@ -15,7 +43,7 @@ export function createCollaboration(db, identities) {
       )
       .get(id, principal);
     if (!space) fail('space-not-found', 404);
-    return space;
+    return currentSpace(space);
   };
   const safeSpace = (row) => ({
     id: row.id,
@@ -35,7 +63,7 @@ export function createCollaboration(db, identities) {
         'SELECT s.*,m.role FROM family_spaces s JOIN family_members m ON m.space=s.id WHERE m.principal=?',
       )
       .all(principal)
-      .map(safeSpace);
+      .map((row) => safeSpace(currentSpace(row)));
   }
   function create(principal, title) {
     if (typeof title !== 'string' || !title.trim() || title.length > 100)
@@ -58,6 +86,7 @@ export function createCollaboration(db, identities) {
       db.exec('ROLLBACK');
       throw error;
     }
+    announce(id, revision);
     return safeSpace(requireMember(principal, id));
   }
   function invite(principal, id) {
@@ -93,6 +122,10 @@ export function createCollaboration(db, identities) {
       'INSERT INTO family_members VALUES(?,?,?) ON CONFLICT(space,principal) DO NOTHING',
     ).run(row.space, principal, 'member');
     db.prepare('UPDATE family_invites SET used=1 WHERE id=?').run(row.id);
+    announce(
+      row.space,
+      currentSpace(db.prepare('SELECT * FROM family_spaces WHERE id=?').get(row.space)).revision,
+    );
     return safeSpace(requireMember(principal, row.space));
   }
   function accept(body) {
@@ -118,10 +151,13 @@ export function createCollaboration(db, identities) {
     try {
       const old = requireMember(principal, id);
       if (old.revision !== body.revision) fail('space-changed', 409);
-      if (!body.data || Object.keys(body.data).some((key) => key !== 'personal-os.tasks.v1'))
+      const incoming = body.changes
+        ? applyWorkspaceDelta(JSON.parse(old.data), body.changes)
+        : body.data;
+      if (!incoming || Object.keys(incoming).some((key) => key !== 'personal-os.tasks.v1'))
         fail('invalid-shared-data');
-      validateData(body.data);
-      const tasks = body.data['personal-os.tasks.v1'];
+      validateData(incoming);
+      const tasks = incoming['personal-os.tasks.v1'];
       if (
         !Array.isArray(tasks) ||
         tasks.length > 2000 ||
@@ -139,17 +175,17 @@ export function createCollaboration(db, identities) {
         )
       )
         fail('invalid-family-task');
-      const data = auditWorkspace(JSON.parse(old.data), body.data);
+      const data = auditWorkspace(JSON.parse(old.data), incoming);
       delete data['personal-os.trash.v1'];
       validateData(data);
       const revision = randomUUID();
-      db.prepare('UPDATE family_spaces SET revision=?,data=? WHERE id=?').run(
-        revision,
-        JSON.stringify(data),
-        id,
-      );
+      boards.save('family:' + id, revision, data);
+      announce(id, revision);
       db.exec('COMMIT');
-      return safeSpace(requireMember(principal, id));
+      const saved = safeSpace(requireMember(principal, id));
+      return body.changes
+        ? { ...saved, data: undefined, changes: diffWorkspace(JSON.parse(old.data), saved.data) }
+        : saved;
     } catch (error) {
       db.exec('ROLLBACK');
       throw error;
@@ -168,11 +204,9 @@ export function createCollaboration(db, identities) {
         ),
       });
       db.prepare('DELETE FROM family_members WHERE space=? AND principal=?').run(id, member);
-      db.prepare('UPDATE family_spaces SET revision=?,data=? WHERE id=?').run(
-        randomUUID(),
-        JSON.stringify(data),
-        id,
-      );
+      const revision = randomUUID();
+      boards.save('family:' + id, revision, data);
+      announce(id, revision, [member]);
       db.exec('COMMIT');
       return safeSpace(requireMember(principal, id));
     } catch (error) {

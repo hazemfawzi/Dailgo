@@ -5,7 +5,9 @@ export default defineConfig({
   outputDir: 'test-results/browser',
   fullyParallel: false,
   workers: 1,
-  timeout: 30000,
+  // These end-to-end cases include multiple accounts/devices and cold lazy imports.
+  timeout: 60000,
+  expect: { timeout: 10000 },
   use: {
     baseURL: 'http://127.0.0.1:5187',
     headless: true,

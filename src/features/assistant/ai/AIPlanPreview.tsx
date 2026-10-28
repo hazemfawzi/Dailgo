@@ -23,21 +23,11 @@ export function AIPlanPreview({
 }) {
   return (
     <section className="chat-proposal ai-plan">
-      <h3 dir="auto">
-        {t('Claude proposal · review before saving', 'اقتراح Claude · راجع قبل الحفظ')}
-      </h3>
-      <p dir="auto">
-        {t(
-          'Nothing changes until you confirm the complete proposal. A changed task blocks the whole proposal.',
-          'مفيش تغيير قبل تأكيد الاقتراح كاملًا. لو مهمة اتغيرت، التنفيذ كله بيتوقف للمراجعة.',
-        )}
-      </p>
+      <h3 dir="auto">{t('ui.claudeProposalReviewBeforeSaving.633b70')}</h3>
+      <p dir="auto">{t('ui.nothingChangesUntilYouConfirmTheComplete.145a58')}</p>
       {plan.contextTruncated && (
         <p dir="auto" className="capture-hint">
-          {t(
-            'The selected context was shortened to control cost. This proposal may not cover every record.',
-            'السياق المختار اتختصر لضبط التكلفة. الاقتراح ممكن ما يشملش كل السجلات.',
-          )}
+          {t('ui.theSelectedContextWasShortenedToControl.08602a')}
         </p>
       )}
       <ol>
@@ -51,12 +41,12 @@ export function AIPlanPreview({
             <li key={index}>
               <strong dir="auto">
                 {action.kind === 'update_goal'
-                  ? t('Add goal milestones', 'إضافة مراحل للهدف')
+                  ? t('ui.addGoalMilestones.f4d909')
                   : action.kind === 'update_task'
-                    ? t('Update task', 'تعديل مهمة')
+                    ? t('ui.updateTask.de756c')
                     : action.kind === 'create_task'
-                      ? t('Create task', 'إنشاء مهمة')
-                      : t('Create goal', 'إنشاء هدف')}
+                      ? t('ui.createTask.75da8c')
+                      : t('ui.createGoal.280a46')}
                 : {item.title}
               </strong>
               {action.kind === 'update_goal' ? (
@@ -79,11 +69,11 @@ export function AIPlanPreview({
                     ? ' · ' + formatTime(item.plannedTime, t('en', 'ar'))
                     : ''}
                   {'estimate' in item && item.estimate
-                    ? ' · ' + formatNumber(item.estimate, t('en', 'ar')) + ' ' + t('min', 'دقيقة')
+                    ? ' · ' + formatNumber(item.estimate, t('en', 'ar')) + ' ' + t('ui.min.2c0d20')
                     : ''}
                   {'dueDate' in item && item.dueDate
                     ? ' · ' +
-                      t('Due', 'التسليم') +
+                      t('ui.due.6c34a1') +
                       ': ' +
                       formatCalendarDate(item.dueDate, t('en', 'ar'))
                     : ''}
@@ -91,7 +81,7 @@ export function AIPlanPreview({
               )}
               {action.kind === 'update_task' && (
                 <p className="muted" dir="auto">
-                  {t('Before', 'قبل')}: {action.before.title}
+                  {t('ui.before.c8c77a')}: {action.before.title}
                   {action.before.plannedDate
                     ? ' · ' + formatCalendarDate(action.before.plannedDate, t('en', 'ar'))
                     : ''}
@@ -118,29 +108,26 @@ export function AIPlanPreview({
       {status === 'pending' ? (
         <div className="proposal-actions">
           <Button disabled={busy} onClick={confirm}>
-            {t('Confirm Claude proposal', 'تأكيد اقتراح Claude')}
+            {t('ui.confirmClaudeProposal.ea0275')}
           </Button>
           <Button disabled={busy} variant="outline" onClick={cancel}>
-            {t('Cancel proposal', 'إلغاء الاقتراح')}
+            {t('ui.cancelProposal.0941ab')}
           </Button>
         </div>
       ) : status === 'confirmed' ? (
         <div>
           <p dir="auto" role="status">
-            {t(
-              'Proposal saved. History is available in each changed item.',
-              'اتحفظ الاقتراح. سجل التغيير متاح في كل عنصر اتعدل.',
-            )}
+            {t('ui.proposalSavedHistoryIsAvailableInEach.dd8333')}
           </p>
           <Button disabled={busy} variant="outline" onClick={undo}>
-            {t('Undo Claude changes', 'تراجع عن تغييرات Claude')}
+            {t('ui.undoClaudeChanges.99746a')}
           </Button>
         </div>
       ) : (
         <p dir="auto">
           {status === 'reverted'
-            ? t('Changes reverted', 'تم التراجع عن التغييرات')
-            : t('Proposal cancelled', 'تم إلغاء الاقتراح')}
+            ? t('ui.changesReverted.9e02f1')
+            : t('ui.proposalCancelled.84d023')}
         </p>
       )}
     </section>

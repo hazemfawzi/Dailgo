@@ -31,7 +31,7 @@ export function NotificationsPanel({ t }: { t: Translate }) {
       setStatus(value);
       setSettings(value.settings);
     } catch {
-      setNotice(t('Could not load reminder settings.', 'تعذر تحميل إعدادات التذكيرات.'));
+      setNotice(t('ui.couldNotLoadReminderSettings.e8f285'));
     }
   }
   useEffect(() => {
@@ -60,46 +60,27 @@ export function NotificationsPanel({ t }: { t: Translate }) {
         await subscription.unsubscribe();
         throw error;
       }
-      setNotice(
-        t(
-          'This device is registered. Enable Push and save to receive reminders.',
-          'الجهاز اتسجل. فعّل Push واحفظ عشان تستقبل التذكيرات.',
-        ),
-      );
+      setNotice(t('ui.thisDeviceIsRegisteredEnablePushAnd.4d282f'));
       await load();
     } catch {
-      setNotice(
-        t(
-          'Push registration failed or permission was declined. It requires an installed/supported browser over HTTPS; iPhone requires adding the web app to the home screen.',
-          'تعذر تسجيل Push أو إذنه مرفوض. محتاج متصفح داعم وHTTPS؛ على iPhone لازم إضافة نسخة الويب للشاشة الرئيسية.',
-        ),
-      );
+      setNotice(t('ui.pushRegistrationFailedOrPermissionWasDeclined.b73095'));
     }
     setBusy(false);
   }
   return (
     <section className="card tools-section editor-form">
-      <h2 dir="auto">{t('Push and email reminders', 'تذكيرات Push والبريد')}</h2>
-      <p dir="auto">
-        {t(
-          'External delivery is opt-in. Keep task details hidden for shared lock screens. The server checks reminders once a minute; delivery depends on the browser and email provider.',
-          'الإرسال الخارجي باختيارك. يفضل إخفاء تفاصيل المهام لو شاشة القفل مشتركة. السيرفر بيفحص التذكيرات كل دقيقة، والوصول بيعتمد على المتصفح ومزود البريد.',
-        )}
-      </p>
+      <h2 dir="auto">{t('ui.pushAndEmailReminders.c01ac6')}</h2>
+      <p dir="auto">{t('ui.externalDeliveryIsOptInKeepTask.5b3420')}</p>
       {settings && status && (
         <>
           <p dir="auto" className="integration-status">
             Push:{' '}
-            {status.pushAvailable
-              ? t('available', 'متاح')
-              : t('server setup required', 'يحتاج إعداد السيرفر')}{' '}
-            · {t('Email', 'البريد')}:{' '}
-            {status.emailAvailable
-              ? t('available', 'متاح')
-              : t('server setup required', 'يحتاج إعداد السيرفر')}
+            {status.pushAvailable ? t('ui.available.080863') : t('ui.serverSetupRequired.38c3bc')} ·{' '}
+            {t('ui.email.c3657f')}:{' '}
+            {status.emailAvailable ? t('ui.available.080863') : t('ui.serverSetupRequired.38c3bc')}
           </p>
           <label>
-            {t('Reminder email', 'بريد التذكيرات')}
+            {t('ui.reminderEmail.837e4d')}
             <input
               type="email"
               value={settings.email}
@@ -109,11 +90,8 @@ export function NotificationsPanel({ t }: { t: Translate }) {
           </label>
           <p dir="auto">
             {settings.verified
-              ? t('Email verified', 'البريد مؤكد')
-              : t(
-                  'Save your email, then request its confirmation link.',
-                  'احفظ البريد، وبعدها اطلب رابط تأكيده.',
-                )}
+              ? t('ui.emailVerified.949aa1')
+              : t('ui.saveYourEmailThenRequestItsConfirmation.90d41c')}
           </p>
           <div className="tools-tabs">
             <Button
@@ -124,27 +102,17 @@ export function NotificationsPanel({ t }: { t: Translate }) {
                 try {
                   await apiRequest('notifications', 'PUT', settings);
                   await apiRequest('notifications/verify', 'POST', {});
-                  setNotice(
-                    t(
-                      'Confirmation email sent. Open its link, then refresh these settings.',
-                      'اترسلت رسالة التأكيد. افتح رابطها، وبعدها حدّث الإعدادات.',
-                    ),
-                  );
+                  setNotice(t('ui.confirmationEmailSentOpenItsLinkThen.0e8e63'));
                 } catch {
-                  setNotice(
-                    t(
-                      'Could not send verification. Review the email and server mail setup, or wait a few minutes.',
-                      'تعذر إرسال التأكيد. راجع البريد وإعداد السيرفر، أو انتظر دقائق.',
-                    ),
-                  );
+                  setNotice(t('ui.couldNotSendVerificationReviewTheEmail.6b638c'));
                 }
                 setBusy(false);
               }}
             >
-              {t('Send email confirmation', 'إرسال تأكيد البريد')}
+              {t('ui.sendEmailConfirmation.ddfa2b')}
             </Button>
             <Button disabled={busy} variant="ghost" onClick={() => void load()}>
-              {t('Refresh reminder status', 'تحديث حالة التذكيرات')}
+              {t('ui.refreshReminderStatus.80131e')}
             </Button>
           </div>
           {(
@@ -170,32 +138,18 @@ export function NotificationsPanel({ t }: { t: Translate }) {
               />
               {
                 {
-                  emailEnabled: t('Email reminders', 'تذكيرات بالبريد'),
-                  pushEnabled: t('Push reminders', 'تذكيرات Push'),
-                  morning: t('Morning plan', 'خطة الصباح'),
-                  evening: t('Evening review', 'المراجعة المسائية'),
-                  tasks: t(
-                    'Due and planned tasks (up to 10 per day)',
-                    'المهام المستحقة والمخططة (حتى ١٠ يوميًا)',
-                  ),
-                  events: t(
-                    'Appointments starting now (up to 10 per day)',
-                    'المواعيد اللي تبدأ الآن (حتى ١٠ يوميًا)',
-                  ),
-                  showDetails: t(
-                    'Include task titles in notifications',
-                    'إظهار عناوين المهام في التذكيرات',
-                  ),
+                  emailEnabled: t('ui.emailReminders.4e9839'),
+                  pushEnabled: t('ui.pushReminders.685d97'),
+                  morning: t('ui.morningPlan.d97e9c'),
+                  evening: t('ui.eveningReview.31ee28'),
+                  tasks: t('ui.dueAndPlannedTasksUpTo10.fab6c4'),
+                  events: t('ui.appointmentsStartingNowUpTo10Per.ac2308'),
+                  showDetails: t('ui.includeTaskTitlesInNotifications.c53314'),
                 }[key]
               }
             </label>
           ))}
-          <p dir="auto">
-            {t(
-              'Morning and evening times follow your Daily cycle preferences and planning timezone. Task alerts use the execution time, or 09:00 when only a due date is set.',
-              'أوقات الصباح والمساء حسب إعدادات الدورة اليومية والمنطقة الزمنية. تنبيه المهمة يستخدم وقت التنفيذ أو ٠٩:٠٠ لو محدد تاريخ فقط.',
-            )}
-          </p>
+          <p dir="auto">{t('ui.morningAndEveningTimesFollowYourDaily.a3dada')}</p>
           <div className="tools-tabs">
             <Button
               disabled={busy}
@@ -205,21 +159,21 @@ export function NotificationsPanel({ t }: { t: Translate }) {
                   const value = await apiRequest('notifications', 'PUT', settings);
                   setStatus(value);
                   setSettings(value.settings);
-                  setNotice(t('Reminder preferences saved.', 'اتحفظت تفضيلات التذكير.'));
+                  setNotice(t('ui.reminderPreferencesSaved.0c3b9f'));
                 } catch {
-                  setNotice(t('Could not save reminders.', 'تعذر حفظ التذكيرات.'));
+                  setNotice(t('ui.couldNotSaveReminders.bbc0a3'));
                 }
                 setBusy(false);
               }}
             >
-              {t('Save reminder preferences', 'حفظ تفضيلات التذكير')}
+              {t('ui.saveReminderPreferences.7bafb8')}
             </Button>
             <Button
               disabled={busy || !status.pushAvailable}
               variant="outline"
               onClick={() => void subscribe()}
             >
-              {t('Register this device for Push', 'تسجيل الجهاز لـPush')}
+              {t('ui.registerThisDeviceForPush.59bbb4')}
             </Button>
             <Button
               disabled={busy}
@@ -236,14 +190,14 @@ export function NotificationsPanel({ t }: { t: Translate }) {
                     await subscription.unsubscribe();
                   }
                   await load();
-                  setNotice(t('This device was unregistered.', 'اتلغى تسجيل الجهاز.'));
+                  setNotice(t('ui.thisDeviceWasUnregistered.e0cca7'));
                 } catch {
-                  setNotice(t('Could not unregister this device.', 'تعذر إلغاء تسجيل الجهاز.'));
+                  setNotice(t('ui.couldNotUnregisterThisDevice.b0532f'));
                 }
                 setBusy(false);
               }}
             >
-              {t('Unregister this device', 'إلغاء تسجيل الجهاز')}
+              {t('ui.unregisterThisDevice.045d17')}
             </Button>
             <Button
               disabled={busy || (!status.emailAvailable && !status.pushAvailable)}
@@ -252,21 +206,14 @@ export function NotificationsPanel({ t }: { t: Translate }) {
                 setBusy(true);
                 try {
                   await apiRequest('notifications/test', 'POST', {});
-                  setNotice(
-                    t('Requested test notification sent.', 'اترسل التنبيه التجريبي اللي طلبته.'),
-                  );
+                  setNotice(t('ui.requestedTestNotificationSent.8cfe7f'));
                 } catch {
-                  setNotice(
-                    t(
-                      'No verified destination or delivery failed. Check setup and try again after one minute.',
-                      'مفيش وجهة مؤكدة أو تعذر الإرسال. راجع الإعدادات وحاول بعد دقيقة.',
-                    ),
-                  );
+                  setNotice(t('ui.noVerifiedDestinationOrDeliveryFailedCheck.d220ae'));
                 }
                 setBusy(false);
               }}
             >
-              {t('Send one test reminder', 'إرسال تذكير تجريبي واحد')}
+              {t('ui.sendOneTestReminder.743884')}
             </Button>
           </div>
         </>

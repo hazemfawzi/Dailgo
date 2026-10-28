@@ -17,10 +17,7 @@ export function GoalDateReview({
       {late && (
         <section className="goal-date-review">
           <p dir="auto" role="alert">
-            {t(
-              'Some milestones are after this target. Extend the goal or explicitly keep those dates.',
-              'في مراحل بعد الموعد ده. مدّ موعد الهدف أو وافق صراحة على الاحتفاظ بتواريخها.',
-            )}
+            {t('ui.someMilestonesAreAfterThisTargetExtend.6afe1f')}
           </p>
           <Button
             type="button"
@@ -35,7 +32,7 @@ export function GoalDateReview({
               })
             }
           >
-            {t('Extend goal to the last milestone', 'مدّ الهدف لآخر مرحلة')}
+            {t('ui.extendGoalToTheLastMilestone.276e31')}
           </Button>
           <label>
             <input
@@ -43,13 +40,13 @@ export function GoalDateReview({
               checked={issue !== 'after-goal'}
               onChange={(e) => onChange(acknowledgeLateMilestones(goal, e.target.checked))}
             />
-            {t('Keep milestones after the goal target', 'احتفظ بالمراحل بعد موعد الهدف بموافقتي')}
+            {t('ui.keepMilestonesAfterTheGoalTarget.4d48d9')}
           </label>
         </section>
       )}
       {issue === 'invalid-date' && (
         <p dir="auto" role="alert">
-          {t('Use valid calendar dates.', 'استخدم تواريخ صحيحة.')}
+          {t('ui.useValidCalendarDates.ae09b0')}
         </p>
       )}
     </>

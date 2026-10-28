@@ -1,3 +1,4 @@
+import { DateTimeInput } from '../../components/DateTimeInput';
 import { formatNumber as localizedNumber } from '../../i18n/format';
 import { formatNumber } from '../../i18n/format';
 import { useEffect, useState } from 'react';
@@ -81,19 +82,8 @@ export function DailyCycle({
     setBusy(false);
     if (ok) {
       setManual(false);
-      setNotice(
-        t(
-          'Your focus choices and execution days are saved.',
-          'اتحفظ اختيار التركيز وأيام التنفيذ.',
-        ),
-      );
-    } else
-      setNotice(
-        t(
-          'The selection changed or could not be saved. Review the latest tasks.',
-          'الاختيار اتغير أو تعذر حفظه. راجع أحدث مهام.',
-        ),
-      );
+      setNotice(t('ui.yourFocusChoicesAndExecutionDaysAre.dacba6'));
+    } else setNotice(t('ui.theSelectionChangedOrCouldNotBe.bc8c05'));
   }
   async function decide(id: string, operation: 'today' | 'defer' | 'cancel') {
     if (busy) return;
@@ -124,23 +114,15 @@ export function DailyCycle({
     if (ok) {
       setDefer(null);
       setChosen((ids) => ids.filter((value) => value !== id || operation === 'today'));
-    } else
-      setNotice(
-        t(
-          'Could not update the task. Review it and retry.',
-          'تعذر تعديل المهمة. راجعها وحاول تاني.',
-        ),
-      );
+    } else setNotice(t('ui.couldNotUpdateTheTaskReviewIt.e3c746'));
   }
   return (
     <section className="card daily-cycle">
       <div className="home-section-title">
         <div>
-          <div className="eyebrow">{t('YOUR DAILY CYCLE', 'دورتك اليومية')}</div>
+          <div className="eyebrow">{t('ui.yourDailyCycle.7d448b')}</div>
           <h2 dir="auto">
-            {show
-              ? t('Plan today in one minute', 'خطط يومك في دقيقة')
-              : t('Your daily plan', 'خطة يومك')}
+            {show ? t('ui.planTodayInOneMinute.68c63a') : t('ui.yourDailyPlan.4c5352')}
           </h2>
         </div>
         <Button
@@ -152,36 +134,27 @@ export function DailyCycle({
             } else setManual(true);
           }}
         >
-          {show ? t('Collapse plan', 'طيّ الخطة') : t('Review today’s plan', 'راجع خطة اليوم')}
+          {show ? t('ui.collapsePlan.d6adc9') : t('ui.reviewTodaySPlan.309c01')}
         </Button>
       </div>
       {show && (
         <>
           <p dir="auto">
             {clock < '12:00'
-              ? t(
-                  'Good morning. Choose up to three steps to focus on.',
-                  'صباح الخير. اختار لحد ثلاث خطوات تركز عليها.',
-                )
-              : t(
-                  'Choose up to three focus steps for the rest of your day.',
-                  'اختار لحد ثلاث خطوات تركز عليها في باقي اليوم.',
-                )}
+              ? t('ui.goodMorningChooseUpToThreeSteps.cf6990')
+              : t('ui.chooseUpToThreeFocusStepsFor.f92268')}
           </p>
           <p dir="auto" className="muted">
-            {t(
-              'Selected tasks will be planned for today. Their due dates stay unchanged.',
-              'المهام المختارة هيتحدد تنفيذها النهارده، ومواعيد التسليم هتفضل زي ما هي.',
-            )}
+            {t('ui.selectedTasksWillBePlannedForToday.8e04e2')}
           </p>
           <p dir="auto">
-            {t('Due today', 'تسليم اليوم')}:{' '}
+            {t('ui.dueToday.6c50f4')}:{' '}
             {formatNumber(
               tasks.filter((task) => isActionable(task) && task.dueDate === today).length,
               t('en', 'ar'),
             )}{' '}
-            · {t('Overdue', 'متأخرة')}: {formatNumber(overdue.length, t('en', 'ar'))} ·{' '}
-            {t('Routines', 'الروتين')}:{' '}
+            · {t('ui.overdue.918363')}: {formatNumber(overdue.length, t('en', 'ar'))} ·{' '}
+            {t('ui.routines.4daff4')}:{' '}
             {formatNumber(
               routines.filter((entry) => !entry.doneDates.includes(today)).length,
               t('en', 'ar'),
@@ -192,7 +165,7 @@ export function DailyCycle({
               <label key={task.id}>
                 <input
                   type="checkbox"
-                  aria-label={`${t('Focus choice', 'اختيار التركيز')}: ${task.title}`}
+                  aria-label={`${t('ui.focusChoice.ed593b')}: ${task.title}`}
                   checked={chosen.includes(task.id)}
                   disabled={!chosen.includes(task.id) && eligibleChosen.length === 3}
                   onChange={(e) =>
@@ -204,16 +177,15 @@ export function DailyCycle({
                 <span dir="auto">{task.title}</span>
                 <small>
                   {areaLabel(task.category as any, t)} ·{' '}
-                  {formatNumber(task.estimate ?? 0, t('en', 'ar'))}{' '}
-                  {t('estimated min', 'دقيقة متوقعة')}
+                  {formatNumber(task.estimate ?? 0, t('en', 'ar'))} {t('ui.estimatedMin.2e09f8')}
                 </small>
               </label>
             ))}
           </div>
           {!candidates.length && (
             <p dir="auto">
-              {t('Add one task to start your day.', 'أضف مهمة واحدة تبدأ بيها يومك.')}{' '}
-              <Link to="/planner">{t('Open tasks', 'افتح المهام')}</Link>
+              {t('ui.addOneTaskToStartYourDay.13a4eb')}{' '}
+              <Link to="/planner">{t('ui.openTasks.4911c1')}</Link>
             </p>
           )}
           <div
@@ -222,24 +194,17 @@ export function DailyCycle({
           >
             <strong dir="auto">
               {formatNumber(load.total, t('en', 'ar'))} /{' '}
-              {formatNumber(load.capacity, t('en', 'ar'))} {t('planned minutes', 'دقيقة مخططة')}
+              {formatNumber(load.capacity, t('en', 'ar'))} {t('ui.plannedMinutes.3a4007')}
             </strong>
             <progress
               value={Math.min(load.total, Math.max(load.capacity, 1))}
               max={Math.max(load.capacity, 1)}
             />
-            {load.overloaded && (
-              <p dir="auto">
-                {t(
-                  'The day is over capacity. Choose fewer tasks, shorten estimates, or adjust available time.',
-                  'اليوم محمّل زيادة. اختار مهام أقل، أو راجع المدد والوقت المتاح.',
-                )}
-              </p>
-            )}
+            {load.overloaded && <p dir="auto">{t('ui.theDayIsOverCapacityChooseFewer.2c6f2f')}</p>}
             {load.unknownTasks > 0 && (
               <p dir="auto">
                 {formatNumber(load.unknownTasks, t('en', 'ar'))}{' '}
-                {t('tasks still need time estimates.', 'مهام لسه محتاجة تقدير وقت.')}
+                {t('ui.tasksStillNeedTimeEstimates.62e042')}
               </p>
             )}
           </div>
@@ -257,7 +222,7 @@ export function DailyCycle({
                 setJourney((old) => ({ ...old, morningReviewedOn: today }));
               }}
             >
-              {t('Later today', 'بعد شوية')}
+              {t('ui.laterToday.6771e5')}
             </Button>
           </div>
         </>
@@ -265,8 +230,7 @@ export function DailyCycle({
       {overdue.length > 0 && (
         <details>
           <summary>
-            {t('Decide on overdue tasks', 'قرار للمهام المتأخرة')} ·{' '}
-            {formatNumber(overdue.length, t('en', 'ar'))}
+            {t('ui.decideOnOverdueTasks.5a2cd5')} · {formatNumber(overdue.length, t('en', 'ar'))}
           </summary>
           {overdue.map((task) => (
             <div className="overdue-choice" key={task.id}>
@@ -277,7 +241,7 @@ export function DailyCycle({
                   variant="outline"
                   onClick={() => void decide(task.id, 'today')}
                 >
-                  {t('Today', 'النهارده')}
+                  {t('ui.today.448511')}
                 </Button>
                 <Button
                   disabled={busy}
@@ -287,21 +251,21 @@ export function DailyCycle({
                     setDeferDate(nextDay(today));
                   }}
                 >
-                  {t('Defer', 'أجّل')}
+                  {t('ui.defer.6a5938')}
                 </Button>
                 <Button
                   disabled={busy}
                   variant="ghost"
                   onClick={() => void decide(task.id, 'cancel')}
                 >
-                  {t('Cancel task', 'الغِ المهمة')}
+                  {t('ui.cancelTask.a92d32')}
                 </Button>
               </div>
               {defer === task.id && (
                 <label>
-                  {t('Review and execution date', 'تاريخ المراجعة والتنفيذ')}
-                  <input
-                    aria-label={t('Deferred task date', 'تاريخ تأجيل المهمة')}
+                  {t('ui.reviewAndExecutionDate.824afb')}
+                  <DateTimeInput
+                    aria-label={t('ui.deferredTaskDate.3296b7')}
                     type="date"
                     min={nextDay(today)}
                     value={deferDate}
@@ -309,7 +273,7 @@ export function DailyCycle({
                     onChange={(e) => setDeferDate(e.target.value)}
                   />
                   <Button disabled={busy} onClick={() => void decide(task.id, 'defer')}>
-                    {t('Confirm defer', 'تأكيد التأجيل')}
+                    {t('ui.confirmDefer.e68655')}
                   </Button>
                 </label>
               )}
@@ -317,27 +281,16 @@ export function DailyCycle({
           ))}
         </details>
       )}
-      {clock >= journey.eveningTime && journey.eveningReviewedOn !== today && (
-        <aside className="evening-reminder" role="status">
-          <strong dir="auto">
-            {t('Two minutes for your evening review', 'دقيقتين لمراجعة آخر اليوم')}
-          </strong>
-          <a href="#daily-review">{t('Open evening review', 'افتح المراجعة المسائية')}</a>
-        </aside>
-      )}
-      <nav
-        className="cycle-links"
-        aria-label={t('Daily cycle navigation', 'التنقل في الدورة اليومية')}
-      >
-        <a href="#daily-focus">{t('Start focus', 'ابدأ التركيز')}</a>
-        <a href="#daily-review">{t('Evening review', 'مراجعة آخر اليوم')}</a>
-        <Link to="/planner?tab=week&review=1">{t('Weekly review', 'مراجعة الأسبوع')}</Link>
+      <nav className="cycle-links" aria-label={t('ui.dailyCycleNavigation.4c2302')}>
+        <a href="#daily-focus">{t('ui.startFocus.98a925')}</a>
+        <a href="#daily-review">{t('ui.eveningReview.fc70ce')}</a>
+        <Link to="/planner?tab=week&review=1">{t('ui.weeklyReview.d0d31a')}</Link>
         {!journey.onboardingComplete && (
           <Button
             variant="ghost"
             onClick={() => window.dispatchEvent(new Event('dailgo-onboarding'))}
           >
-            {t('Set up my starting plan', 'جهّز خطة البداية')}
+            {t('ui.setUpMyStartingPlan.8c1189')}
           </Button>
         )}
       </nav>

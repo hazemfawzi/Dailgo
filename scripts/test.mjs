@@ -8,10 +8,10 @@ const result = await build({
   format: 'esm',
   write: false,
 });
-const { respond, proposalEntry } = await import(
+const { respond, proposalEntry, createTranslator } = await import(
   `data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`
 );
-const t = (en) => en;
+const t = createTranslator('en');
 const dayBuild = await build({
   entryPoints: ['src/features/home/dayModel.ts'],
   bundle: true,

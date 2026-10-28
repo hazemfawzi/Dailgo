@@ -4,11 +4,11 @@ import type { Translate } from '../../lib/workspace';
 export function CaptureOrigin({ source, t }: { source?: CaptureSource; t: Translate }) {
   return source ? (
     <details className="capture-original">
-      <summary>{t('Captured from your request', 'مصدر العنصر من طلبك')}</summary>
+      <summary>{t('ui.capturedFromYourRequest.e3f44e')}</summary>
       <p dir="auto">{source.fragment}</p>
       <small>{formatTimestamp(source.createdAt, t('en', 'ar'))}</small>
       <details>
-        <summary>{t('Full request', 'الطلب كاملًا')}</summary>
+        <summary>{t('ui.fullRequest.d0d920')}</summary>
         <p dir="auto">{source.text}</p>
       </details>
     </details>

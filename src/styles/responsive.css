@@ -44,61 +44,6 @@
   width: 100%;
 }
 @media (max-width: 650px) {
-  .home-v2 {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-  }
-  .home-heading {
-    order: 0;
-    margin-bottom: 0;
-  }
-  .home-content-grid,
-  .home-main-column,
-  .home-side-column {
-    display: contents;
-  }
-  .home-focus-list {
-    order: 1;
-  }
-  .home-stats {
-    order: 2;
-    margin: 0;
-  }
-  .home-assistant-bar {
-    order: 3;
-    margin: 0;
-  }
-  .attention-card {
-    order: 4;
-  }
-  .focus-widget {
-    order: 5;
-  }
-  .home-agenda {
-    order: 6;
-  }
-  .home-routines {
-    order: 7;
-  }
-  .home-goals {
-    order: 8;
-  }
-  .daily-review {
-    order: 9;
-    margin: 0;
-  }
-  .daily-hero {
-    order: 10;
-    min-height: 0;
-    padding: 24px;
-  }
-  .home-footer {
-    order: 11;
-  }
-  .daily-hero .hero-progress {
-    display: none;
-  }
   .daily-review .review-fields {
     grid-template-columns: 1fr;
   }
@@ -110,7 +55,7 @@
     gap: 4px;
   }
   .home-focus-task .suggestion-reason small {
-    font-size: 11px;
+    font-size: var(--text-xs);
   }
   .daily-review .home-section-title {
     flex-wrap: wrap;
@@ -127,7 +72,7 @@
   padding: 24px;
 }
 .my-day h2 {
-  font-size: 26px;
+  font-size: var(--text-xl);
   margin: 4px 0;
 }
 .my-day .home-section-title {
@@ -155,7 +100,7 @@
   padding: 12px;
   background: var(--bg);
   border-radius: 12px;
-  font-size: 12px;
+  font-size: var(--text-xs);
   justify-content: space-between;
 }
 .my-day-list {
@@ -182,11 +127,11 @@
   gap: 6px;
 }
 .day-step-heading a {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--purple);
 }
 .day-step-heading > span {
-  font-size: 11px;
+  font-size: var(--text-xs);
   white-space: nowrap;
 }
 .day-step-actions {
@@ -222,7 +167,7 @@
 }
 .result-summary small,
 .result-summary a {
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 .my-day .home-empty {
   padding: 15px;
@@ -244,13 +189,13 @@
     align-items: flex-start;
   }
   .my-day .home-section-title p {
-    font-size: 12px;
+    font-size: var(--text-xs);
   }
   .day-step {
     padding: 14px;
   }
   .day-step-actions .button {
-    font-size: 12px;
+    font-size: var(--text-xs);
     padding: 8px 10px;
   }
   .day-step-heading {
@@ -258,7 +203,7 @@
   }
   .my-day-totals {
     gap: 8px;
-    font-size: 11px;
+    font-size: var(--text-xs);
   }
 }
 
@@ -353,7 +298,7 @@
 }
 .action-center-stats strong {
   display: block;
-  font-size: 28px;
+  font-size: var(--text-xl);
   margin-top: 8px;
 }
 .action-center-tools {
@@ -367,7 +312,7 @@
 .action-center-tools label {
   display: grid;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--text-xs);
   flex: 1;
   min-width: 130px;
 }
@@ -410,7 +355,7 @@
 }
 .action-center-item small {
   display: block;
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 .action-center-item p,
@@ -428,7 +373,7 @@
   padding-block: 8px;
 }
 .action-state {
-  font-size: 11px;
+  font-size: var(--text-xs);
   white-space: nowrap;
   padding: 6px 10px;
   border-radius: 15px;
@@ -532,7 +477,7 @@ textarea:focus-visible {
 }
 .memory-link {
   display: block;
-  font-size: 12px;
+  font-size: var(--text-xs);
   margin-block: 8px;
   overflow-wrap: anywhere;
 }
@@ -557,7 +502,7 @@ textarea:focus-visible {
 .change-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: var(--text-xs);
   margin-block: 15px;
   table-layout: fixed;
 }
@@ -570,7 +515,7 @@ textarea:focus-visible {
   overflow-wrap: anywhere;
 }
 .offline-tag {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--purple);
   max-width: 100px;
 }
@@ -589,9 +534,6 @@ textarea:focus-visible {
   }
   .attachment-row {
     flex-wrap: wrap;
-  }
-  .topbar .avatar.small {
-    display: none;
   }
   .offline-tag {
     position: fixed;
@@ -614,7 +556,7 @@ textarea:focus-visible {
   border-radius: 12px;
   background: var(--surface);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--text-xs);
 }
 .home-briefing .daily-hero {
   margin-top: 12px;
@@ -624,7 +566,7 @@ textarea:focus-visible {
   padding: 12px;
   background: var(--bg);
   border-radius: 10px;
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 .assistant-command-help li {
   margin: 10px 0;
@@ -654,5 +596,84 @@ textarea:focus-visible {
   }
   .topbar {
     padding-inline: 12px;
+  }
+}
+.bottom-nav {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.more-navigation {
+  display: grid;
+  gap: var(--space-4);
+}
+.topbar {
+  gap: var(--space-2);
+}
+@media (max-width: 850px) {
+  .topbar {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 64px;
+    padding: var(--space-2);
+  }
+  .breadcrumb {
+    display: none;
+  }
+  .topbar > .flex {
+    gap: 4px !important;
+  }
+  .save-status {
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.desktop-preferences,
+.settings-appearance {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.core-home {
+  display: block;
+}
+.core-home .home-content-grid {
+  display: block;
+}
+.core-home .home-main-column {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: var(--space-6);
+}
+.core-home .home-side-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.core-home .task-reason > summary {
+  font-size: var(--text-xs);
+  min-height: 30px;
+  color: var(--muted);
+}
+button.checkbox {
+  position: relative;
+  min-height: 24px;
+  min-width: 24px;
+  width: 24px;
+  height: 24px;
+  flex: none;
+}
+button.checkbox::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+}
+@media (max-width: 850px) {
+  .desktop-preferences {
+    display: none;
+  }
+  .core-home .home-main-column,
+  .core-home .home-side-column {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

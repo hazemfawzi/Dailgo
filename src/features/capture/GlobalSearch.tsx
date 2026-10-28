@@ -42,7 +42,7 @@ export function GlobalSearch({
     ...tasks.filter(matches).map((task) => ({
       id: task.id,
       title: task.title,
-      label: t('Task', 'مهمة'),
+      label: t('ui.task.c7a3d8'),
       archived: task.archived,
       open: () => edit(task),
     })),
@@ -70,8 +70,8 @@ export function GlobalSearch({
       <Button
         variant="ghost"
         size="icon"
-        aria-label={t('Search everything', 'بحث في كل حاجة')}
-        title={t('Search · /', 'بحث · /')}
+        aria-label={t('ui.searchEverything.b6d2a1')}
+        title={t('ui.search.75f522')}
         aria-keyshortcuts="/"
         onClick={() => setOpen(true)}
       >
@@ -80,24 +80,21 @@ export function GlobalSearch({
       <Dialog
         open={open}
         onOpenChange={setOpen}
-        title={t('Search your space', 'ابحث في مساحتك')}
-        description={t(
-          'Tasks, goals, events and memories, including archived items and capture sources.',
-          'المهام والأهداف والمواعيد والذاكرة، بما فيها الأرشيف ونص التسجيل الأصلي.',
-        )}
+        title={t('ui.searchYourSpace.3205fa')}
+        description={t('ui.tasksGoalsEventsAndMemoriesIncludingArchived.0d6911')}
       >
         <input
           dir="auto"
           className="global-search-input"
           autoFocus
-          aria-label={t('Global search', 'البحث الموحد')}
+          aria-label={t('ui.globalSearch.5fbfcd')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           maxLength={300}
         />
         {needle && (
           <p dir="auto" className="muted">
-            {localizedNumber(results.length, t('en', 'ar'))} {t('results', 'نتيجة')}
+            {localizedNumber(results.length, t('en', 'ar'))} {t('ui.results.7a27d5')}
           </p>
         )}
         <div className="global-search-results">
@@ -113,11 +110,11 @@ export function GlobalSearch({
                 <strong dir="auto">{r.title}</strong>
                 <small>
                   {r.label}
-                  {r.archived ? ` · ${t('Archived', 'مؤرشف')}` : ''}
+                  {r.archived ? ` · ${t('ui.archived.799523')}` : ''}
                 </small>
               </button>
             ))}
-          {needle && !results.length && <p dir="auto">{t('No matches.', 'مفيش نتائج.')}</p>}
+          {needle && !results.length && <p dir="auto">{t('ui.noMatches.eb3976')}</p>}
         </div>
       </Dialog>
     </>

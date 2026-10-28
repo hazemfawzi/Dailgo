@@ -16,25 +16,20 @@ export function ToolsScreen({ t }: { t: Translate }) {
     <>
       <div className="page-heading">
         <div>
-          <h1 dir="auto">{t('Life tools', 'أدوات حياتك')}</h1>
-          <p dir="auto">
-            {t(
-              'Understand your progress, manage simple records and connect your planning tools.',
-              'افهم تقدمك، ونظم سجلاتك البسيطة، واربط أدوات التخطيط.',
-            )}
-          </p>
+          <h1 dir="auto">{t('ui.lifeTools.2ae7ad')}</h1>
+          <p dir="auto">{t('ui.understandYourProgressManageSimpleRecordsAnd.033afb')}</p>
         </div>
-        <Link to="/">{t('Today', 'اليوم')}</Link>
+        <Link to="/">{t('ui.today.7981a9')}</Link>
       </div>
-      <nav className="tools-tabs" aria-label={t('Life tools sections', 'أقسام أدوات الحياة')}>
+      <nav className="tools-tabs" aria-label={t('ui.lifeToolsSections.b0447a')}>
         {[
-          ['insights', t('Insights', 'الإحصائيات')],
-          ['finance', t('Finance', 'المالية')],
-          ['prayer', t('Prayer breaks', 'فواصل الصلاة')],
-          ['family', t('Family', 'العائلة')],
-          ['sharing', t('Goal sharing', 'مشاركة الأهداف')],
-          ['connections', t('Connections', 'الربط والتذكيرات')],
-          ['widgets', t('Home screen', 'الشاشة الرئيسية')],
+          ['insights', t('ui.insights.de2e70')],
+          ['finance', t('ui.finance.097a53')],
+          ['prayer', t('ui.prayerBreaks.08b46f')],
+          ['family', t('ui.family.d1b531')],
+          ['sharing', t('ui.goalSharing.c309ca')],
+          ['connections', t('ui.connections.2545fd')],
+          ['widgets', t('ui.homeScreen.306cfb')],
           ['pro', 'Pro'],
         ].map(([key, label]) => (
           <button

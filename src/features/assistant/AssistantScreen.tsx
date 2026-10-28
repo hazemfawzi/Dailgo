@@ -1,3 +1,4 @@
+import { DateTimeInput } from '../../components/DateTimeInput';
 import {
   formatCalendarDate as localizedDate,
   formatTime as localizedTime,
@@ -170,12 +171,7 @@ export function AssistantScreen({
   }
   async function askClaude(text: string) {
     if (!consent) {
-      setActionError(
-        t(
-          'Allow sending the selected scope to Claude first.',
-          'وافق أولًا على إرسال النطاق المختار إلى Claude.',
-        ),
-      );
+      setActionError(t('ui.allowSendingTheSelectedScopeToClaude.103f42'));
       return;
     }
     setAsking(true);
@@ -203,12 +199,7 @@ export function AssistantScreen({
     });
     if (!saved) {
       setAsking(false);
-      setActionError(
-        t(
-          'Could not save your message; Claude was not contacted.',
-          'تعذر حفظ رسالتك؛ لم يتم الاتصال بـClaude.',
-        ),
-      );
+      setActionError(t('ui.couldNotSaveYourMessageClaudeWas.1af766'));
       return;
     }
     setSelected(chatId);
@@ -236,9 +227,7 @@ export function AssistantScreen({
                     {
                       id: responseId,
                       role: 'assistant',
-                      text:
-                        plan.summary ||
-                        t('Review the proposed changes below.', 'راجع التغييرات المقترحة أدناه.'),
+                      text: plan.summary || t('ui.reviewTheProposedChangesBelow.a85440'),
                       createdAt: new Date().toISOString(),
                       scope,
                       ai: plan,
@@ -250,25 +239,13 @@ export function AssistantScreen({
           ),
         };
       });
-      if (!ok)
-        setActionError(
-          t(
-            'Claude replied, but the conversation changed or could not be saved. No proposed changes were executed.',
-            'Claude رد، لكن المحادثة اتغيرت أو تعذر حفظها. لم تُنفذ تغييرات مقترحة.',
-          ),
-        );
+      if (!ok) setActionError(t('ui.claudeRepliedButTheConversationChangedOr.0871bc'));
       setProvider(await apiRequest('assistant/status'));
     } catch (error) {
       setActionError(
         error instanceof ApiError && error.status === 429
-          ? t(
-              'Assistant usage limit reached. Try later or review your plan.',
-              'وصلت لحد استخدام المساعد. حاول لاحقًا أو راجع اشتراكك.',
-            )
-          : t(
-              'Claude is unavailable or returned an invalid proposal. Your tasks did not change.',
-              'Claude غير متاح أو رجّع اقتراحًا غير صالح. مهامك لم تتغير.',
-            ),
+          ? t('ui.assistantUsageLimitReachedTryLaterOr.487639')
+          : t('ui.claudeIsUnavailableOrReturnedAnInvalid.a076c0'),
       );
     } finally {
       setAsking(false);
@@ -313,22 +290,18 @@ export function AssistantScreen({
       };
     });
     setConfirming(false);
-    if (!ok)
-      setActionError(
-        t(
-          'The proposal or a target changed. Review the latest records; nothing was applied.',
-          'الاقتراح أو أحد العناصر اتغير. راجع أحدث بيانات؛ لم يُنفذ شيء.',
-        ),
-      );
+    if (!ok) setActionError(t('ui.theProposalOrATargetChangedReview.9b5923'));
   }
   useEffect(() => {
+    if (!provider && !providerError) return;
     const incoming = location.state?.prompt;
     if (typeof incoming === 'string' && handledPrompt.current !== location.key) {
       handledPrompt.current = location.key;
-      send(incoming);
+      if (provider?.enabled && !consent) setInput(incoming);
+      else send(incoming);
       navigate(location.pathname, { replace: true, state: null });
     }
-  }, [location.key]);
+  }, [location.key, provider, providerError]);
   async function confirm(message: Message) {
     if (!message.proposal || message.status !== 'pending' || confirming || !active) return;
     if (
@@ -344,9 +317,7 @@ export function AssistantScreen({
       (message.proposal.kind === 'routine' &&
         !/^([01]\d|2[0-3]):[0-5]\d$/.test(message.proposal.time))
     ) {
-      setActionError(
-        t('Review the title, date and time first.', 'راجع العنوان والتاريخ والوقت أولًا.'),
-      );
+      setActionError(t('ui.reviewTheTitleDateAndTimeFirst.1ac85a'));
       return;
     }
     setConfirming(true);
@@ -415,13 +386,7 @@ export function AssistantScreen({
         ),
       };
     });
-    if (!ok)
-      setActionError(
-        t(
-          'Action not saved. Review storage and retry.',
-          'لم يُحفظ الإجراء. راجع التخزين وأعد المحاولة.',
-        ),
-      );
+    if (!ok) setActionError(t('ui.actionNotSavedReviewStorageAndRetry.5d3fb9'));
     setConfirming(false);
   }
   async function confirmActions(message: Message) {
@@ -430,13 +395,7 @@ export function AssistantScreen({
     setActionError('');
     const ok = await transactData((data) => confirmBatch(data, active.id, message));
     setConfirming(false);
-    if (!ok)
-      setActionError(
-        t(
-          'Nothing executed. The preview may have changed, or storage is unavailable. Review it and retry.',
-          'لم يتم تنفيذ شيء. المعاينة ممكن تكون اتعدّلت أو التخزين غير متاح. راجعها وأعد المحاولة.',
-        ),
-      );
+    if (!ok) setActionError(t('ui.nothingExecutedThePreviewMayHaveChanged.f04ec0'));
   }
   async function confirmChange(message: Message) {
     if (!active || confirming) return;
@@ -444,22 +403,13 @@ export function AssistantScreen({
     setActionError('');
     const ok = await transactData((data) => confirmMutation(data, active.id, message));
     setConfirming(false);
-    if (!ok)
-      setActionError(
-        t(
-          'Nothing changed. The record or preview changed; reopen the latest state.',
-          'لم يتغير شيء. السجل أو المعاينة اتغيّروا؛ افتح أحدث نسخة.',
-        ),
-      );
+    if (!ok) setActionError(t('ui.nothingChangedTheRecordOrPreviewChanged.d47a62'));
   }
   const suggestions = [
-    t(
-      'Task: Review interface; Event: Design review; Note: Unify colors',
-      'مهمة: مراجعة الواجهة؛ موعد: مراجعة التصميم؛ ملاحظة: توحيد الألوان',
-    ),
-    t('Task: Check mobile layout', 'مهمة: فحص عرض الموبايل'),
-    t('Note: Support Arabic and English', 'ملاحظة: دعم العربية والإنجليزية'),
-    t('Show my memories', 'اعرض ذاكرتي'),
+    t('ui.taskReviewInterfaceEventDesignReviewNote.8a35f1'),
+    t('ui.taskCheckMobileLayout.03755d'),
+    t('ui.noteSupportArabicAndEnglish.e55394'),
+    t('ui.showMyMemories.962543'),
   ];
   return (
     <>
@@ -467,23 +417,18 @@ export function AssistantScreen({
         <div>
           <div className="eyebrow">
             <Sparkles size={14} />
-            {t('THINK OUT LOUD', 'فكّر بصوت عالٍ')}
+            {t('ui.thinkOutLoud.18ceab')}
           </div>
-          <h1 dir="auto">{t('Assistant', 'المساعد')}</h1>
-          <p dir="auto">
-            {t(
-              'Prepare changes, review the proposal, then decide what to save.',
-              'جهّز التغييرات، وراجع الاقتراح، وبعدها قرر اللي يتحفظ.',
-            )}
-          </p>
+          <h1 dir="auto">{t('ui.assistant.f476e5')}</h1>
+          <p dir="auto">{t('ui.prepareChangesReviewTheProposalThenDecide.7692a1')}</p>
         </div>
         <Button asChild variant="outline">
-          <Link to="/assistant/actions">{t('Action center', 'مركز الإجراءات')}</Link>
+          <Link to="/assistant/actions">{t('ui.actionCenter.de900b')}</Link>
         </Button>
       </div>
       {error && (
         <p dir="auto" role="alert" className="notice">
-          {t('Conversation storage is unavailable.', 'تعذر حفظ المحادثات محلياً.')}
+          {t('ui.conversationStorageIsUnavailable.62763e')}
         </p>
       )}
       <div className="conversation-layout">
@@ -494,7 +439,7 @@ export function AssistantScreen({
               const id = crypto.randomUUID();
               setConversations((old) => [
                 ...old,
-                { id, title: t('New conversation', 'محادثة جديدة'), messages: [], archived: false },
+                { id, title: t('ui.newConversation.68be9d'), messages: [], archived: false },
               ]);
               setSelected(id);
               setArchive(false);
@@ -502,14 +447,14 @@ export function AssistantScreen({
             }}
           >
             <Plus size={15} />
-            {t('New conversation', 'محادثة جديدة')}
+            {t('ui.newConversation.68be9d')}
           </Button>
           <div className="conversation-filter">
             <button className={!archive ? 'selected' : ''} onClick={() => setArchive(false)}>
-              {t('Recent', 'الأخيرة')}
+              {t('ui.recent.4c5ef9')}
             </button>
             <button className={archive ? 'selected' : ''} onClick={() => setArchive(true)}>
-              {t('Archived', 'المؤرشفة')}
+              {t('ui.archived.a2bc44')}
             </button>
           </div>
           {conversations
@@ -531,7 +476,7 @@ export function AssistantScreen({
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label={`${c.archived ? t('Restore conversation', 'استعادة المحادثة') : t('Archive conversation', 'أرشفة المحادثة')}: ${c.title}`}
+                  aria-label={`${c.archived ? t('ui.restoreConversation.087950') : t('ui.archiveConversation.95868d')}: ${c.title}`}
                   onClick={() => {
                     setConversations((old) =>
                       old.map((x) => (x.id === c.id ? { ...x, archived: !x.archived } : x)),
@@ -547,7 +492,7 @@ export function AssistantScreen({
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label={`${t('Delete conversation', 'حذف المحادثة')}: ${c.title}`}
+                  aria-label={`${t('ui.deleteConversation.8d2cf2')}: ${c.title}`}
                   onClick={() => setDeleting(c)}
                 >
                   <Trash2 size={13} />
@@ -556,7 +501,7 @@ export function AssistantScreen({
             ))}
           {!conversations.some((c) => c.archived === archive) && (
             <p dir="auto" className="muted">
-              {t('No conversations here yet.', 'لا توجد محادثات هنا بعد.')}
+              {t('ui.noConversationsHereYet.4a1778')}
             </p>
           )}
         </aside>
@@ -566,24 +511,24 @@ export function AssistantScreen({
               <Sparkles size={20} />
             </span>
             <div>
-              <h3 dir="auto">{t('Your thinking space', 'مساحة تفكيرك')}</h3>
+              <h3 dir="auto">{t('ui.yourThinkingSpace.d49c2d')}</h3>
               <p dir="auto">
                 {mode === 'claude'
-                  ? t('Claude · proposals require confirmation', 'Claude · الاقتراحات تحتاج تأكيدك')
-                  : t('Local rules · no external AI', 'قواعد محلية · بدون AI خارجي')}
+                  ? t('ui.claudeProposalsRequireConfirmation.7fe9b3')
+                  : t('ui.quickHelpForTasksAndNotes.a79970')}
               </p>
             </div>
           </div>
           <section className="assistant-mode editor-form">
             <label>
-              {t('Assistant mode', 'نوع المساعد')}
+              {t('ui.assistantMode.7a4a12')}
               <select
-                aria-label={t('Assistant mode', 'نوع المساعد')}
+                aria-label={t('ui.assistantMode.7a4a12')}
                 disabled={asking}
                 value={mode}
                 onChange={(e) => setMode(e.target.value as 'local' | 'claude')}
               >
-                <option value="local">{t('Local rules', 'قواعد محلية')}</option>
+                <option value="local">{t('ui.localRules.c0d011')}</option>
                 <option value="claude" disabled={!provider?.enabled}>
                   Claude
                 </option>
@@ -592,39 +537,25 @@ export function AssistantScreen({
             {!provider?.enabled && (
               <p dir="auto" role="status">
                 {provider
-                  ? t(
-                      'Claude is not activated on this server. Local rules are available.',
-                      'Claude مش مفعّل على السيرفر حاليًا. المتاح هو المساعد المحلي بقواعد محددة.',
-                    )
+                  ? t('ui.quickCaptureIsAvailableTheSmartAssistant.a9809e')
                   : providerError
-                    ? t(
-                        'Could not check Claude availability. Check your connection before retrying.',
-                        'تعذر التحقق من توفر Claude. راجع الاتصال وحاول مجددًا.',
-                      )
-                    : t('Checking Claude availability…', 'جاري التحقق من توفر Claude…')}
+                    ? t('ui.couldNotCheckClaudeAvailabilityCheckYour.8ee9b9')
+                    : t('ui.checkingClaudeAvailability.ede8ac')}
               </p>
             )}
             {mode === 'claude' && (
               <>
-                <p dir="auto">
-                  {t(
-                    'Only the selected scope’s tasks, goals, calendar entries and memory text, plus recent chat messages in that scope, are sent to Anthropic. Attachments and financial records are excluded.',
-                    'يتم إرسال مهام وأهداف ومواعيد ونصوص ذاكرة النطاق المختار، ورسائل المحادثة الأخيرة في نفس النطاق، إلى Anthropic. المرفقات والسجلات المالية لا تُرسل.',
-                  )}
-                </p>
+                <p dir="auto">{t('ui.onlyTheSelectedScopeSTasksGoals.c09847')}</p>
                 <label>
                   <input
                     type="checkbox"
                     checked={consent}
                     onChange={(e) => setConsent(e.target.checked)}
                   />
-                  {t(
-                    'Allow sharing this selected context with Claude',
-                    'أوافق على مشاركة السياق المختار مع Claude',
-                  )}
+                  {t('ui.allowSharingThisSelectedContextWithClaude.a08bc3')}
                 </label>
                 <p dir="auto">
-                  {t('Remaining provider attempts today', 'محاولات الاتصال المتاحة اليوم')}:{' '}
+                  {t('ui.remainingProviderAttemptsToday.559d39')}:{' '}
                   {formatNumber(provider?.remaining ?? 0, t('en', 'ar'))} /{' '}
                   {formatNumber(provider?.limit ?? 0, t('en', 'ar'))} ·{' '}
                   <bdi>{provider?.resetTimezone ?? 'Africa/Cairo'}</bdi>
@@ -632,22 +563,17 @@ export function AssistantScreen({
               </>
             )}
             {!provider?.enabled && (
-              <p dir="auto">
-                {t(
-                  'Claude requires a server API key and configured model.',
-                  'Claude محتاج مفتاح API وموديل مضبوطين على السيرفر.',
-                )}
-              </p>
+              <p dir="auto">{t('ui.claudeRequiresAServerApiKeyAnd.b64364')}</p>
             )}
           </section>
           <label className="assistant-scope">
-            {t('Conversation data scope', 'نطاق بيانات المحادثة')}
+            {t('ui.conversationDataScope.e952e6')}
             <select
-              aria-label={t('Conversation data scope', 'نطاق بيانات المحادثة')}
+              aria-label={t('ui.conversationDataScope.e952e6')}
               value={scope}
               onChange={(e) => setScope(e.target.value)}
             >
-              <option value="all">{t('All areas', 'كل المجالات')}</option>
+              <option value="all">{t('ui.allAreas.e2d78b')}</option>
               {areas.map((a) => (
                 <option key={a} value={a}>
                   {areaLabel(a, t)}
@@ -657,47 +583,23 @@ export function AssistantScreen({
                 new Set([...tasks, ...entries].map((x) => x.context).filter(Boolean)),
               ).map((context) => (
                 <option key={context} value={'context:' + context}>
-                  {t('Context', 'سياق')}: {context}
+                  {t('ui.context.6dd3bd')}: {context}
                 </option>
               ))}
             </select>
-            <small>
-              {t(
-                'New summaries use this scope only. Older messages keep their original context.',
-                'الملخصات الجديدة تستخدم النطاق ده فقط. الرسائل القديمة تحتفظ بسياقها وقت كتابتها.',
-              )}
-            </small>
+            <small>{t('ui.newSummariesUseThisScopeOnlyOlder.aa76cb')}</small>
           </label>
           <details className="assistant-command-help">
-            <summary>
-              {t('Supported local edit commands', 'أوامر التعديل المحلية المدعومة')}
-            </summary>
-            <p dir="auto">
-              {t(
-                'Use an exact unique title in the selected scope. Every change is previewed first.',
-                'استخدم عنوان كامل وفريد داخل النطاق المختار. كل تغيير بيظهر في معاينة الأول.',
-              )}
-            </p>
+            <summary>{t('ui.supportedLocalEditCommands.662a0a')}</summary>
+            <p dir="auto">{t('ui.useAnExactUniqueTitleInThe.1640d1')}</p>
             <ul>
               {[
-                t(
-                  'Rename task: current title => new title',
-                  'عدّل عنوان المهمة: العنوان الحالي => العنوان الجديد',
-                ),
-                t(
-                  'Plan task: current title => YYYY-MM-DD',
-                  'خطط المهمة: العنوان الحالي => YYYY-MM-DD',
-                ),
-                t(
-                  'Due task: current title => YYYY-MM-DD',
-                  'حدد استحقاق المهمة: العنوان الحالي => YYYY-MM-DD',
-                ),
-                t(
-                  'Edit note: current title => new details',
-                  'عدّل الملاحظة: العنوان الحالي => التفاصيل الجديدة',
-                ),
-                t('Archive: exact title', 'أرشف: العنوان الكامل'),
-                t('Restore: exact title', 'استعد: العنوان الكامل'),
+                t('ui.renameTaskCurrentTitleNewTitle.47bc49'),
+                t('ui.planTaskCurrentTitleYyyyMmDd.0c333d'),
+                t('ui.dueTaskCurrentTitleYyyyMmDd.296e14'),
+                t('ui.editNoteCurrentTitleNewDetails.229120'),
+                t('ui.archiveExactTitle.eebe98'),
+                t('ui.restoreExactTitle.3a8e7e'),
               ].map((x) => (
                 <li key={x}>{x}</li>
               ))}
@@ -717,13 +619,8 @@ export function AssistantScreen({
             {messages.length === 0 && (
               <div className="chat-welcome">
                 <Sparkles size={35} />
-                <h2 dir="auto">{t('What’s on your mind?', 'بماذا تفكر؟')}</h2>
-                <p dir="auto">
-                  {t(
-                    'Turn a thought into a task, a goal, or something worth remembering.',
-                    'حوّل فكرة إلى مهمة أو هدف أو معلومة تستحق الحفظ.',
-                  )}
-                </p>
+                <h2 dir="auto">{t('ui.whatSOnYourMind.d3226c')}</h2>
+                <p dir="auto">{t('ui.turnAThoughtIntoATaskA.a63093')}</p>
                 <div className="suggestion-grid">
                   {suggestions.map((text) => (
                     <button key={text} onClick={() => send(text)}>
@@ -742,20 +639,17 @@ export function AssistantScreen({
               >
                 <span className="message-role">
                   {message.role === 'user'
-                    ? t('You', 'أنت')
+                    ? t('ui.you.3548f9')
                     : message.ai
                       ? 'Claude'
-                      : t('Local assistant', 'المساعد المحلي')}
+                      : t('ui.localAssistant.fee397')}
                 </span>
                 <p dir="auto" className="message-text">
                   {messageText(message, t)}
                 </p>
                 {!message.createdAt && (
                   <small className="message-time">
-                    {t(
-                      'Legacy message: time was not recorded',
-                      'رسالة قديمة: وقتها لم يكن محفوظًا',
-                    )}
+                    {t('ui.legacyMessageTimeWasNotRecorded.89caa2')}
                   </small>
                 )}
                 {message.createdAt && (
@@ -765,12 +659,7 @@ export function AssistantScreen({
                 )}
                 {!!message.references?.length && (
                   <details>
-                    <summary>
-                      {t(
-                        'Based on local records at this time',
-                        'مبني على السجلات المحلية وقت الرد',
-                      )}
-                    </summary>
+                    <summary>{t('ui.basedOnLocalRecordsAtThisTime.31e897')}</summary>
                     {message.references.map((ref) => (
                       <p dir="auto" key={ref.id}>
                         {ref.title}
@@ -855,9 +744,9 @@ export function AssistantScreen({
                 {message.proposal && (
                   <div className="chat-proposal">
                     <span className="eyebrow">
-                      {t('ACTION PREVIEW', 'معاينة الإجراء')} ·{' '}
+                      {t('ui.actionPreview.d0ec16')} ·{' '}
                       {message.proposal.kind === 'task'
-                        ? t('Task', 'مهمة')
+                        ? t('ui.task.c7a3d8')
                         : kindLabel(message.proposal.kind, t)}
                     </span>
                     <strong dir="auto">{message.proposal.title}</strong>
@@ -869,7 +758,7 @@ export function AssistantScreen({
                     )}
                     {message.proposal.kind === 'routine' && (
                       <span>
-                        {t('Daily at', 'يومياً الساعة')}{' '}
+                        {t('ui.dailyAt.04f493')}{' '}
                         {localizedTime(message.proposal.time, t('en', 'ar'))}
                       </span>
                     )}
@@ -877,9 +766,9 @@ export function AssistantScreen({
                       <>
                         <div className="editor-form">
                           <label>
-                            {t('Proposed life area', 'مجال الحياة المقترح')}
+                            {t('ui.proposedLifeArea.4064d6')}
                             <select
-                              aria-label={t('Proposed life area', 'مجال الحياة المقترح')}
+                              aria-label={t('ui.proposedLifeArea.4064d6')}
                               value={proposalArea(message.proposal, message.scope)}
                               disabled={areas.some((area) => area === message.scope)}
                               onChange={(e) => {
@@ -901,7 +790,7 @@ export function AssistantScreen({
                             </select>
                           </label>
                           <label>
-                            {t('Preview title', 'عنوان المعاينة')}
+                            {t('ui.previewTitle.a7df33')}
                             <input
                               dir="auto"
                               maxLength={160}
@@ -921,9 +810,9 @@ export function AssistantScreen({
                           {['event', 'task'].includes(message.proposal.kind) && (
                             <label>
                               {message.proposal.kind === 'task'
-                                ? t('Execution day (optional)', 'يوم التنفيذ (اختياري)')
-                                : t('Event date', 'تاريخ الموعد')}
-                              <input
+                                ? t('ui.executionDayOptional.98e9e0')
+                                : t('ui.eventDate.fcd1d9')}
+                              <DateTimeInput
                                 type="date"
                                 value={message.proposal.date}
                                 onChange={(e) => {
@@ -936,15 +825,20 @@ export function AssistantScreen({
                                     ),
                                   );
                                 }}
+                                aria-label={
+                                  message.proposal.kind === 'task'
+                                    ? t('ui.executionDayOptional.98e9e0')
+                                    : t('ui.eventDate.fcd1d9')
+                                }
                               />
                             </label>
                           )}
                           {['event', 'routine', 'task'].includes(message.proposal.kind) && (
                             <label>
                               {message.proposal.kind === 'task'
-                                ? t('Execution time (optional)', 'وقت التنفيذ (اختياري)')
-                                : t('Time', 'الوقت')}
-                              <input
+                                ? t('ui.executionTimeOptional.a87ad6')
+                                : t('ui.time.d46229')}
+                              <DateTimeInput
                                 type="time"
                                 value={message.proposal.time}
                                 onChange={(e) => {
@@ -957,36 +851,28 @@ export function AssistantScreen({
                                     ),
                                   );
                                 }}
+                                aria-label={
+                                  message.proposal.kind === 'task'
+                                    ? t('ui.executionTimeOptional.a87ad6')
+                                    : t('ui.time.d46229')
+                                }
                               />
                             </label>
                           )}
                         </div>
-                        <p dir="auto">
-                          {t(
-                            'Saved in your workspace only after confirmation.',
-                            'يُحفظ في مساحة عملك بعد التأكيد فقط.',
-                          )}
-                        </p>
+                        <p dir="auto">{t('ui.savedInYourWorkspaceOnlyAfterConfirmation.80a129')}</p>
                         {message.proposal.kind === 'event' && (
-                          <p dir="auto">
-                            {t(
-                              'Review the exact date and time before confirming.',
-                              'راجع التاريخ والوقت بدقة قبل التأكيد.',
-                            )}
-                          </p>
+                          <p dir="auto">{t('ui.reviewTheExactDateAndTimeBefore.1917ee')}</p>
                         )}
                         {message.proposal?.timeAssumed && (
                           <p dir="auto" className="capture-hint">
-                            {t(
-                              'Unspecified hour interpreted as evening. Review the time before confirming.',
-                              'افترضنا الساعة مساءً. راجع الوقت قبل التأكيد.',
-                            )}
+                            {t('ui.unspecifiedHourInterpretedAsEveningReviewThe.287bb7')}
                           </p>
                         )}
                         <div className="proposal-actions">
                           <Button disabled={confirming} onClick={() => void confirm(message)}>
                             <Check size={15} />
-                            {t('Confirm action', 'تأكيد الإجراء')}
+                            {t('ui.confirmAction.5c1b9d')}
                           </Button>
                           <Button
                             variant="outline"
@@ -998,7 +884,7 @@ export function AssistantScreen({
                               )
                             }
                           >
-                            {t('Cancel', 'إلغاء')}
+                            {t('ui.cancel.428808')}
                           </Button>
                         </div>
                       </>
@@ -1007,7 +893,7 @@ export function AssistantScreen({
                         {message.status === 'confirmed' ? (
                           <>
                             <Check size={15} />
-                            {t('Confirmed and saved', 'تم التأكيد والحفظ')}
+                            {t('ui.confirmedAndSaved.8ee7c0')}
                             <Link
                               to={
                                 message.proposal.kind === 'task' ||
@@ -1019,7 +905,7 @@ export function AssistantScreen({
                                     : '/memory'
                               }
                             >
-                              {t('Open section', 'فتح القسم')}
+                              {t('ui.openSection.eb172a')}
                               <ArrowUpRight size={13} />
                             </Link>
                           </>
@@ -1027,11 +913,8 @@ export function AssistantScreen({
                           <>
                             <X size={15} />
                             {message.status === 'reverted'
-                              ? t(
-                                  'Reverted · Removed items can be restored from Data and backup',
-                                  'تم التراجع · العناصر المستبعدة قابلة للاستعادة من البيانات والنسخ الاحتياطي',
-                                )
-                              : t('Cancelled · Nothing saved', 'ملغي · لم يتم حفظ شيء')}
+                              ? t('ui.revertedRemovedItemsCanBeRestoredFrom.7dd1ea')
+                              : t('ui.cancelledNothingSaved.f6c92c')}
                           </>
                         )}
                       </div>
@@ -1044,12 +927,7 @@ export function AssistantScreen({
           <>
             {active?.archived ? (
               <div className="context-banner archived-chat">
-                <p dir="auto">
-                  {t(
-                    'Archived conversation · Restore it to continue.',
-                    'محادثة مؤرشفة · استعدها لاستكمال الحديث.',
-                  )}
-                </p>
+                <p dir="auto">{t('ui.archivedConversationRestoreItToContinue.2d3024')}</p>
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -1059,7 +937,7 @@ export function AssistantScreen({
                     setArchive(false);
                   }}
                 >
-                  {t('Restore conversation', 'استعادة المحادثة')}
+                  {t('ui.restoreConversation.087950')}
                 </Button>
               </div>
             ) : (
@@ -1075,7 +953,7 @@ export function AssistantScreen({
                   onText={(value) => setInput((old) => (old ? old + ' ' + value : value))}
                 />
                 <label htmlFor="chat-message" className="sr-only">
-                  {t('Your message', 'رسالتك')}
+                  {t('ui.yourMessage.f58f21')}
                 </label>
                 <textarea
                   dir="auto"
@@ -1084,10 +962,7 @@ export function AssistantScreen({
                   maxLength={4000}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder={t(
-                    'Try “Task: Review my priorities”',
-                    'جرّب «مهمة: مراجعة أولوياتي»',
-                  )}
+                  placeholder={t('ui.tryTaskReviewMyPriorities.6933e4')}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                       e.preventDefault();
@@ -1098,7 +973,7 @@ export function AssistantScreen({
                 <Button
                   disabled={!input.trim() || asking || (mode === 'claude' && !consent)}
                   size="icon"
-                  aria-label={t('Send message', 'إرسال الرسالة')}
+                  aria-label={t('ui.sendMessage.cbcd6c')}
                 >
                   <ArrowUp size={19} />
                 </Button>
@@ -1107,32 +982,23 @@ export function AssistantScreen({
           </>
           <p dir="auto" className="chat-disclaimer">
             {asking
-              ? t('Claude is preparing a proposal…', 'Claude بيجهّز الاقتراح…')
+              ? t('ui.claudeIsPreparingAProposal.ffb6b3')
               : mode === 'claude'
-                ? t(
-                    'AI can make mistakes. Check dates, scope and all proposed changes before confirming.',
-                    'الذكاء الاصطناعي ممكن يغلط. راجع التواريخ والنطاق والتغييرات قبل التأكيد.',
-                  )
-                : t(
-                    'Responses use local rules. Confirmed changes are saved to your workspace.',
-                    'الردود بقواعد محلية. التغييرات المؤكدة بتتحفظ في مساحة عملك.',
-                  )}
+                ? t('ui.aiCanMakeMistakesCheckDatesScope.928a06')
+                : t('ui.responsesUseLocalRulesConfirmedChangesAre.9042c0')}
           </p>
         </section>
       </div>
       <Dialog
         open={!!deleting}
         onOpenChange={() => setDeleting(null)}
-        title={t('Delete this conversation?', 'حذف هذه المحادثة؟')}
-        description={t(
-          'Messages and pending previews will be removed. Previously confirmed tasks and memories will be kept.',
-          'سيتم حذف الرسائل والمعاينات المعلقة. المهام والمعلومات التي أكّدتها سابقاً ستبقى محفوظة.',
-        )}
+        title={t('ui.deleteThisConversation.495a49')}
+        description={t('ui.messagesAndPendingPreviewsWillBeRemoved.9f9b75')}
       >
         <p dir="auto">{deleting?.title}</p>
         <div className="dialog-actions">
           <Button variant="outline" onClick={() => setDeleting(null)}>
-            {t('Keep conversation', 'الاحتفاظ بالمحادثة')}
+            {t('ui.keepConversation.4d92b9')}
           </Button>
           <Button
             onClick={() => {
@@ -1140,7 +1006,7 @@ export function AssistantScreen({
               setDeleting(null);
             }}
           >
-            {t('Delete conversation', 'حذف المحادثة')}
+            {t('ui.deleteConversation.8d2cf2')}
           </Button>
         </div>
       </Dialog>

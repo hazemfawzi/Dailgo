@@ -1,3 +1,5 @@
+import type { ComponentProps } from 'react';
+import { OfflineSettings } from './OfflineSettings';
 import { formatNumber } from '../../i18n/format';
 import { JourneyPreferences } from '../journey/JourneyPreferences';
 import { storageText } from '../../i18n/messages';
@@ -26,7 +28,7 @@ function download(value: string, name: string) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-export function DataSettings({ t }: { t: Translate }) {
+export function DataSettings({ t, inline = false }: { t: Translate; inline?: boolean }) {
   const { data, error } = useStorageState();
   const [open, setOpen] = useState(false);
   const [preview, setPreview] = useState<{ data: Data; token: string; name: string } | null>(null);
@@ -53,74 +55,53 @@ export function DataSettings({ t }: { t: Translate }) {
       setPreview({ data: parsed, token: token(), name: file.name });
       setNotice('');
     } catch {
-      setNotice(
-        t(
-          'Invalid or unsupported backup. Nothing changed.',
-          'النسخة غير صالحة أو إصدارها غير مدعوم. لم تتغير البيانات.',
-        ),
-      );
+      setNotice(t('ui.invalidOrUnsupportedBackupNothingChanged.f8e01e'));
     }
   }
   return (
     <>
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label={t('Data and backup', 'البيانات والنسخ الاحتياطي')}
-        onClick={() => setOpen(true)}
-      >
-        <Database size={18} />
-      </Button>
+      {!inline && (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={t('ui.dataAndBackup.9ad2e5')}
+          onClick={() => setOpen(true)}
+        >
+          <Database size={18} />
+        </Button>
+      )}
       {error && (
         <div className="data-status" role="alert">
           {error === 'corrupt'
-            ? t(
-                'Saved data could not be read. Original data is protected; saving is blocked.',
-                'تعذر قراءة البيانات. الأصل محفوظ والحفظ متوقف لحمايته.',
-              )
+            ? t('ui.savedDataCouldNotBeReadOriginal.621df7')
             : error === 'conflict'
-              ? t(
-                  'Data changed elsewhere. Refresh the workspace, review and retry your change.',
-                  'البيانات اتعدلت في مكان تاني. حدّث مساحة العمل وراجع التغيير قبل المحاولة.',
-                )
-              : t('Save failed. Changes were not saved.', 'تعذر الحفظ. التغييرات لم تُحفظ.')}{' '}
-          <button onClick={() => setOpen(true)}>{t('Manage data', 'إدارة البيانات')}</button>{' '}
+              ? t('ui.dataChangedElsewhereRefreshTheWorkspaceReview.836561')
+              : t('ui.saveFailedChangesWereNotSaved.1eb7d3')}{' '}
+          <button onClick={() => setOpen(true)}>{t('ui.manageData.c568b7')}</button>{' '}
           {error === 'failed' && (
-            <button onClick={refreshStorage}>{t('Retry storage', 'إعادة فحص التخزين')}</button>
+            <button onClick={refreshStorage}>{t('ui.retryStorage.ccc5e3')}</button>
           )}
         </div>
       )}
-      <Dialog
+      <SettingsSurface
+        inline={inline}
         open={open}
         onOpenChange={setOpen}
-        title={t('Your data', 'بياناتك')}
+        title={t('ui.yourData.d5b913')}
         description={
           isServerStorage()
             ? storageText(t, 'backup')
-            : t(
-                'Browser data is local. The optional local server account is separate; no automatic cloud sync.',
-                'بيانات المتصفح محلية. حساب السيرفر المحلي اختياري ومستقل؛ بدون مزامنة سحابية تلقائية.',
-              )
+            : t('ui.browserDataIsLocalTheOptionalLocal.906324')
         }
       >
         <p dir="auto">
-          {t(
-            'Tasks / items / conversations / weeks',
-            'المهام / الأهداف والمواعيد والذاكرة والروتين / المحادثات / الأسابيع',
-          )}
-          : <strong dir="auto">{counts(data)}</strong>
+          {t('ui.tasksItemsConversationsWeeks.bfcf5f')}: <strong dir="auto">{counts(data)}</strong>
         </p>
         <p dir="auto" className="muted">
-          {t(
-            'Backup includes settings, archived items and links. The file is not encrypted; keep it somewhere private.',
-            'النسخة تشمل الإعدادات والعناصر المؤرشفة والروابط. الملف غير مشفر؛ احتفظ به في مكان خاص.',
-          )}
+          {t('ui.backupIncludesSettingsArchivedItemsAndLinks.1e889d')}
         </p>
         <p dir="auto" className="muted">
-          {t(
-            'This is your personal backup, including finances and preferences. Family tasks have a separate export in Life tools. Integration credentials and device access tokens stay on the server.',
-            'دي نسختك الشخصية، بما فيها المالية والتفضيلات. مهام العائلة لها تصدير منفصل في أدوات حياتك. بيانات الربط ورموز الأجهزة تفضل على السيرفر.',
-          )}
+          {t('ui.thisIsYourPersonalBackupIncludingFinances.336112')}
         </p>
         <div className="dialog-actions">
           <Button
@@ -131,18 +112,18 @@ export function DataSettings({ t }: { t: Translate }) {
                   JSON.stringify(makeBackup(data), null, 2),
                   `personal-os-backup-${new Date().toISOString().slice(0, 10)}.json`,
                 );
-                setNotice(t('Backup download requested.', 'تم طلب تنزيل النسخة الاحتياطية.'));
+                setNotice(t('ui.backupDownloadRequested.7a7d6a'));
               } catch {
-                setNotice(t('Could not export backup.', 'تعذر تصدير النسخة.'));
+                setNotice(t('ui.couldNotExportBackup.1fcdce'));
               }
             }}
           >
             <Download size={16} />
-            {t('Export backup', 'تصدير نسخة احتياطية')}
+            {t('ui.exportBackup.69c09c')}
           </Button>
           <label className="backup-upload">
             <Upload size={16} />
-            {t('Choose backup', 'اختيار نسخة للاستعادة')}
+            {t('ui.chooseBackup.22e2c5')}
             <input
               type="file"
               accept=".json,application/json"
@@ -169,57 +150,44 @@ export function DataSettings({ t }: { t: Translate }) {
                   'personal-os-recovery-raw.json',
                 );
               } catch {
-                setNotice(t('Could not read browser storage.', 'تعذر قراءة تخزين المتصفح.'));
+                setNotice(t('ui.couldNotReadBrowserStorage.b1a274'));
               }
             }}
           >
-            {t('Download original data for recovery', 'تنزيل البيانات الأصلية لمحاولة إصلاحها')}
+            {t('ui.downloadOriginalDataForRecovery.eb1fdb')}
           </Button>
         )}
         {preview && (
           <section className="backup-preview">
-            <h3 dir="auto">{t('Restore preview', 'معاينة الاستعادة')}</h3>
+            <h3 dir="auto">{t('ui.restorePreview.eea8cd')}</h3>
             <p dir="auto">{preview.name}</p>
             <strong dir="auto">{counts(preview.data)}</strong>
-            <p dir="auto">
-              {t(
-                'Replaces the active workspace, including settings. Export a backup first.',
-                'سيستبدل مساحة العمل الحالية بما فيها الإعدادات. صدّر نسخة أولًا.',
-              )}
-            </p>
+            <p dir="auto">{t('ui.replacesTheActiveWorkspaceIncludingSettingsExport.7e654a')}</p>
             <div className="dialog-actions">
               <Button
                 onClick={async () => {
                   try {
                     if (token() !== preview.token) {
-                      setNotice(
-                        t(
-                          'Data changed since preview. Select the backup again.',
-                          'البيانات اتغيرت بعد المعاينة. اختار النسخة مرة تانية.',
-                        ),
-                      );
+                      setNotice(t('ui.dataChangedSincePreviewSelectTheBackup.5722fc'));
                       setPreview(null);
                       return;
                     }
                     const ok = await restoreBackupData(preview.data, preview.token);
                     setNotice(
                       ok
-                        ? t('Restored successfully.', 'تمت الاستعادة بنجاح.')
-                        : t(
-                            'Restore failed; current data was kept.',
-                            'تعذرت الاستعادة؛ تم الاحتفاظ بالبيانات الحالية.',
-                          ),
+                        ? t('ui.restoredSuccessfully.78088b')
+                        : t('ui.restoreFailedCurrentDataWasKept.a7c00b'),
                     );
                     setPreview(null);
                   } catch {
-                    setNotice(t('Restore failed.', 'تعذرت الاستعادة.'));
+                    setNotice(t('ui.restoreFailed.f38488'));
                   }
                 }}
               >
-                {t('Confirm replacement', 'تأكيد الاستبدال')}
+                {t('ui.confirmReplacement.b7b96f')}
               </Button>
               <Button variant="outline" onClick={() => setPreview(null)}>
-                {t('Cancel', 'إلغاء')}
+                {t('ui.cancel.428808')}
               </Button>
             </div>
           </section>
@@ -230,10 +198,26 @@ export function DataSettings({ t }: { t: Translate }) {
           </p>
         )}
         {!isServerStorage() && <LocalServer t={t} />}
+        <OfflineSettings t={t} />
         <PlanningSettings t={t} />
         <JourneyPreferences t={t} />
         <Trash t={t} />
-      </Dialog>
+      </SettingsSurface>
     </>
+  );
+}
+
+function SettingsSurface({
+  inline,
+  ...props
+}: ComponentProps<typeof Dialog> & { inline: boolean }) {
+  return inline ? (
+    <section className="settings-panel">
+      <h1>{props.title}</h1>
+      <p>{props.description}</p>
+      {props.children}
+    </section>
+  ) : (
+    <Dialog {...props} />
   );
 }

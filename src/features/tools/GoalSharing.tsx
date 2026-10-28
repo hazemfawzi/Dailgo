@@ -18,7 +18,7 @@ export function GoalSharing({ t }: { t: Translate }) {
     try {
       setShares((await apiRequest('shares')).shares);
     } catch {
-      setNotice(t('Could not load goal shares.', 'تعذر تحميل مشاركات الأهداف.'));
+      setNotice(t('ui.couldNotLoadGoalShares.b9df5b'));
     }
   };
   useEffect(() => {
@@ -26,15 +26,8 @@ export function GoalSharing({ t }: { t: Translate }) {
   }, []);
   return (
     <section className="card tools-section">
-      <h2 dir="auto">
-        {t('Share a goal with an accountability partner', 'شارك هدفًا مع شريك متابعة')}
-      </h2>
-      <p dir="auto">
-        {t(
-          'The private link shows the goal title, target, milestones and task counts. Anyone holding it can view and comment for seven days. You can revoke access here. No personal tasks or other goals are shared.',
-          'الرابط الخاص بيعرض عنوان الهدف وموعده ومراحله وعدد مهامه. أي شخص معاه الرابط يقدر يشوف ويعلّق لمدة سبعة أيام. تقدر تلغي الوصول من هنا. مهامك الشخصية وأهدافك التانية مش بتتشارك.',
-        )}
-      </p>
+      <h2 dir="auto">{t('ui.shareAGoalWithAnAccountabilityPartner.22c774')}</h2>
+      <p dir="auto">{t('ui.thePrivateLinkShowsTheGoalTitle.3b4bce')}</p>
       <form
         className="editor-form tools-inline"
         onSubmit={async (e) => {
@@ -48,12 +41,12 @@ export function GoalSharing({ t }: { t: Translate }) {
             setLink(location.origin + '/share#' + result.token);
             await load();
           } catch {
-            setNotice(t('Could not share the goal.', 'تعذر مشاركة الهدف.'));
+            setNotice(t('ui.couldNotShareTheGoal.925128'));
           }
         }}
       >
         <label>
-          {t('Goal to share', 'الهدف المطلوب مشاركته')}
+          {t('ui.goalToShare.a0e5f5')}
           <select name="goal" required>
             {goals.map((x) => (
               <option key={x.id} value={x.id}>
@@ -64,14 +57,9 @@ export function GoalSharing({ t }: { t: Translate }) {
         </label>
         <label>
           <input name="notes" type="checkbox" />
-          {t(
-            'Also share the goal notes and success criterion',
-            'مشاركة ملاحظات الهدف ومعيار النجاح أيضًا',
-          )}
+          {t('ui.alsoShareTheGoalNotesAndSuccess.b9d5e4')}
         </label>
-        <Button disabled={!goals.length}>
-          {t('Create goal sharing link', 'إنشاء رابط مشاركة الهدف')}
-        </Button>
+        <Button disabled={!goals.length}>{t('ui.createGoalSharingLink.a92029')}</Button>
       </form>
       {link && (
         <aside>
@@ -79,7 +67,7 @@ export function GoalSharing({ t }: { t: Translate }) {
             {link}
           </a>
           <Button variant="outline" onClick={() => void navigator.clipboard?.writeText(link)}>
-            {t('Copy sharing link', 'نسخ رابط المشاركة')}
+            {t('ui.copySharingLink.d54359')}
           </Button>
         </aside>
       )}
@@ -87,8 +75,7 @@ export function GoalSharing({ t }: { t: Translate }) {
         {shares.map((share) => (
           <li key={share.id}>
             <span dir="auto">
-              {goals.find((x) => x.id === share.goal)?.title ??
-                t('Unavailable goal', 'هدف غير متاح')}
+              {goals.find((x) => x.id === share.goal)?.title ?? t('ui.unavailableGoal.660f13')}
             </span>
             <time>{formatTimestamp(new Date(share.expires).toISOString(), t('en', 'ar'))}</time>
             <Button
@@ -98,13 +85,11 @@ export function GoalSharing({ t }: { t: Translate }) {
                   const result = await apiRequest('shares/' + share.id);
                   setComments((old) => ({ ...old, [share.id]: result.comments }));
                 } catch {
-                  setNotice(
-                    t('Could not load partner comments.', 'تعذر تحميل تعليقات شريك المتابعة.'),
-                  );
+                  setNotice(t('ui.couldNotLoadPartnerComments.5a40e1'));
                 }
               }}
             >
-              {t('Review partner comments', 'عرض تعليقات شريك المتابعة')}
+              {t('ui.reviewPartnerComments.6d5731')}
             </Button>
             {comments[share.id] && (
               <div className="share-comments">
@@ -118,9 +103,7 @@ export function GoalSharing({ t }: { t: Translate }) {
                     </blockquote>
                   ))
                 ) : (
-                  <p dir="auto">
-                    {t('No partner comments yet.', 'لسه مفيش تعليقات من شريك المتابعة.')}
-                  </p>
+                  <p dir="auto">{t('ui.noPartnerCommentsYet.3f91f6')}</p>
                 )}
               </div>
             )}
@@ -132,11 +115,11 @@ export function GoalSharing({ t }: { t: Translate }) {
                   setLink('');
                   await load();
                 } catch {
-                  setNotice(t('Could not revoke access.', 'تعذر إلغاء الوصول.'));
+                  setNotice(t('ui.couldNotRevokeAccess.d0d9f1'));
                 }
               }}
             >
-              {t('Revoke goal access', 'إلغاء وصول الهدف')}
+              {t('ui.revokeGoalAccess.19a91a')}
             </Button>
           </li>
         ))}

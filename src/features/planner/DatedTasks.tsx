@@ -23,14 +23,10 @@ export function DatedTasks({
   return (
     <section className="card dated-tasks">
       <h3 dir="auto">
-        {t('Tasks for this day', 'مهام اليوم المحدد')} ·{' '}
-        {localizedNumber(dated.length, t('en', 'ar'))}
+        {t('ui.tasksForThisDay.450753')} · {localizedNumber(dated.length, t('en', 'ar'))}
       </h3>
       <p dir="auto" className="muted">
-        {t(
-          'Due dates are deadlines. Only an execution day reserves planned task time.',
-          'الاستحقاق هو موعد التسليم. يوم التنفيذ فقط هو اللي يدخل في حساب الوقت المخطط.',
-        )}
+        {t('ui.dueDatesAreDeadlinesOnlyAnExecution.82b240')}
       </p>
       {dated.map((task) => {
         const labels = taskDateLabels(task, date);
@@ -42,7 +38,7 @@ export function DatedTasks({
             <div className="task-badges">
               {labels.planned && (
                 <span>
-                  {t('Execution day', 'يوم التنفيذ')}
+                  {t('ui.executionDay.51f86f')}
                   {task.plannedTime && (
                     <>
                       {' '}
@@ -51,7 +47,7 @@ export function DatedTasks({
                   )}
                 </span>
               )}
-              {labels.due && <span>{t('Due date', 'موعد التسليم')}</span>}
+              {labels.due && <span>{t('ui.dueDate.3146bb')}</span>}
               <span>{statusLabel(statusOf(task), t)}</span>
             </div>
           </div>
@@ -59,7 +55,7 @@ export function DatedTasks({
       })}
       {!dated.length && (
         <p dir="auto" className="muted">
-          {t('No task execution or deadline on this day.', 'مفيش تنفيذ أو تسليم مهام في اليوم ده.')}
+          {t('ui.noTaskExecutionOrDeadlineOnThis.642783')}
         </p>
       )}
     </section>

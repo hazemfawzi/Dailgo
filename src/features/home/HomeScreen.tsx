@@ -110,36 +110,36 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
   const percent = active.length ? Math.round((done / active.length) * 100) : 0;
   const stats = [
     {
-      label: t('Open tasks', 'مهام مفتوحة'),
+      label: t('ui.openTasks.db9693'),
       value: open.length,
-      sub: t('Your next steps', 'خطواتك الجاية'),
+      sub: t('ui.yourNextSteps.17745e'),
       icon: CheckCheck,
       path: '/planner',
     },
     {
-      label: t('Due today', 'تسليم اليوم'),
+      label: t('ui.dueToday.6c50f4'),
       value: due.length,
-      sub: t('A little attention today', 'تستحق اهتمامك النهارده'),
+      sub: t('ui.aLittleAttentionToday.87731e'),
       icon: CalendarDays,
       path: '/planner?filter=today',
     },
     {
-      label: t('Overdue', 'مهام متأخرة'),
+      label: t('ui.overdue.2463f8'),
       value: overdue.length,
-      sub: t('A chance to replan', 'فرصة لإعادة التخطيط'),
+      sub: t('ui.aChanceToReplan.c7fcee'),
       icon: Flag,
       path: '/planner?filter=overdue',
     },
     {
-      label: t('Daily rituals', 'روتين اليوم'),
+      label: t('ui.dailyRituals.855025'),
       value: `${formatNumber(routineDone, t('en', 'ar'))}/${formatNumber(routines.length, t('en', 'ar'))}`,
-      sub: t('Small things add up', 'خطوات صغيرة بتفرق'),
+      sub: t('ui.smallThingsAddUp.717410'),
       icon: Repeat2,
       path: '/planner?tab=routines',
     },
   ];
   return (
-    <div className="home-v2">
+    <div className="home-v2 core-home">
       <div className="home-heading">
         <div>
           <div className="eyebrow">
@@ -150,104 +150,21 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
               month: 'long',
             })}
           </div>
-          <h1 dir="auto">{t('Today’s plan', 'خطة اليوم')}</h1>
-          <p dir="auto">
-            {t(
-              'Everything that matters, brought a little closer.',
-              'كل اللي يهمك، في مكان أقرب ليك.',
-            )}
-          </p>
+          <h1 dir="auto">{t('ui.todaySPlan.1d53ee')}</h1>
+          <p dir="auto">{t('ui.everythingThatMattersBroughtALittleCloser.2d87cb')}</p>
         </div>
         <div className="home-heading-actions">
           <Button asChild variant="outline">
             <Link to="/planner?tab=week">
               <CalendarDays size={16} />
-              {t('Plan my week', 'خطط أسبوعك')}
+              {t('ui.planMyWeek.d6ffa7')}
             </Link>
           </Button>
           <Button onClick={() => edit()}>
             <Plus size={17} />
-            {t('New task', 'مهمة جديدة')}
+            {t('ui.newTask.02b6c9')}
           </Button>
         </div>
-      </div>
-      {prayer.enabled && (
-        <Suspense fallback={null}>
-          <PrayerBreaks t={t} compact />
-        </Suspense>
-      )}
-      <DailyCycle tasks={tasks} entries={entries} settings={settings} t={t} />
-      <MyDay tasks={tasks} entries={entries} t={t} edit={edit} />
-      <details className="home-briefing">
-        <summary>{t('General overview', 'الملخص العام')}</summary>
-        <section className="daily-hero">
-          <div className="hero-content">
-            <span className="hero-kicker">
-              <span />
-              {t('YOUR DAILY PERSPECTIVE', 'نظرة على يومك')}
-            </span>
-            <h2 dir="auto">
-              {overdue.length
-                ? t('A fresh start is always an option.', 'لسه فيه فرصة ترتّبها من جديد.')
-                : t('Make space for what moves you forward.', 'خلّي وقتك للي يقرّبك من هدفك.')}
-            </h2>
-            <p dir="auto">
-              {t(
-                `${localizedNumber(open.length, t('en', 'ar'))} open tasks, ${localizedNumber(due.length, t('en', 'ar'))} due today. Choose one meaningful step and give it your attention.`,
-                `${localizedNumber(open.length, t('en', 'ar'))} مهام مفتوحة، منها ${localizedNumber(due.length, t('en', 'ar'))} تسليمها اليوم. اختار خطوة مهمة واديها تركيزك.`,
-              )}
-            </p>
-            <Button onClick={() => propose(t('Plan my day', 'خطط يومي'))}>
-              <Sparkles size={16} />
-              {t('Plan my day with me', 'ساعدني أرتّب يومي')}
-              <ArrowUpRight size={15} />
-            </Button>
-            <span className="hero-disclaimer">
-              {t(
-                'Rule-based assistant · Review before confirming',
-                'مساعد بقواعد محددة · راجع قبل التأكيد',
-              )}
-            </span>
-          </div>
-          <div className="hero-progress">
-            <div
-              className="progress-orbit"
-              style={{ background: `conic-gradient(#c9dfb8 ${percent}%,#ffffff17 0)` }}
-            >
-              <div>
-                <span>
-                  {formatNumber(percent, t('en', 'ar'))}
-                  <small>%</small>
-                </span>
-                <p dir="auto">{t('of active tasks done', 'من المهام النشطة مكتملة')}</p>
-              </div>
-            </div>
-            <span>
-              <CheckCheck size={14} />
-              {formatNumber(done, t('en', 'ar'))} {t('completed', 'مكتملة')} ·{' '}
-              {formatNumber(active.length, t('en', 'ar'))} {t('total', 'إجمالي')}
-            </span>
-          </div>
-        </section>
-      </details>
-      <div className="home-stats">
-        {stats.map((stat) => (
-          <Link className="card stat-card" to={stat.path} key={stat.path}>
-            <div>
-              <span>{stat.label}</span>
-              <stat.icon size={17} />
-            </div>
-            <strong dir="auto">
-              {typeof stat.value === 'number'
-                ? formatNumber(stat.value, t('en', 'ar'))
-                : stat.value}
-            </strong>
-            <small>
-              {stat.sub}
-              <ArrowUpRight size={13} />
-            </small>
-          </Link>
-        ))}
       </div>
       <section className="home-assistant-bar">
         <span className="assistant-icon">
@@ -262,44 +179,54 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
         >
           <input
             dir="auto"
-            aria-label={t('Ask your assistant', 'اسأل مساعدك')}
+            aria-label={t('ui.askYourAssistant.d22cbb')}
             maxLength={1000}
-            placeholder={t(
-              'A thought, a plan, a little help…',
-              'فكرة، خطة، أو حاجة محتاج ترتّبها…',
-            )}
+            placeholder={t('ui.sayWhatIsOnYourMind.ad06c6')}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
           />
-          <Button
-            size="icon"
-            disabled={!prompt.trim()}
-            aria-label={t('Send to assistant', 'إرسال للمساعد')}
-          >
+          <Button size="icon" disabled={!prompt.trim()} aria-label={t('ui.sendToAssistant.2849f7')}>
             <ArrowUp size={18} />
           </Button>
         </form>
         <div className="home-assistant-shortcuts">
-          <button onClick={() => propose(t('Show my memories', 'اعرض ذاكرتي'))}>
-            {t('Recall a memory', 'افتكر معلومة')}
+          <button onClick={() => propose(t('ui.showMyMemories.962543'))}>
+            {t('ui.recallAMemory.c3ea12')}
             <ArrowUpRight size={12} />
           </button>
-          <button onClick={() => propose(t('Task: Take a short break', 'مهمة: استراحة قصيرة'))}>
-            {t('Make room for a break', 'وقت لاستراحة')}
+          <button onClick={() => propose(t('ui.taskTakeAShortBreak.35be98'))}>
+            {t('ui.makeRoomForABreak.c17aaa')}
             <ArrowUpRight size={12} />
           </button>
         </div>
       </section>
+      {new Intl.DateTimeFormat('en-GB', {
+        timeZone: settings.timezone,
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      }).format(new Date()) >= journey.eveningTime &&
+        journey.eveningReviewedOn !== today && (
+          <aside className="evening-reminder" role="status">
+            <strong>{t('ui.twoMinutesForYourEveningReview.dbcb89')}</strong>
+            <a href="#daily-review">{t('ui.openEveningReview.9ee03c')}</a>
+          </aside>
+        )}
+      {prayer.enabled && (
+        <Suspense fallback={null}>
+          <PrayerBreaks t={t} compact />
+        </Suspense>
+      )}
       <div className="home-content-grid">
         <div className="home-main-column">
           <section className="card home-focus-list">
             <div className="home-section-title">
               <div>
-                <div className="eyebrow">{t('LESS, BUT MEANINGFUL', 'أقل، لكن أهم')}</div>
-                <h3 dir="auto">{t('Your next three steps', '٣ خطوات تستحق تركيزك')}</h3>
+                <div className="eyebrow">{t('ui.lessButMeaningful.da1b68')}</div>
+                <h3 dir="auto">{t('ui.yourNextThreeSteps.66ff72')}</h3>
               </div>
               <Link to="/planner">
-                {t('All tasks', 'كل المهام')}
+                {t('ui.allTasks.25807e')}
                 <ArrowUpRight size={15} />
               </Link>
             </div>
@@ -308,7 +235,7 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
                 <span className="focus-index">{formatClockPart(i + 1, t('en', 'ar'))}</span>
                 <button
                   className="checkbox"
-                  aria-label={`${t('Complete', 'إكمال')}: ${task.title}`}
+                  aria-label={`${t('ui.complete.e721b1')}: ${task.title}`}
                   onClick={() =>
                     setTasks((old) =>
                       old.map((x) => (x.id === task.id ? { ...x, done: true, status: 'done' } : x)),
@@ -321,11 +248,14 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
                   <button className="task-title-button" onClick={() => edit(task)}>
                     {task.title}
                   </button>
-                  <SuggestionNote
-                    task={task}
-                    t={t}
-                    onDismiss={() => setDismissed((old) => ({ ...old, [task.id]: today }))}
-                  />
+                  <details className="task-reason">
+                    <summary>{t('ui.whyThisStep.ddeffe')}</summary>{' '}
+                    <SuggestionNote
+                      task={task}
+                      t={t}
+                      onDismiss={() => setDismissed((old) => ({ ...old, [task.id]: today }))}
+                    />
+                  </details>
                   <div className="task-badges">
                     <span>{areaLabel(task.category as Area, t)}</span>
                     <span className={`priority-badge ${priorityOf(task)}`}>
@@ -339,7 +269,7 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
                     {!!task.estimate && (
                       <span>
                         <Clock3 size={11} />
-                        {localizedNumber(task.estimate, t('en', 'ar'))} {t('min', 'د')}
+                        {localizedNumber(task.estimate, t('en', 'ar'))} {t('ui.min.bea689')}
                       </span>
                     )}
                     {task.pinned && <Pin size={11} />}
@@ -348,7 +278,7 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
                 <Button
                   size="icon"
                   variant="ghost"
-                  aria-label={`${t('Edit', 'تعديل')}: ${task.title}`}
+                  aria-label={`${t('ui.edit.c554f4')}: ${task.title}`}
                   onClick={() => edit(task)}
                 >
                   <ArrowUpRight size={16} />
@@ -360,32 +290,24 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
                 <CheckCheck size={27} />
                 <p dir="auto">
                   {journey.focusDate === today && open.length
-                    ? t(
-                        'No focus tasks selected. Review your morning plan.',
-                        'مفيش مهام تركيز مختارة. راجع خطة الصبح.',
-                      )
-                    : t(
-                        'No open tasks yet. Add one clear step to start.',
-                        'مفيش مهام مفتوحة لسه. أضف خطوة واضحة تبدأ بيها.',
-                      )}
+                    ? t('ui.noFocusTasksSelectedReviewYourMorning.5b581f')
+                    : t('ui.noOpenTasksYetAddOneClear.ec45f0')}
                 </p>
               </div>
             )}
             <button className="home-add-task" onClick={() => edit()}>
               <Plus size={16} />
-              {t('Add your next step', 'أضف خطوتك الجاية')}
+              {t('ui.addYourNextStep.292149')}
             </button>
           </section>
           <section className="card home-agenda">
             <div className="home-section-title">
               <div>
-                <div className="eyebrow">{t('A LITTLE RHYTHM', 'إيقاع يومك')}</div>
-                <h3 dir="auto">
-                  {t('Appointments and planned tasks', 'المواعيد والمهام المخططة')}
-                </h3>
+                <div className="eyebrow">{t('ui.aLittleRhythm.587182')}</div>
+                <h3 dir="auto">{t('ui.appointmentsAndPlannedTasks.8ddd6c')}</h3>
               </div>
               <Link to={`/planner?tab=calendar&date=${selectedDay}`}>
-                {t('Calendar', 'التقويم')}
+                {t('ui.calendar.33a4a9')}
                 <ArrowUpRight size={15} />
               </Link>
             </div>
@@ -441,16 +363,16 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
                     <strong dir="auto">{task.title}</strong>
                     <small>
                       {taskDateLabels(task, selectedDay).planned
-                        ? t('Execution day', 'يوم التنفيذ')
-                        : t('Due date', 'موعد التسليم')}
+                        ? t('ui.executionDay.51f86f')
+                        : t('ui.dueDate.3146bb')}
                       {taskDateLabels(task, selectedDay).planned &&
                       taskDateLabels(task, selectedDay).due
-                        ? ' · ' + t('Due date', 'موعد التسليم')
+                        ? ' · ' + t('ui.dueDate.3146bb')
                         : ''}
                       {task.estimate
-                        ? ` · ${formatNumber(task.estimate, t('en', 'ar'))} ${t('min', 'د')}`
+                        ? ` · ${formatNumber(task.estimate, t('en', 'ar'))} ${t('ui.min.bea689')}`
                         : ''}{' '}
-                      · {task.done ? t('Completed', 'مكتملة') : t('Open', 'مفتوحة')}
+                      · {task.done ? t('ui.completed.bba94f') : t('ui.open.ec80f4')}
                     </small>
                   </div>
                   <ArrowUpRight size={14} />
@@ -459,14 +381,9 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
               {!events.length && !plannedTasks.length && (
                 <div className="home-empty">
                   <CalendarDays size={25} />
-                  <p dir="auto">
-                    {t(
-                      'No appointments or tasks planned for this day.',
-                      'مفيش مواعيد أو مهام مخططة لليوم ده.',
-                    )}
-                  </p>
+                  <p dir="auto">{t('ui.noAppointmentsOrTasksPlannedForThis.946595')}</p>
                   <Link to={`/planner?tab=calendar&date=${selectedDay}`}>
-                    {t('Plan something meaningful', 'أضف موعد يهمك')}
+                    {t('ui.planSomethingMeaningful.35adca')}
                     <Plus size={14} />
                   </Link>
                 </div>
@@ -474,12 +391,20 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
             </div>
           </section>
         </div>
+      </div>
+      <details className="home-secondary" data-home-section="planning">
+        <summary>{t('ui.planAndRecordMyDay.1636bb')}</summary>{' '}
+        <DailyCycle tasks={tasks} entries={entries} settings={settings} t={t} />
+        <MyDay tasks={tasks} entries={entries} t={t} edit={edit} />
+      </details>
+      <details className="home-secondary" data-home-section="focus">
+        <summary>{t('ui.focusRoutinesAndGoals.b384a4')}</summary>{' '}
         <div className="home-side-column">
           <FocusTimer t={t} tasks={tasks} />
           <NeedsAttention tasks={tasks} t={t} edit={edit} />
           <section className="card home-routines">
             <div className="home-section-title">
-              <h3 dir="auto">{t('Daily routines', 'الروتين اليومي')}</h3>
+              <h3 dir="auto">{t('ui.dailyRoutines.7c227d')}</h3>
               <Repeat2 size={17} />
             </div>
             {routines.slice(0, 4).map((routine) => (
@@ -518,17 +443,17 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
             ))}
             {!routines.length && (
               <p dir="auto" className="muted">
-                {t('Build a small habit you can return to.', 'ابدأ عادة بسيطة تقدر تستمر عليها.')}
+                {t('ui.buildASmallHabitYouCanReturn.4d558a')}
               </p>
             )}
             <Link className="home-section-link" to="/planner?tab=routines">
-              {t('Manage routines', 'إدارة الروتين')}
+              {t('ui.manageRoutines.1a5ed2')}
               <ArrowRight size={14} />
             </Link>
           </section>
           <section className="card home-goals">
             <div className="home-section-title">
-              <h3 dir="auto">{t('The bigger picture', 'أهداف أبعد من النهارده')}</h3>
+              <h3 dir="auto">{t('ui.theBiggerPicture.f2039f')}</h3>
               <Target size={17} />
             </div>
             {goals.map((goal) => (
@@ -542,25 +467,97 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
             ))}
             {!goals.length && (
               <p dir="auto" className="muted">
-                {t('Give your next ambition a home.', 'ادّي طموحك الجاي مساحة.')}
+                {t('ui.giveYourNextAmbitionAHome.d80a96')}
               </p>
             )}
             <Link className="home-section-link" to="/life">
-              {t('Explore my life', 'شوف أهداف حياتك')}
+              {t('ui.exploreMyLife.4ae1e8')}
               <ArrowRight size={14} />
             </Link>
           </section>
         </div>
-      </div>
-      <DailyReview t={t} tasks={tasks} setTasks={setTasks} edit={edit} />
-      <TrialReview t={t} />
+      </details>
+      <details className="home-briefing home-secondary">
+        <summary>{t('ui.generalOverview.4e8d97')}</summary>
+        <section className="daily-hero">
+          <div className="hero-content">
+            <span className="hero-kicker">
+              <span />
+              {t('ui.yourDailyPerspective.f59752')}
+            </span>
+            <h2 dir="auto">
+              {overdue.length
+                ? t('ui.aFreshStartIsAlwaysAnOption.203482')
+                : t('ui.makeSpaceForWhatMovesYouForward.7d6ad4')}
+            </h2>
+            <p dir="auto">
+              {t(
+                `${localizedNumber(open.length, t('en', 'ar'))} open tasks, ${localizedNumber(due.length, t('en', 'ar'))} due today. Choose one meaningful step and give it your attention.`,
+                `${localizedNumber(open.length, t('en', 'ar'))} مهام مفتوحة، منها ${localizedNumber(due.length, t('en', 'ar'))} تسليمها اليوم. اختار خطوة مهمة واديها تركيزك.`,
+              )}
+            </p>
+            <Button onClick={() => propose(t('ui.planMyDay.fec857'))}>
+              <Sparkles size={16} />
+              {t('ui.planMyDayWithMe.9669ca')}
+              <ArrowUpRight size={15} />
+            </Button>
+            <span className="hero-disclaimer">
+              {t('ui.ruleBasedAssistantReviewBeforeConfirming.9b6935')}
+            </span>
+          </div>
+          <div className="hero-progress">
+            <div
+              className="progress-orbit"
+              style={{ background: `conic-gradient(#c9dfb8 ${percent}%,#ffffff17 0)` }}
+            >
+              <div>
+                <span>
+                  {formatNumber(percent, t('en', 'ar'))}
+                  <small>%</small>
+                </span>
+                <p dir="auto">{t('ui.ofActiveTasksDone.fcfc42')}</p>
+              </div>
+            </div>
+            <span>
+              <CheckCheck size={14} />
+              {formatNumber(done, t('en', 'ar'))} {t('ui.completed.ff1564')} ·{' '}
+              {formatNumber(active.length, t('en', 'ar'))} {t('ui.total.c1e5a5')}
+            </span>
+          </div>
+        </section>
+      </details>
+      <details className="home-secondary">
+        <summary>{t('ui.progressSummary.fea616')}</summary>
+        <div className="home-stats">
+          {stats.map((stat) => (
+            <Link className="card stat-card" to={stat.path} key={stat.path}>
+              <div>
+                <span>{stat.label}</span>
+                <stat.icon size={17} />
+              </div>
+              <strong dir="auto">
+                {typeof stat.value === 'number'
+                  ? formatNumber(stat.value, t('en', 'ar'))
+                  : stat.value}
+              </strong>
+              <small>
+                {stat.sub}
+                <ArrowUpRight size={13} />
+              </small>
+            </Link>
+          ))}
+        </div>
+      </details>
+      <details className="home-secondary" data-home-section="review">
+        <summary>{t('ui.eveningReview.fc70ce')}</summary>
+        <DailyReview t={t} tasks={tasks} setTasks={setTasks} edit={edit} />
+      </details>
+      <details className="home-secondary" data-home-section="trial">
+        <summary>{t('ui.weeklyTrialNotes.3a7fc0')}</summary>
+        <TrialReview t={t} />
+      </details>
       <footer className="home-footer">
-        <span>
-          {t(
-            'Shortcuts: N new task · / search · F focus',
-            'اختصارات: N مهمة جديدة · / بحث · F تركيز',
-          )}
-        </span>
+        <span>{t('ui.shortcutsNNewTaskSearchFFocus.ca546e')}</span>
         <span>{storageText(t, 'saved')}</span>
       </footer>
     </div>

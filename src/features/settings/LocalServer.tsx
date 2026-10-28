@@ -51,14 +51,8 @@ export function LocalServer({ t }: { t: Translate }) {
     } catch (error) {
       setNotice(
         error instanceof Error && error.message === '409'
-          ? t(
-              'Data changed or the account already exists. Refresh the server state and review again.',
-              'البيانات اتغيّرت أو الحساب موجود بالفعل. افحص حالة السيرفر وراجع المعاينة تاني.',
-            )
-          : t(
-              'Server request failed. Check the connection and your credentials, then retry. No browser data was replaced.',
-              'تعذر طلب السيرفر. راجع الاتصال وبيانات الدخول وحاول تاني. بيانات المتصفح لم تُستبدل.',
-            ),
+          ? t('ui.dataChangedOrTheAccountAlreadyExists.7f4307')
+          : t('ui.serverRequestFailedCheckTheConnectionAnd.b530c4'),
       );
     } finally {
       setBusy(false);
@@ -66,12 +60,9 @@ export function LocalServer({ t }: { t: Translate }) {
   }
   return (
     <section className="local-server editor-form">
-      <h3 dir="auto">{t('Server storage', 'تخزين السيرفر')}</h3>
+      <h3 dir="auto">{t('ui.serverStorage.b8f2ed')}</h3>
       <p dir="auto" className="muted">
-        {t(
-          'The application server stores a separate SQLite copy. Records are not encrypted at rest. Browser data stays independent until you approve a transfer; no automatic merge or third-party AI is enabled.',
-          'سيرفر التطبيق بيحفظ نسخة SQLite مستقلة. السجلات غير مشفرة على القرص. بيانات المتصفح مستقلة لحد ما توافق على نقلها؛ بدون دمج تلقائي أو AI خارجي.',
-        )}
+        {t('ui.theApplicationServerStoresASeparateSqlite.7e49ce')}
       </p>
       <Button
         variant="outline"
@@ -80,11 +71,11 @@ export function LocalServer({ t }: { t: Translate }) {
           void run(async () => {
             await request('health');
             setAccount(await request('account/status'));
-            setNotice(t('Server is available.', 'السيرفر متاح.'));
+            setNotice(t('ui.serverIsAvailable.a78291'));
           })
         }
       >
-        {t('Check server', 'افحص السيرفر')}
+        {t('ui.checkServer.e63942')}
       </Button>
       {account && !account.signedIn && (
         <form
@@ -100,12 +91,12 @@ export function LocalServer({ t }: { t: Translate }) {
               setPassword('');
               setSetupToken('');
               setAccount(await request('account/status'));
-              setNotice(t('Signed in. No data transferred.', 'تم الدخول. لم تُنقل أي بيانات.'));
+              setNotice(t('ui.signedInNoDataTransferred.994713'));
             });
           }}
         >
           <label>
-            {t('Username', 'اسم المستخدم')}
+            {t('ui.username.647b84')}
             <input
               dir="auto"
               required
@@ -117,7 +108,7 @@ export function LocalServer({ t }: { t: Translate }) {
             />
           </label>
           <label>
-            {t('Password (at least 12 characters)', 'كلمة المرور (12 حرف على الأقل)')}
+            {t('ui.passwordAtLeast12Characters.7401e9')}
             <input
               type="password"
               required
@@ -131,18 +122,12 @@ export function LocalServer({ t }: { t: Translate }) {
           <>
             {!account.configured && account.setupEnabled === false && (
               <p dir="auto" className="notice">
-                {t(
-                  'Account setup is disabled until the administrator configures a private setup token.',
-                  'إنشاء الحساب معطّل لحد ما المشرف يضبط رمز تهيئة خاص.',
-                )}
+                {t('ui.accountSetupIsDisabledUntilTheAdministrator.377398')}
               </p>
             )}
             {!account.configured && account.setupTokenRequired && (
               <label>
-                {t(
-                  'Private setup token from server configuration',
-                  'رمز التهيئة الخاص من إعدادات السيرفر',
-                )}
+                {t('ui.privateSetupTokenFromServerConfiguration.07404f')}
                 <input
                   type="password"
                   required
@@ -154,9 +139,7 @@ export function LocalServer({ t }: { t: Translate }) {
             )}
           </>
           <Button disabled={busy || (!account.configured && account.setupEnabled === false)}>
-            {account.configured
-              ? t('Sign in', 'تسجيل الدخول')
-              : t('Create account', 'إنشاء الحساب')}
+            {account.configured ? t('ui.signIn.471dfa') : t('ui.createAccount.c108a3')}
           </Button>
         </form>
       )}
@@ -177,7 +160,7 @@ export function LocalServer({ t }: { t: Translate }) {
               })
             }
           >
-            {t('Preview save to server', 'معاينة الحفظ على السيرفر')}
+            {t('ui.previewSaveToServer.1c1850')}
           </Button>
           <Button
             variant="outline"
@@ -186,7 +169,7 @@ export function LocalServer({ t }: { t: Translate }) {
               void run(async () => {
                 const remote = await request('workspace');
                 if (!remote.data) {
-                  setNotice(t('No server copy yet.', 'لسه مفيش نسخة على السيرفر.'));
+                  setNotice(t('ui.noServerCopyYet.e54633'));
                   return;
                 }
                 validateData(remote.data);
@@ -199,7 +182,7 @@ export function LocalServer({ t }: { t: Translate }) {
               })
             }
           >
-            {t('Preview load from server', 'معاينة التحميل من السيرفر')}
+            {t('ui.previewLoadFromServer.e83caf')}
           </Button>
           <Button
             variant="ghost"
@@ -211,7 +194,7 @@ export function LocalServer({ t }: { t: Translate }) {
               })
             }
           >
-            {t('Sign out', 'تسجيل الخروج')}
+            {t('ui.signOut.cc0fc3')}
           </Button>
         </div>
       )}
@@ -222,7 +205,7 @@ export function LocalServer({ t }: { t: Translate }) {
       )}
       {account?.signedIn && (
         <details>
-          <summary>{t('Change password', 'تغيير كلمة المرور')}</summary>
+          <summary>{t('ui.changePassword.b51df8')}</summary>
           <form
             className="editor-form"
             onSubmit={(e) => {
@@ -231,17 +214,12 @@ export function LocalServer({ t }: { t: Translate }) {
                 await request('account/password', 'POST', { currentPassword, newPassword });
                 setCurrentPassword('');
                 setNewPassword('');
-                setNotice(
-                  t(
-                    'Password changed. Other sessions were signed out.',
-                    'تم تغيير كلمة المرور وتسجيل خروج الجلسات الأخرى.',
-                  ),
-                );
+                setNotice(t('ui.passwordChangedOtherSessionsWereSignedOut.15da42'));
               });
             }}
           >
             <label>
-              {t('Current password', 'كلمة المرور الحالية')}
+              {t('ui.currentPassword.08cdad')}
               <input
                 type="password"
                 autoComplete="current-password"
@@ -252,7 +230,7 @@ export function LocalServer({ t }: { t: Translate }) {
               />
             </label>
             <label>
-              {t('New password', 'كلمة المرور الجديدة')}
+              {t('ui.newPassword.f7f4ac')}
               <input
                 type="password"
                 autoComplete="new-password"
@@ -263,7 +241,7 @@ export function LocalServer({ t }: { t: Translate }) {
                 onChange={(e) => setNewPassword(e.target.value)}
               />
             </label>
-            <Button disabled={busy}>{t('Update password', 'تحديث كلمة المرور')}</Button>
+            <Button disabled={busy}>{t('ui.updatePassword.b6163e')}</Button>
           </form>
         </details>
       )}
@@ -272,25 +250,18 @@ export function LocalServer({ t }: { t: Translate }) {
         onOpenChange={(v) => {
           if (!v && !busy) setPreview(null);
         }}
-        title={t('Review local data transfer', 'راجع نقل البيانات المحلي')}
+        title={t('ui.reviewLocalDataTransfer.c39320')}
         description={
           preview?.direction === 'upload'
-            ? t(
-                'Replaces the separate server copy with this browser snapshot. It does not merge or sync automatically.',
-                'هيستبدل نسخة السيرفر المستقلة بنسخة المتصفح. مفيش دمج أو مزامنة تلقائية.',
-              )
-            : t(
-                'Replaces all browser records and settings with the server snapshot. Export a browser backup first.',
-                'هيستبدل كل سجلات وإعدادات المتصفح بنسخة السيرفر. صدّر نسخة احتياطية من المتصفح الأول.',
-              )
+            ? t('ui.replacesTheSeparateServerCopyWithThis.e35943')
+            : t('ui.replacesAllBrowserRecordsAndSettingsWith.f42f48')
         }
       >
         <p dir="auto">
-          {t('Browser tasks / records', 'مهام / سجلات المتصفح')}: {count(data)}
+          {t('ui.browserTasksRecords.0a6a4c')}: {count(data)}
         </p>
         <p dir="auto">
-          {t('Transfer tasks / records', 'مهام / سجلات النسخة المنقولة')}:{' '}
-          {preview ? count(preview.data) : ''}
+          {t('ui.transferTasksRecords.ca586c')}: {preview ? count(preview.data) : ''}
         </p>
         {notice && (
           <p dir="auto" role="status">
@@ -299,7 +270,7 @@ export function LocalServer({ t }: { t: Translate }) {
         )}
         <div className="dialog-actions">
           <Button variant="outline" disabled={busy} onClick={() => setPreview(null)}>
-            {t('Cancel', 'إلغاء')}
+            {t('ui.cancel.428808')}
           </Button>
           <Button
             disabled={busy || !preview}
@@ -319,11 +290,11 @@ export function LocalServer({ t }: { t: Translate }) {
                     throw Error('409');
                 }
                 setPreview(null);
-                setNotice(t('Transfer confirmed and saved.', 'تم تأكيد النقل والحفظ.'));
+                setNotice(t('ui.transferConfirmedAndSaved.034e76'));
               })
             }
           >
-            {t('Confirm replacement', 'تأكيد الاستبدال')}
+            {t('ui.confirmReplacement.b7b96f')}
           </Button>
         </div>
       </Dialog>

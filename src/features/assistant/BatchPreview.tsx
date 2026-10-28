@@ -1,3 +1,4 @@
+import { DateTimeInput } from '../../components/DateTimeInput';
 import {
   formatCalendarDate as localizedDate,
   formatTime as localizedTime,
@@ -45,25 +46,19 @@ export function BatchPreview({
   return (
     <div className="chat-proposal batch-preview">
       <div className="batch-preview-heading">
-        <span className="eyebrow">{t('MULTI-ACTION PREVIEW', 'معاينة إجراءات متعددة')}</span>
+        <span className="eyebrow">{t('ui.multiActionPreview.875d4b')}</span>
         <strong dir="auto">
-          {localizedNumber(items.length, t('en', 'ar'))} {t('actions', 'إجراءات')}
+          {localizedNumber(items.length, t('en', 'ar'))} {t('ui.actions.9dd063')}
         </strong>
       </div>
       <p dir="auto">
         {pending
-          ? t(
-              'Local rules only. No tasks, events or notes have been created from this preview.',
-              'قواعد محلية فقط. المعاينة دي لسه ما أنشأتش مهام أو مواعيد أو ملاحظات.',
-            )
+          ? t('ui.localRulesOnlyNoTasksEventsOr.29bf24')
           : message.status === 'confirmed'
-            ? t('Saved together in one local transaction.', 'اتحفظوا مع بعض في عملية محلية واحدة.')
+            ? t('ui.savedTogetherInOneLocalTransaction.236d9e')
             : message.status === 'reverted'
-              ? t(
-                  'Undo completed. Edited or linked items may have been kept. See the action center for details.',
-                  'تم التراجع. العناصر المعدّلة أو المرتبطة ممكن تكون اتسابوا؛ التفاصيل في مركز الإجراءات.',
-                )
-              : t('Cancelled. No actions were executed.', 'تم الإلغاء. لم يتم تنفيذ الإجراءات.')}
+              ? t('ui.undoCompletedEditedOrLinkedItemsMay.0b9da1')
+              : t('ui.cancelledNoActionsWereExecuted.ebd2a2')}
       </p>
       <div className="batch-preview-items">
         {items.map((item, index) => (
@@ -71,14 +66,14 @@ export function BatchPreview({
             <div className="batch-preview-heading">
               <span>
                 {localizedNumber(index + 1, t('en', 'ar'))} ·{' '}
-                {item.kind === 'task' ? t('Task', 'مهمة') : kindLabel(item.kind, t)}
+                {item.kind === 'task' ? t('ui.task.c7a3d8') : kindLabel(item.kind, t)}
               </span>
               {pending && (
                 <Button
                   size="icon"
                   variant="ghost"
                   disabled={busy || items.length === 1}
-                  aria-label={`${t('Remove preview item', 'استبعاد عنصر المعاينة')} ${localizedNumber(index + 1, t('en', 'ar'))}`}
+                  aria-label={`${t('ui.removePreviewItem.16eeb8')} ${localizedNumber(index + 1, t('en', 'ar'))}`}
                   onClick={() => remove(item.id)}
                 >
                   <Trash2 size={15} />
@@ -88,7 +83,7 @@ export function BatchPreview({
             {pending ? (
               <div className="editor-form">
                 <label>
-                  {t('Action title', 'عنوان الإجراء')}
+                  {t('ui.actionTitle.f11358')}
                   <input
                     dir="auto"
                     maxLength={160}
@@ -99,7 +94,7 @@ export function BatchPreview({
                 </label>
                 <div className="form-pair">
                   <label>
-                    {t('Action type', 'نوع الإجراء')}
+                    {t('ui.actionType.2200e9')}
                     <select
                       disabled={busy}
                       value={item.kind}
@@ -109,13 +104,13 @@ export function BatchPreview({
                     >
                       {kinds.map((k) => (
                         <option key={k} value={k}>
-                          {k === 'task' ? t('Task', 'مهمة') : kindLabel(k, t)}
+                          {k === 'task' ? t('ui.task.c7a3d8') : kindLabel(k, t)}
                         </option>
                       ))}
                     </select>
                   </label>
                   <label>
-                    {t('Life area', 'مجال الحياة')}
+                    {t('ui.lifeArea.d4e236')}
                     <select
                       disabled={busy}
                       value={item.area}
@@ -134,33 +129,41 @@ export function BatchPreview({
                 {['task', 'event', 'goal', 'project'].includes(item.kind) && (
                   <label>
                     {item.kind === 'event'
-                      ? t('Event date (required)', 'تاريخ الموعد (مطلوب)')
+                      ? t('ui.eventDateRequired.5eedab')
                       : item.kind === 'task'
-                        ? t('Planned day (optional)', 'يوم التنفيذ (اختياري)')
-                        : t('Target date (optional)', 'التاريخ المستهدف (اختياري)')}
-                    <input
+                        ? t('ui.plannedDayOptional.54d004')
+                        : t('ui.targetDateOptional.0eb380')}
+                    <DateTimeInput
                       type="date"
                       disabled={busy}
                       value={item.date}
                       onChange={(e) => patch(item.id, { date: e.target.value })}
                       onInput={(e) => patch(item.id, { date: e.currentTarget.value })}
+                      aria-label={
+                        item.kind === 'event'
+                          ? t('ui.eventDateRequired.5eedab')
+                          : item.kind === 'task'
+                            ? t('ui.plannedDayOptional.54d004')
+                            : t('ui.targetDateOptional.0eb380')
+                      }
                     />
                   </label>
                 )}
                 {['event', 'routine', 'task'].includes(item.kind) && (
                   <label>
-                    {t('Time (required)', 'الوقت (مطلوب)')}
-                    <input
+                    {t('ui.timeRequired.c282e3')}
+                    <DateTimeInput
                       disabled={busy}
                       type="time"
                       value={item.time}
                       onChange={(e) => patch(item.id, { time: e.target.value })}
                       onInput={(e) => patch(item.id, { time: e.currentTarget.value })}
+                      aria-label={t('ui.timeRequired.c282e3')}
                     />
                   </label>
                 )}
                 <label>
-                  {t('Details (optional)', 'تفاصيل (اختياري)')}
+                  {t('ui.detailsOptional.6ca244')}
                   <textarea
                     dir="auto"
                     disabled={busy}
@@ -189,17 +192,11 @@ export function BatchPreview({
       {pending ? (
         <>
           <p dir="auto" className="muted">
-            {t(
-              'You may edit, change type or exclude items. All remaining items must be valid before saving any of them.',
-              'تقدر تعدّل أو تغيّر النوع أو تستبعد عنصر. لازم كل العناصر المتبقية تكون صحيحة قبل حفظ أي منها.',
-            )}
+            {t('ui.youMayEditChangeTypeOrExclude.c78f53')}
           </p>
           {captureErrors(items) && (
             <p dir="auto" className="capture-hint" role="status">
-              {t(
-                'Complete the titles and required dates/times. Nothing has been executed.',
-                'كمّل العناوين والتواريخ والأوقات المطلوبة. لم يتم تنفيذ شيء.',
-              )}
+              {t('ui.completeTheTitlesAndRequiredDatesTimes.7350a7')}
             </p>
           )}
           <div className="proposal-actions">
@@ -212,26 +209,23 @@ export function BatchPreview({
             </Button>
             <Button variant="outline" disabled={busy} onClick={cancel}>
               <X size={15} />
-              {t('Cancel all', 'إلغاء الكل')}
+              {t('ui.cancelAll.5aa435')}
             </Button>
           </div>
         </>
       ) : message.status === 'confirmed' ? (
         <div className="action-result" role="status">
           <Check size={15} />
-          {t('Confirmed and saved locally', 'تم التأكيد والحفظ محليًا')}
-          <Link to="/planner">{t('Planner', 'المخطط')}</Link>
-          <Link to="/memory">{t('Memory', 'الذاكرة')}</Link>
-          <Link to="/life">{t('My life', 'حياتي')}</Link>
+          {t('ui.confirmedAndSavedLocally.60607d')}
+          <Link to="/planner">{t('ui.planner.e7665d')}</Link>
+          <Link to="/memory">{t('ui.memory.eee0de')}</Link>
+          <Link to="/life">{t('ui.myLife.907c1a')}</Link>
         </div>
       ) : (
         <div role="status">
           {message.status === 'reverted'
-            ? t(
-                'Reverted · Removed items can be restored from Data and backup',
-                'تم التراجع · العناصر المستبعدة قابلة للاستعادة من البيانات والنسخ الاحتياطي',
-              )
-            : t('Cancelled · Nothing executed', 'ملغي · لم يتم تنفيذ شيء')}
+            ? t('ui.revertedRemovedItemsCanBeRestoredFrom.7dd1ea')
+            : t('ui.cancelledNothingExecuted.b41fbc')}
         </div>
       )}
     </div>

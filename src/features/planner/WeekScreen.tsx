@@ -1,3 +1,4 @@
+import { DateTimeInput } from '../../components/DateTimeInput';
 import {
   formatCalendarDate as localizedDate,
   formatTime as localizedTime,
@@ -10,7 +11,7 @@ import { tasksOnDate } from './taskDates';
 import { ResultSummary } from '../review/ResultSummary';
 import { ConflictNotice } from './ConflictNotice';
 import { usePlanning } from '../../lib/preferences';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   ChevronLeft,
@@ -71,73 +72,6 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
   const [roll, setRoll] = useState<'next' | 'previous' | null>(null);
   const [moveDates, setMoveDates] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState('');
-  const dayRail = useRef<HTMLDivElement>(null);
-  const navigationTarget = useRef<number | null>(null);
-  const scrollIdle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const [dayWindow, setDayWindow] = useState({ index: 0, visible: 3 });
-  function measureDays() {
-    const rail = dayRail.current;
-    if (!rail) return;
-    const cards = Array.from(rail.querySelectorAll<HTMLElement>('.week-day'));
-    if (!cards.length) return;
-    const gap = parseFloat(getComputedStyle(rail).columnGap) || 0;
-    const visible = Math.max(
-      1,
-      Math.round((rail.clientWidth + gap) / (cards[0].getBoundingClientRect().width + gap)),
-    );
-    const edge = rail.getBoundingClientRect();
-    let closest = 0;
-    let distance = Infinity;
-    cards.forEach((card, i) => {
-      const bounds = card.getBoundingClientRect();
-      const offset = Math.abs(ar ? edge.right - bounds.right : bounds.left - edge.left);
-      if (offset < distance) {
-        distance = offset;
-        closest = i;
-      }
-    });
-    const index = Math.min(closest, Math.max(0, 7 - visible));
-    if (navigationTarget.current !== null) {
-      clearTimeout(scrollIdle.current);
-      scrollIdle.current = setTimeout(() => {
-        navigationTarget.current = null;
-      }, 180);
-    }
-    setDayWindow((old) =>
-      old.index === index && old.visible === visible ? old : { index, visible },
-    );
-  }
-  useEffect(() => {
-    const rail = dayRail.current;
-    if (!rail) return;
-    navigationTarget.current = null;
-    clearTimeout(scrollIdle.current);
-    rail.scrollTo({ left: 0, behavior: 'instant' });
-    const observer = new ResizeObserver(measureDays);
-    observer.observe(rail);
-    const frame = requestAnimationFrame(measureDays);
-    return () => {
-      observer.disconnect();
-      cancelAnimationFrame(frame);
-      clearTimeout(scrollIdle.current);
-    };
-  }, [start, ar]);
-  function slideDays(delta: number) {
-    const rail = dayRail.current;
-    if (!rail) return;
-    const target = Math.max(
-      0,
-      Math.min(7 - dayWindow.visible, (navigationTarget.current ?? dayWindow.index) + delta),
-    );
-    navigationTarget.current = target;
-    const card = rail.querySelector<HTMLElement>('.week-day');
-    if (!card) return;
-    const gap = parseFloat(getComputedStyle(rail).columnGap) || 0;
-    rail.scrollTo({
-      left: (ar ? -1 : 1) * target * (card.getBoundingClientRect().width + gap),
-      behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
-    });
-  }
   const goals = entries.filter((x) => x.kind === 'goal');
   const scheduled = tasks.filter(
     (x) =>
@@ -212,7 +146,7 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
           <button
             className={`checkbox ${task.done ? 'checked' : ''}`}
             aria-pressed={task.done}
-            aria-label={`${t('Complete', 'إكمال')}: ${task.title}`}
+            aria-label={`${t('ui.complete.e721b1')}: ${task.title}`}
             onClick={() =>
               updateTask(task.id, { done: !task.done, status: task.done ? 'todo' : 'done' })
             }
@@ -224,7 +158,7 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
             <Button
               variant="ghost"
               size="icon"
-              aria-label={`${t('Unplan', 'إلغاء التخطيط')}: ${task.title}`}
+              aria-label={`${t('ui.unplan.6d79ff')}: ${task.title}`}
               onClick={() => updateTask(task.id, { plannedDate: undefined })}
             >
               <X size={13} />
@@ -238,8 +172,8 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
           <span>
             <Clock3 size={11} />
             {task.estimate
-              ? `${localizedNumber(task.estimate, t('en', 'ar'))} ${t('min', 'د')}`
-              : t('No estimate', 'بدون تقدير')}
+              ? `${localizedNumber(task.estimate, t('en', 'ar'))} ${t('ui.min.bea689')}`
+              : t('ui.noEstimate.39dc40')}
           </span>
           {task.plannedTime && (
             <span>
@@ -249,7 +183,7 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
           )}
           {task.dueDate && (
             <span>
-              {t('Due', 'التسليم')}: {formatCalendarDate(task.dueDate, t('en', 'ar'))}
+              {t('ui.due.6c34a1')}: {formatCalendarDate(task.dueDate, t('en', 'ar'))}
             </span>
           )}
         </div>
@@ -260,13 +194,13 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
           </Link>
         )}
         <label className="week-task-schedule">
-          <span>{t('Plan for', 'التنفيذ يوم')}</span>
+          <span>{t('ui.planFor.d9500a')}</span>
           <select
-            aria-label={`${t('Plan task', 'تخطيط المهمة')}: ${task.title}`}
+            aria-label={`${t('ui.planTask.4f896d')}: ${task.title}`}
             value={task.plannedDate ?? ''}
             onChange={(e) => updateTask(task.id, { plannedDate: e.target.value || undefined })}
           >
-            <option value="">{t('Unscheduled', 'بدون تخطيط')}</option>
+            <option value="">{t('ui.unscheduled.19a99e')}</option>
             {task.plannedDate && !days.includes(task.plannedDate) && (
               <option value={task.plannedDate}>
                 {localizedDate(task.plannedDate, t('en', 'ar'))}
@@ -286,8 +220,8 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
     <section className="week-workspace">
       <div className="week-header">
         <div>
-          <div className="eyebrow">{t('A WEEK WITH INTENTION', 'أسبوع بخطوات واضحة')}</div>
-          <h2 dir="auto">{t('Weekly plan', 'خطة الأسبوع')}</h2>
+          <div className="eyebrow">{t('ui.aWeekWithIntention.74f49e')}</div>
+          <h2 dir="auto">{t('ui.weeklyPlan.e40088')}</h2>
           <p dir="auto">
             {dateLabel(start)} —{' '}
             {dateLabel(addDays(start, 6), { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -297,18 +231,18 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
           <Button
             variant="outline"
             size="icon"
-            aria-label={t('Previous week', 'الأسبوع السابق')}
+            aria-label={t('ui.previousWeek.4ed61e')}
             onClick={() => navigateWeek(addDays(start, -7))}
           >
             <ChevronLeft size={17} />
           </Button>
           <Button variant="outline" onClick={() => navigateWeek(localDate())}>
-            {t('This week', 'الأسبوع الحالي')}
+            {t('ui.thisWeek.867cff')}
           </Button>
           <Button
             variant="outline"
             size="icon"
-            aria-label={t('Next week', 'الأسبوع التالي')}
+            aria-label={t('ui.nextWeek.e639c1')}
             onClick={() => navigateWeek(addDays(start, 7))}
           >
             <ChevronRight size={17} />
@@ -321,9 +255,9 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
         </p>
       )}
       <label className="date-picker">
-        {t('Previously saved weeks', 'أسابيع محفوظة سابقًا')}
+        {t('ui.previouslySavedWeeks.9d4b38')}
         <select
-          aria-label={t('Previously saved weeks', 'أسابيع محفوظة سابقًا')}
+          aria-label={t('ui.previouslySavedWeeks.9d4b38')}
           value={plans[start] ? start : ''}
           onChange={(e) => {
             if (e.target.value) {
@@ -334,7 +268,7 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
             }
           }}
         >
-          <option value="">{t('Current selection', 'الاختيار الحالي')}</option>
+          <option value="">{t('ui.currentSelection.bac067')}</option>
           {Object.keys(plans)
             .sort()
             .reverse()
@@ -348,12 +282,9 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
       </label>
       {savedWeek && savedWeek !== weekStart(savedWeek, settings.weekStartsOn) && (
         <p dir="auto" role="status">
-          {t(
-            'Viewing a saved week with its original boundaries. Your current week-start preference applies to new plans.',
-            'بتعرض أسبوع محفوظ بحدوده الأصلية. إعداد بداية الأسبوع الحالي بيُستخدم في الخطط الجديدة.',
-          )}{' '}
+          {t('ui.viewingASavedWeekWithItsOriginal.15641c')}{' '}
           <Button variant="outline" onClick={() => navigateWeek(localDate())}>
-            {t('Open current week', 'افتح الأسبوع الحالي')}
+            {t('ui.openCurrentWeek.aace20')}
           </Button>
         </p>
       )}
@@ -361,18 +292,16 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
         <span>
           <Check size={15} />
           {localizedNumber(completed, t('en', 'ar'))}/
-          {localizedNumber(scheduled.length, t('en', 'ar'))}{' '}
-          {t('planned tasks done', 'مهام مخططة مكتملة')}
+          {localizedNumber(scheduled.length, t('en', 'ar'))} {t('ui.plannedTasksDone.1cb7c3')}
         </span>
         <span>
           <CalendarDays size={15} />
-          {localizedNumber(events.length, t('en', 'ar'))} {t('local events', 'مواعيد محلية')}
+          {localizedNumber(events.length, t('en', 'ar'))} {t('ui.localEvents.d92519')}
         </span>
         <span>
           <Target size={15} />
           {localizedNumber(outcomesDone, t('en', 'ar'))}/
-          {localizedNumber(plan.outcomes.length, t('en', 'ar'))}{' '}
-          {t('weekly results', 'نتائج الأسبوع')}
+          {localizedNumber(plan.outcomes.length, t('en', 'ar'))} {t('ui.weeklyResults.d0161e')}
         </span>
         <small>{storageText(t, 'saved')}</small>
       </div>
@@ -385,7 +314,7 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
                 className={`checkbox ${outcome.done ? 'checked' : ''}`}
                 disabled={!outcome.title.trim()}
                 aria-pressed={outcome.done}
-                aria-label={`${t('Complete weekly result', 'إكمال نتيجة الأسبوع')} ${localizedNumber(index + 1, t('en', 'ar'))}`}
+                aria-label={`${t('ui.completeWeeklyResult.0a556f')} ${localizedNumber(index + 1, t('en', 'ar'))}`}
                 onClick={() =>
                   updatePlan((old) => ({
                     ...old,
@@ -399,12 +328,12 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
               </button>
             </div>
             <label>
-              <span>{t('A result worth finishing', 'نتيجة تستحق الإنجاز')}</span>
+              <span>{t('ui.aResultWorthFinishing.eb9e80')}</span>
               <input
                 dir="auto"
-                aria-label={`${t('Weekly result', 'نتيجة الأسبوع')} ${localizedNumber(index + 1, t('en', 'ar'))}`}
+                aria-label={`${t('ui.weeklyResult.a4b15c')} ${localizedNumber(index + 1, t('en', 'ar'))}`}
                 maxLength={160}
-                placeholder={t('By the end of this week…', 'بنهاية الأسبوع ده…')}
+                placeholder={t('ui.byTheEndOfThisWeek.8861c8')}
                 value={outcome.title}
                 onChange={(e) => {
                   const title = e.target.value;
@@ -418,7 +347,7 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
               />
             </label>
             <select
-              aria-label={`${t('Result goal', 'هدف النتيجة')} ${localizedNumber(index + 1, t('en', 'ar'))}`}
+              aria-label={`${t('ui.resultGoal.3c90e5')} ${localizedNumber(index + 1, t('en', 'ar'))}`}
               value={outcome.goalId}
               onChange={(e) => {
                 const goalId = e.target.value;
@@ -428,9 +357,9 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
                 }));
               }}
             >
-              <option value="">{t('Link a goal (optional)', 'ربط بهدف (اختياري)')}</option>
+              <option value="">{t('ui.linkAGoalOptional.e6932a')}</option>
               {outcome.goalId && !goals.some((x) => x.id === outcome.goalId) && (
-                <option value={outcome.goalId}>{t('Goal removed', 'الهدف محذوف')}</option>
+                <option value={outcome.goalId}>{t('ui.goalRemoved.e91e3d')}</option>
               )}
               {goals.map((goal) => (
                 <option value={goal.id} key={goal.id}>
@@ -440,9 +369,9 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
             </select>
             <input
               dir="auto"
-              aria-label={t('Result completion criteria', 'معيار اكتمال النتيجة')}
+              aria-label={t('ui.resultCompletionCriteria.4f1eea')}
               maxLength={500}
-              placeholder={t('What makes this result complete?', 'إيه اللي يثبت اكتمال النتيجة؟')}
+              placeholder={t('ui.whatMakesThisResultComplete.8f42ba')}
               value={outcome.criteria ?? ''}
               onChange={(e) => {
                 const criteria = e.target.value;
@@ -462,7 +391,7 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
                 }))
               }
             >
-              {t('Remove result', 'إزالة النتيجة')}
+              {t('ui.removeResult.a2fd4a')}
             </Button>
           </section>
         ))}
@@ -477,26 +406,21 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
           }))
         }
       >
-        {t('Add weekly result', 'إضافة نتيجة للأسبوع')}
+        {t('ui.addWeeklyResult.e7abfe')}
       </Button>
       <div className="week-plan-heading">
         <div>
-          <h3 dir="auto">{t('Give each day a little breathing room.', 'سيب مساحة في كل يوم.')}</h3>
-          <p dir="auto">
-            {t(
-              'Planning date is separate from due date. Move tasks without changing their deadlines.',
-              'يوم التنفيذ غير موعد التسليم. انقل المهمة من غير ما تغيّر التزامك.',
-            )}
-          </p>
+          <h3 dir="auto">{t('ui.giveEachDayALittleBreathingRoom.6b9df0')}</h3>
+          <p dir="auto">{t('ui.planningDateIsSeparateFromDueDate.1e65c2')}</p>
         </div>
         <div>
           <Button variant="outline" onClick={() => prepareMove('previous')}>
             <RotateCcw size={14} />
-            {t('Bring previous unfinished', 'غير المكتمل من السابق')}
+            {t('ui.bringPreviousUnfinished.ea637b')}
           </Button>
           <Button variant="outline" onClick={() => prepareMove('next')}>
             <ArrowRight size={14} />
-            {t('Move unfinished to next week', 'ترحيل غير المكتمل للتالي')}
+            {t('ui.moveUnfinishedToNextWeek.8e856c')}
           </Button>
         </div>
       </div>
@@ -505,52 +429,7 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
           {notice}
         </p>
       )}
-      <div className="week-scroll-toolbar">
-        <span aria-live="polite">
-          {dateLabel(days[dayWindow.index])} —{' '}
-          {dateLabel(days[Math.min(6, dayWindow.index + dayWindow.visible - 1)])}
-          <small>
-            {t(
-              'Swipe or use the arrows to explore the week',
-              'اسحب جانبياً أو استخدم الأسهم لباقي الأسبوع',
-            )}
-          </small>
-        </span>
-        <div>
-          <Button
-            variant="outline"
-            size="icon"
-            aria-label={t('Scroll days left', 'مرّر الأيام لليسار')}
-            disabled={ar ? dayWindow.index >= 7 - dayWindow.visible : dayWindow.index === 0}
-            onClick={() => slideDays(ar ? 1 : -1)}
-          >
-            <ChevronLeft size={17} />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            aria-label={t('Scroll days right', 'مرّر الأيام لليمين')}
-            disabled={ar ? dayWindow.index === 0 : dayWindow.index >= 7 - dayWindow.visible}
-            onClick={() => slideDays(ar ? -1 : 1)}
-          >
-            <ChevronRight size={17} />
-          </Button>
-        </div>
-      </div>
-      <div
-        className="week-days"
-        ref={dayRail}
-        role="region"
-        aria-label={t('Scrollable week days', 'أيام الأسبوع بتمرير جانبي')}
-        tabIndex={0}
-        onScroll={measureDays}
-        onKeyDown={(e) => {
-          if (e.target === e.currentTarget && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
-            e.preventDefault();
-            slideDays(e.key === 'ArrowLeft' ? (ar ? 1 : -1) : ar ? -1 : 1);
-          }
-        }}
-      >
+      <div className="week-days" role="region" aria-label={t('ui.weekDays.ab2a25')}>
         {days.map((date) => {
           const dayTasks = scheduled.filter((x) => x.plannedDate === date);
           const deadlines = tasksOnDate(tasks, date).filter(
@@ -586,7 +465,7 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label={`${t('Add task for', 'إضافة مهمة ليوم')} ${date}`}
+                  aria-label={`${t('ui.addTaskFor.e61a7b')} ${date}`}
                   onClick={() => createTask(date)}
                 >
                   <Plus size={15} />
@@ -596,24 +475,24 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
                 <div>
                   <span>
                     {localizedNumber(load.total, t('en', 'ar'))} /{' '}
-                    {localizedNumber(load.capacity, t('en', 'ar'))} {t('min', 'د')}
+                    {localizedNumber(load.capacity, t('en', 'ar'))} {t('ui.min.bea689')}
                   </span>
                   <strong dir="auto">
-                    {load.overloaded ? t('Crowded', 'مزدحم') : t('Planned time', 'وقت مخطط')}
+                    {load.overloaded ? t('ui.crowded.9c4b48') : t('ui.plannedTime.c6220b')}
                   </strong>
                 </div>
                 <small>
-                  {t('Reserve', 'احتياطي')}: {localizedNumber(load.buffer, t('en', 'ar'))}{' '}
-                  {t('min', 'د')}
+                  {t('ui.reserve.81522c')}: {localizedNumber(load.buffer, t('en', 'ar'))}{' '}
+                  {t('ui.min.bea689')}
                 </small>
                 <progress
                   max={Math.max(1, load.capacity)}
                   value={Math.min(load.total, Math.max(1, load.capacity))}
                 />
                 <label>
-                  {t('Available minutes', 'الدقائق المتاحة')}
+                  {t('ui.availableMinutes.768c33')}
                   <input
-                    aria-label={`${t('Daily capacity', 'سعة اليوم')} ${date}`}
+                    aria-label={`${t('ui.dailyCapacity.dc01b3')} ${date}`}
                     type="number"
                     min={0}
                     max={1440}
@@ -629,9 +508,9 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
                   />
                 </label>
                 <label>
-                  {t('Reserve minutes', 'وقت احتياطي بالدقائق')}
+                  {t('ui.reserveMinutes.7d4b73')}
                   <input
-                    aria-label={t('Daily reserve', 'احتياطي اليوم') + ' ' + date}
+                    aria-label={t('ui.dailyReserve.0a6b93') + ' ' + date}
                     type="number"
                     min={0}
                     max={1440}
@@ -648,13 +527,11 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
                 {load.unknownTasks > 0 && (
                   <small>
                     {localizedNumber(load.unknownTasks, t('en', 'ar'))}{' '}
-                    {t('tasks without estimates', 'مهام بدون تقدير وقت')}
+                    {t('ui.tasksWithoutEstimates.3a1415')}
                   </small>
                 )}
                 {load.estimatedEvents > 0 && (
-                  <small>
-                    {t('Event duration estimated at 60 min', 'مدة الموعد مقدرة بـ٦٠ دقيقة')}
-                  </small>
+                  <small>{t('ui.eventDurationEstimatedAt60Min.10578b')}</small>
                 )}
               </div>
               <ConflictNotice entries={entries} date={date} t={t} />
@@ -672,14 +549,12 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
               <div className="week-due-tasks">
                 {deadlines.length > 0 && (
                   <>
-                    <h4 dir="auto">
-                      {t('Due dates · not execution time', 'تسليمات · مش وقت تنفيذ')}
-                    </h4>
+                    <h4 dir="auto">{t('ui.dueDatesNotExecutionTime.7807eb')}</h4>
                     {deadlines.map((task) => (
                       <button className="week-deadline" key={task.id} onClick={() => edit(task)}>
                         <span dir="auto">{task.title}</span>
                         <small>
-                          {t('Due', 'التسليم')}:{' '}
+                          {t('ui.due.6c34a1')}:{' '}
                           <time dateTime={date}>{formatCalendarDate(date, t('en', 'ar'))}</time>
                         </small>
                       </button>
@@ -691,7 +566,7 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
                 {dayTasks.map((task) => taskCard(task))}
                 {!dayTasks.length && (
                   <p dir="auto" className="day-empty">
-                    {t('Space for your next step.', 'مساحة لخطوتك الجاية.')}
+                    {t('ui.spaceForYourNextStep.085138')}
                   </p>
                 )}
               </div>
@@ -702,43 +577,40 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
       <section className="card week-pool">
         <div className="home-section-title">
           <div>
-            <h3 dir="auto">{t('Choose your next steps', 'اختار مهام الأسبوع')}</h3>
+            <h3 dir="auto">{t('ui.chooseYourNextSteps.9ade5e')}</h3>
             <p dir="auto" className="muted">
-              {t(
-                'Choose a day to add a task to the week. Completed and archived tasks are excluded.',
-                'اختار يوم لإضافة المهمة للأسبوع. المهام المكتملة والمؤرشفة مش ظاهرة هنا.',
-              )}
+              {t('ui.chooseADayToAddATask.4b06cf')}
             </p>
           </div>
           <Button onClick={() => createTask(days.includes(localDate()) ? localDate() : start)}>
             <Plus size={15} />
-            {t('New task', 'مهمة جديدة')}
+            {t('ui.newTask.02b6c9')}
           </Button>
         </div>
         <div className="collection-tools">
           <input
             dir="auto"
             className="week-search"
-            aria-label={t('Search planning tasks', 'بحث في مهام التخطيط')}
-            placeholder={t('Find a task…', 'ابحث عن مهمة…')}
+            aria-label={t('ui.searchPlanningTasks.a5ff8b')}
+            placeholder={t('ui.findATask.3559ab')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
           <select
-            aria-label={t('Planning pool', 'مجموعة المهام')}
+            aria-label={t('ui.planningPool.bd68a7')}
             value={pool}
             onChange={(e) => setPool(e.target.value)}
           >
-            <option value="unplanned">{t('Unscheduled', 'بدون تخطيط')}</option>
-            <option value="earlier">{t('Planned before this week', 'مخططة قبل الأسبوع')}</option>
-            <option value="all">{t('All open tasks', 'كل المهام المفتوحة')}</option>
+            <option value="unplanned">{t('ui.unscheduled.19a99e')}</option>
+            <option value="earlier">{t('ui.plannedBeforeThisWeek.2ca100')}</option>
+            <option value="all">{t('ui.allOpenTasks.a2432b')}</option>
           </select>
           <select
-            aria-label={t('Planning goal filter', 'تصفية هدف التخطيط')}
+            aria-label={t('ui.planningGoalFilter.0084a9')}
             value={goalFilter}
             onChange={(e) => setGoalFilter(e.target.value)}
           >
-            <option value="all">{t('All goals', 'كل الأهداف')}</option>
+            <option value="all">{t('ui.allGoals.e97c2d')}</option>
             {goals.map((goal) => (
               <option key={goal.id} value={goal.id}>
                 {goal.title}
@@ -749,10 +621,7 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
         <div className="week-pool-grid">{poolTasks.map((task) => taskCard(task, true))}</div>
         {!poolTasks.length && (
           <p dir="auto" className="empty-state">
-            {t(
-              'No matching open tasks. Try another filter.',
-              'مفيش مهام مفتوحة مطابقة. جرّب تصفية مختلفة.',
-            )}
+            {t('ui.noMatchingOpenTasksTryAnotherFilter.6682fc')}
           </p>
         )}
       </section>
@@ -763,9 +632,9 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
           <div>
             <div className="eyebrow">
               <NotebookPen size={13} />
-              {t('LEARN, THEN BEGIN AGAIN', 'اتعلّم وابدأ من جديد')}
+              {t('ui.learnThenBeginAgain.db38a4')}
             </div>
-            <h3 dir="auto">{t('A little reflection on the week.', 'مراجعة بسيطة للأسبوع.')}</h3>
+            <h3 dir="auto">{t('ui.aLittleReflectionOnTheWeek.ed225f')}</h3>
           </div>
         </div>
         <div className="review-fields">
@@ -773,9 +642,9 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
             <label key={field}>
               {
                 [
-                  t('What went well?', 'إيه اللي اتنجز؟'),
-                  t('What got in the way?', 'إيه اللي عطّلك؟'),
-                  t('What will you change next week?', 'هتغيّر إيه الأسبوع الجاي؟'),
+                  t('ui.whatWentWell.e26723'),
+                  t('ui.whatGotInTheWay.178e82'),
+                  t('ui.whatWillYouChangeNextWeek.59afb1'),
                 ][i]
               }
               <textarea
@@ -792,26 +661,20 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
           ))}
         </div>
         <p dir="auto" className="week-review-note">
-          {t(
-            'Results are marked manually. Notes save automatically for this week only.',
-            'النتائج بتتعلّم كمكتملة يدوياً. الملاحظات بتتحفظ تلقائياً للأسبوع ده فقط.',
-          )}
+          {t('ui.resultsAreMarkedManuallyNotesSaveAutomatically.bc8f75')}
         </p>
       </section>
       <Dialog
         open={!!roll}
         onOpenChange={() => setRoll(null)}
-        title={t('Review the weekly move', 'راجع ترحيل المهام')}
-        description={t(
-          'Only unfinished, non-archived tasks planned in the source week will move. Review each task and choose its new day or leave it out. Due dates, goals and completion stay unchanged.',
-          'هننقل المهام غير المكتملة وغير المؤرشفة المخططة في أسبوع المصدر فقط، راجع كل مهمة وحدد يومها الجديد أو استبعدها من النقل. مواعيد التسليم والأهداف وحالة الإنجاز مش هتتغير.',
-        )}
+        title={t('ui.reviewTheWeeklyMove.c08e46')}
+        description={t('ui.onlyUnfinishedNonArchivedTasksPlannedIn.77a012')}
       >
         <p className="muted" dir="ltr">
           {localizedDate(from, t('en', 'ar'))} → {localizedDate(to, t('en', 'ar'))}
         </p>
         <p dir="auto">
-          {localizedNumber(moving.length, t('en', 'ar'))} {t('tasks to move', 'مهام للترحيل')}
+          {localizedNumber(moving.length, t('en', 'ar'))} {t('ui.tasksToMove.6ef1b4')}
         </p>
         <ul className="rollover-preview">
           {moving.map((task) => (
@@ -819,20 +682,15 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
               {task.title}
               <small dir="ltr">{localizedDate(task.plannedDate, t('en', 'ar'))}</small>
               <label>
-                {t('Move to', 'انقل إلى')}
-                <input
-                  aria-label={t('New planning day', 'يوم التنفيذ الجديد') + ': ' + task.title}
+                {t('ui.moveTo.96ee5b')}
+                <DateTimeInput
+                  aria-label={t('ui.newPlanningDay.ce8412') + ': ' + task.title}
                   type="date"
                   value={moveDates[task.id] ?? ''}
                   onChange={(e) => setMoveDates((old) => ({ ...old, [task.id]: e.target.value }))}
                 />
               </label>
-              <small>
-                {t(
-                  'Clear the date to keep this task where it is.',
-                  'امسح التاريخ لاستبعاد المهمة من النقل.',
-                )}
-              </small>
+              <small>{t('ui.clearTheDateToKeepThisTask.0f0125')}</small>
             </li>
           ))}
         </ul>
@@ -853,20 +711,14 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
           return (
             <p dir="auto" key={date} className={load.overloaded ? 'capture-hint' : 'muted'}>
               {localizedDate(date, t('en', 'ar'))} · {localizedNumber(load.total, t('en', 'ar'))}/
-              {localizedNumber(load.capacity, t('en', 'ar'))} {t('min after move', 'د بعد النقل')}
-              {load.overloaded
-                ? ' · ' +
-                  t(
-                    'Over capacity; adjust dates or estimates',
-                    'أكبر من المتاح؛ عدّل الأيام أو المدد',
-                  )
-                : ''}
+              {localizedNumber(load.capacity, t('en', 'ar'))} {t('ui.minAfterMove.63b6a4')}
+              {load.overloaded ? ' · ' + t('ui.overCapacityAdjustDatesOrEstimates.e15c00') : ''}
             </p>
           );
         })}
         <div className="dialog-actions">
           <Button variant="outline" onClick={() => setRoll(null)}>
-            {t('Cancel', 'إلغاء')}
+            {t('ui.cancel.428808')}
           </Button>
           <Button
             disabled={!Object.values(moveDates).some(Boolean)}
@@ -879,15 +731,10 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
                 ),
               );
               setRoll(null);
-              setNotice(
-                t(
-                  'Planning dates updated. Deadlines are unchanged.',
-                  'تم تحديث أيام التنفيذ. مواعيد التسليم زي ما هي.',
-                ),
-              );
+              setNotice(t('ui.planningDatesUpdatedDeadlinesAreUnchanged.24c443'));
             }}
           >
-            {t('Confirm move', 'تأكيد الترحيل')}
+            {t('ui.confirmMove.80c782')}
           </Button>
         </div>
       </Dialog>

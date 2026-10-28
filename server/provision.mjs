@@ -14,7 +14,7 @@ import {
 import { dirname, basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomBytes, createECDH, timingSafeEqual } from 'node:crypto';
-export function provisionKeys(file, { dryRun = false } = {}) {
+export function provisionKeys(file, { dryRun = false, backupKey = false } = {}) {
   const stat = lstatSync(file);
   if (
     !stat.isFile() ||
@@ -55,7 +55,11 @@ export function provisionKeys(file, { dryRun = false } = {}) {
     if (expected.length !== actual.length || !timingSafeEqual(expected, actual))
       throw Error('Existing VAPID keys do not match; no keys were changed.');
   }
+  if (values.BACKUP_ENCRYPTION_KEY && !/^[a-f0-9]{64}$/i.test(values.BACKUP_ENCRYPTION_KEY))
+    throw Error('Existing backup key is invalid; it was not replaced.');
   const additions = {};
+  if (backupKey && !values.BACKUP_ENCRYPTION_KEY)
+    additions.BACKUP_ENCRYPTION_KEY = randomBytes(32).toString('hex');
   if (!values.INTEGRATION_ENCRYPTION_KEY)
     additions.INTEGRATION_ENCRYPTION_KEY = randomBytes(32).toString('hex');
   if (!publicKey) {
@@ -113,8 +117,14 @@ if (
 ) {
   try {
     const file = process.argv.slice(2).find((value) => !value.startsWith('--'));
-    if (!file) throw Error('Usage: node server/provision.mjs /etc/personal-os.env [--dry-run]');
-    const result = provisionKeys(file, { dryRun: process.argv.includes('--dry-run') });
+    if (!file)
+      throw Error(
+        'Usage: node server/provision.mjs /etc/personal-os.env [--dry-run] [--backup-key]',
+      );
+    const result = provisionKeys(file, {
+      dryRun: process.argv.includes('--dry-run'),
+      backupKey: process.argv.includes('--backup-key'),
+    });
     process.stdout.write(
       (result.changed ? 'Provisioned: ' : 'Missing keys (no changes): ') +
         result.names.join(', ') +

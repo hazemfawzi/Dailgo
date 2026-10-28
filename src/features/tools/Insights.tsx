@@ -38,39 +38,32 @@ export function Insights({ t }: { t: Translate }) {
   const entries = workspaceEntries(data);
   return (
     <section className="card tools-section">
-      <h2 dir="auto">{t('Progress and focus insights', 'إحصائيات التقدم والتركيز')}</h2>
+      <h2 dir="auto">{t('ui.progressAndFocusInsights.6c9274')}</h2>
       <label>
-        {t('Statistics range', 'فترة الإحصائيات')}
+        {t('ui.statisticsRange.82301b')}
         <select
-          aria-label={t('Statistics range', 'فترة الإحصائيات')}
+          aria-label={t('ui.statisticsRange.82301b')}
           value={days}
           onChange={(e) => setDays(Number(e.target.value))}
         >
-          <option value={7}>{t('Last 7 days', 'آخر ٧ أيام')}</option>
+          <option value={7}>{t('ui.last7Days.169e54')}</option>
           <option value={30} disabled={!advanced}>
-            {t('Last 30 days', 'آخر ٣٠ يومًا')}
+            {t('ui.last30Days.4b8266')}
           </option>
         </select>
       </label>
-      {!advanced && (
-        <p dir="auto">
-          {t(
-            '30-day insights are included in Pro. Your 7-day view and data export remain available.',
-            'إحصائيات ٣٠ يومًا ضمن Pro. عرض ٧ أيام وتصدير بياناتك متاحان.',
-          )}
-        </p>
-      )}
+      {!advanced && <p dir="auto">{t('ui.30DayInsightsAreIncludedInPro.ee405a')}</p>}
       <p dir="auto">
         {formatCalendarDate(start, t('en', 'ar'))} — {formatCalendarDate(end, t('en', 'ar'))}
       </p>
       <div className="insight-stats">
         <div>
           <strong dir="auto">{formatNumber(completions.length, t('en', 'ar'))}</strong>
-          {t('recorded task completions', 'إنجازات مهام مسجلة')}
+          {t('ui.recordedTaskCompletions.cc4e24')}
         </div>
         <div>
           <strong dir="auto">{formatNumber(Math.round(seconds / 60), t('en', 'ar'))}</strong>
-          {t('recorded focus minutes', 'دقائق تركيز مسجلة')}
+          {t('ui.recordedFocusMinutes.232bf3')}
         </div>
         <div>
           <strong dir="auto">
@@ -79,16 +72,11 @@ export function Insights({ t }: { t: Translate }) {
               t('en', 'ar'),
             )}
           </strong>
-          {t('days with a completion', 'أيام فيها إنجاز')}
+          {t('ui.daysWithACompletion.628a37')}
         </div>
       </div>
-      <h3 dir="auto">{t('Recorded activity by life area', 'النشاط المسجل حسب مجال الحياة')}</h3>
-      <p dir="auto">
-        {t(
-          'Activity counts show what you recorded here, not a wellbeing score.',
-          'الأعداد بتوضح اللي سجلته هنا، مش تقييم لجودة حياتك.',
-        )}
-      </p>
+      <h3 dir="auto">{t('ui.recordedActivityByLifeArea.dbb798')}</h3>
+      <p dir="auto">{t('ui.activityCountsShowWhatYouRecordedHere.19aaec')}</p>
       {activity.map((x) => (
         <div className="insight-area" key={x.area}>
           <span>{areaLabel(x.area, t)}</span>
@@ -96,13 +84,8 @@ export function Insights({ t }: { t: Translate }) {
           <bdi>{formatNumber(x.count, t('en', 'ar'))}</bdi>
         </div>
       ))}
-      <h3 dir="auto">{t('Habit streaks', 'استمرارية العادات')}</h3>
-      <p dir="auto">
-        {t(
-          'A streak counts consecutive scheduled check-ins. Rest days do not break it. Today can still be checked in.',
-          'السلسلة بتعد التسجيلات المتتالية في الأيام المجدولة. أيام الراحة لا تقطعها، ولسه تقدر تسجل النهارده.',
-        )}
-      </p>
+      <h3 dir="auto">{t('ui.habitStreaks.6aa1d9')}</h3>
+      <p dir="auto">{t('ui.aStreakCountsConsecutiveScheduledCheckIns.bbfa74')}</p>
       {entries
         .filter((x) => x.kind === 'routine' && !x.archived)
         .map((routine) => (
@@ -116,12 +99,7 @@ export function Insights({ t }: { t: Translate }) {
           </p>
         ))}
       {!entries.some((x) => x.kind === 'routine' && !x.archived) && (
-        <p dir="auto">
-          {t(
-            'Create one routine in Planner to start tracking consistency.',
-            'أنشئ روتينًا في المخطط عشان تتابع الاستمرارية.',
-          )}
-        </p>
+        <p dir="auto">{t('ui.createOneRoutineInPlannerToStart.0a222d')}</p>
       )}
     </section>
   );

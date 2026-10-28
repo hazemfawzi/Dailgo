@@ -13,19 +13,16 @@ import type { Task } from '../tasks/model';
 import type { Translate } from '../../lib/workspace';
 export function suggestionReason(task: Task, t: Translate) {
   return task.pinned
-    ? t('You pinned this step.', 'أنت ثبّت الخطوة دي.')
+    ? t('ui.youPinnedThisStep.df81b4')
     : isOverdue(task)
-      ? t('Its due date has passed; review the commitment.', 'موعد تسليمها فات؛ راجع الالتزام.')
+      ? t('ui.itsDueDateHasPassedReviewThe.fdbd23')
       : task.dueDate === localDate()
-        ? t('Due today.', 'تسليمها النهارده.')
+        ? t('ui.dueToday.ca803c')
         : priorityOf(task) === 'high'
-          ? t('You marked it high priority.', 'أنت حددت أولويتها عالية.')
+          ? t('ui.youMarkedItHighPriority.716fba')
           : task.goalId
-            ? t('Linked to one of your goals.', 'مرتبطة بهدف عندك.')
-            : t(
-                'An available open step, ordered by priority and due date.',
-                'خطوة متاحة، مرتبة حسب الأولوية والتسليم.',
-              );
+            ? t('ui.linkedToOneOfYourGoals.3ff599')
+            : t('ui.anAvailableOpenStepOrderedByPriority.5ce101');
 }
 export function NeedsAttention({
   tasks,
@@ -48,8 +45,7 @@ export function NeedsAttention({
   return waiting.length ? (
     <section className="card attention-card">
       <h3 dir="auto">
-        {t('Needs your decision', 'محتاج قرار منك')} ·{' '}
-        {localizedNumber(waiting.length, t('en', 'ar'))}
+        {t('ui.needsYourDecision.875ab0')} · {localizedNumber(waiting.length, t('en', 'ar'))}
       </h3>
       {waiting.slice(0, 5).map((task) => (
         <button className="attention-row" key={task.id} onClick={() => edit(task)}>
@@ -59,7 +55,7 @@ export function NeedsAttention({
           </small>
         </button>
       ))}
-      <Link to="/planner?filter=waiting">{t('Review waiting tasks', 'راجع المهام المنتظرة')}</Link>
+      <Link to="/planner?filter=waiting">{t('ui.reviewWaitingTasks.5795fa')}</Link>
     </section>
   ) : null;
 }
@@ -80,11 +76,11 @@ export function SuggestionNote({
       <small>
         {suggestionReason(task, t)}
         {task.estimate
-          ? ` · ${localizedNumber(task.estimate, t('en', 'ar'))} ${t('estimated min; review capacity before starting', 'دقيقة تقديرية؛ راجع سعة اليوم قبل البداية')}`
+          ? ` · ${localizedNumber(task.estimate, t('en', 'ar'))} ${t('ui.estimatedMinReviewCapacityBeforeStarting.f045d5')}`
           : ''}
       </small>
       <Button variant="ghost" onClick={onDismiss}>
-        {t('Hide today', 'إخفاء النهارده')}
+        {t('ui.hideToday.127979')}
       </Button>
     </div>
   );

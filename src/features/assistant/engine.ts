@@ -1,3 +1,5 @@
+import { createTranslator } from '../../i18n/translate';
+export { createTranslator } from '../../i18n/translate';
 import { parseCapture, isNaturalTask, validDate } from '../capture/model';
 import { isActionable, rankTasks } from '../tasks/model';
 import { mutationResponse } from './mutationModel';
@@ -47,30 +49,21 @@ function respondText(
     const batch = parseCompound(text);
     if (batch)
       return {
-        text: t(
-          'I prepared a local multi-action preview. Review each type and detail. Nothing is executed until you confirm the whole preview.',
-          'جهزت معاينة لطلب متعدد الإجراءات بقواعد محلية. راجع نوع وتفاصيل كل عنصر. التنفيذ بيتم بعد تأكيد المعاينة كلها فقط.',
-        ),
+        text: t('ui.iPreparedALocalMultiActionPreview.aa90e5'),
         batch,
         batchSource: text,
         status: 'pending',
       };
   } catch {
     return {
-      text: t(
-        'Use at most 20 actions per request. Nothing was executed.',
-        'اكتب لحد 20 إجراء في الطلب الواحد. لم يتم تنفيذ شيء.',
-      ),
+      text: t('ui.useAtMost20ActionsPerRequest.2b8a2c'),
     };
   }
   if (studyRequest) {
     const title = text.replace(/^(?:عايز|عاوز|أريد|اريد|محتاج)\s+/u, '');
     const item = parseCapture('Task: ' + title)[0];
     return {
-      text: t(
-        'I prepared a task preview. Review its execution day before confirming. Review any interpreted time and area; the task does not create a notification.',
-        'جهزت معاينة لمهمة. راجع يوم التنفيذ قبل التأكيد. راجع الوقت والمجال المقترحين؛ المهمة لا ترسل إشعارًا.',
-      ),
+      text: t('ui.iPreparedATaskPreviewReviewIts.109622'),
       proposal: {
         kind: 'task',
         title: item.title.slice(0, 160),
@@ -101,13 +94,9 @@ function respondText(
       const time = timeMatch?.[0] ?? '09:00';
       if (command.kind === 'task') {
         const item = parseCapture('Task: ' + title)[0];
-        if (!item.title.trim())
-          return { text: t('Please include a task title.', 'اكتب عنوان المهمة.') };
+        if (!item.title.trim()) return { text: t('ui.pleaseIncludeATaskTitle.8b3bd4') };
         return {
-          text: t(
-            'Review the task title and optional execution day, then confirm to save.',
-            'راجع عنوان المهمة ويوم التنفيذ الاختياري، ثم أكد الحفظ.',
-          ),
+          text: t('ui.reviewTheTaskTitleAndOptionalExecution.abdb75'),
           proposal: {
             kind: 'task',
             title: item.title.slice(0, 160),
@@ -122,39 +111,26 @@ function respondText(
       }
       if (command.kind === 'routine' && !timeMatch)
         return {
-          text: t(
-            'Please include a 24-hour time for the routine.',
-            'حدد وقت الروتين بنظام 24 ساعة، مثل 08:00.',
-          ),
+          text: t('ui.pleaseIncludeA24HourTimeFor.ce43d3'),
         };
       if (command.kind === 'routine' && timeMatch) title = title.replace(timeMatch[0], '').trim();
       if (command.kind === 'event') {
         if (!dateMatch || !timeMatch)
           return {
-            text: t(
-              'What exact date and time? Use Event: title YYYY-MM-DD HH:mm.',
-              'حدد تاريخ ووقت الموعد: موعد: العنوان YYYY-MM-DD HH:mm.',
-            ),
+            text: t('ui.whatExactDateAndTimeUseEvent.88c568'),
           };
         if (!validDate(date) || (/\b\d{1,2}:\d{2}\b/.test(title) && !timeMatch))
           return {
-            text: t(
-              'Please use a valid date and 24-hour time: Event: title YYYY-MM-DD HH:mm.',
-              'استخدم تاريخاً صحيحاً ووقتاً بنظام ٢٤ ساعة: موعد: العنوان YYYY-MM-DD HH:mm.',
-            ),
+            text: t('ui.pleaseUseAValidDateAnd24.c1bb1c'),
           };
         title = title
           .replace(dateMatch?.[0] ?? '\u0000', '')
           .replace(timeMatch?.[0] ?? '\u0000', '')
           .trim();
       }
-      if (!title)
-        return { text: t('Please include a title after the command.', 'اكتب عنواناً بعد الأمر.') };
+      if (!title) return { text: t('ui.pleaseIncludeATitleAfterTheCommand.92b54f') };
       return {
-        text: t(
-          'I can prepare this local action. Review the details below, then confirm to save it.',
-          'جهزت الإجراء المحلي. راجع التفاصيل أدناه، ثم أكد لحفظه.',
-        ),
+        text: t('ui.iCanPrepareThisLocalActionReview.c32eb0'),
         proposal: { kind: command.kind, title: title.slice(0, 160), date, time },
         status: 'pending',
       };
@@ -176,21 +152,18 @@ function respondText(
               .slice(0, 8)
               .map(
                 (e) =>
-                  `• ${e.title}${e.certainty === 'inferred' ? ' [' + t('inferred; review', 'استنتاج؛ راجع') + ']' : ''}${e.detail ? `: ${e.detail}` : ''}${e.sourceLabel ? ' · ' + t('source: ', 'المصدر: ') + e.sourceLabel : ''}`,
+                  `• ${e.title}${e.certainty === 'inferred' ? ' [' + t('ui.inferredReview.d5e193') + ']' : ''}${e.detail ? `: ${e.detail}` : ''}${e.sourceLabel ? ' · ' + t('ui.source.380763') + e.sourceLabel : ''}`,
               )
               .join('\n')}\n\nThis is a direct local summary, without AI interpretation.`,
             `هذه معلوماتك المحفوظة (${memories.length}):\n${memories
               .slice(0, 8)
               .map(
                 (e) =>
-                  `• ${e.title}${e.certainty === 'inferred' ? ' [' + t('inferred; review', 'استنتاج؛ راجع') + ']' : ''}${e.detail ? `: ${e.detail}` : ''}${e.sourceLabel ? ' · ' + t('source: ', 'المصدر: ') + e.sourceLabel : ''}`,
+                  `• ${e.title}${e.certainty === 'inferred' ? ' [' + t('ui.inferredReview.d5e193') + ']' : ''}${e.detail ? `: ${e.detail}` : ''}${e.sourceLabel ? ' · ' + t('ui.source.380763') + e.sourceLabel : ''}`,
               )
               .join('\n')}\n\nهذا عرض مباشر للبيانات المحلية بدون تحليل ذكاء اصطناعي.`,
           )
-        : t(
-            'Your memory is empty. Try “Remember: I prefer quiet mornings”.',
-            'ذاكرتك فارغة. جرّب «احفظ: أفضل الصباح الهادئ».',
-          ),
+        : t('ui.yourMemoryIsEmptyTryRememberI.3232dc'),
     };
   }
   if (/priorit|plan|today|مهام|أولو|اولوي|يومي|خطط/i.test(text)) {
@@ -200,27 +173,24 @@ function respondText(
     );
     return {
       references: [...open, ...events].map((e) => ({ id: e.id, title: e.title })),
-      text: t(
-        `You have ${open.length} open priorities and ${events.length} local events today.\n${open
+      text: t('ui.youHaveOpenPrioritiesAndLocalEvents.933afd', {
+        en0: open.length,
+        en1: events.length,
+        en2: open
           .slice(0, 5)
           .map((x) => `• ${x.title}`)
-          .join(
-            '\n',
-          )}\n\nA simple suggestion: choose one priority, give it 25 minutes, then take a short break. This is a scripted suggestion, not a personalized AI assessment.`,
-        `لديك ${open.length} أولويات مفتوحة و${events.length} مواعيد محلية اليوم.\n${open
+          .join('\n'),
+        ar0: open.length,
+        ar1: events.length,
+        ar2: open
           .slice(0, 5)
           .map((x) => `• ${x.title}`)
-          .join(
-            '\n',
-          )}\n\nاقتراح بسيط: اختر أولوية واحدة وخصص لها ٢٥ دقيقة، ثم استرح قليلاً. هذا اقتراح مكتوب مسبقاً وليس تقييماً شخصياً بالذكاء الاصطناعي.`,
-      ),
+          .join('\n'),
+      }),
     };
   }
   return {
-    text: t(
-      'I could not identify a supported action in that message. Did you mean a task, event or note? Nothing was changed. I’m a scripted assistant. Try:\n• Task: …\n• Remember: …\n• Goal: …\n• Project: …\n• Routine: …\n• Event: … YYYY-MM-DD HH:mm\n\nEvery action needs your confirmation. This local assistant does not call AI. Reminders follow your settings.',
-      'مش واضح لي إجراء مدعوم في الرسالة دي. تقصد مهمة، موعد، ولا ملاحظة؟ لم تتغير أي بيانات. المساعد يعتمد على قواعد محددة. جرّب:\n• مهمة: …\n• احفظ: …\n• هدف: …\n• مشروع: …\n• روتين: …\n• موعد: … YYYY-MM-DD HH:mm\n\nكل إجراء يحتاج تأكيدك. المساعد المحلي لا يتصل بخدمة ذكاء اصطناعي. التذكيرات حسب إعداداتك.',
-    ),
+    text: t('ui.iCouldNotIdentifyASupportedAction.1f6bbe'),
   };
 }
 export function proposalEntry(proposal: Proposal, id: string): Entry {
@@ -240,8 +210,8 @@ export function respond(
   tasks: Task[],
   entries: Entry[],
 ): Omit<Message, 'id' | 'role'> {
-  const english = respondText(input, (en) => en, tasks, entries);
-  const arabic = respondText(input, (_, ar) => ar, tasks, entries);
+  const english = respondText(input, createTranslator('en'), tasks, entries);
+  const arabic = respondText(input, createTranslator('ar'), tasks, entries);
   return {
     ...(t('en', 'ar') === 'ar' ? arabic : english),
     reply: { key: 'rules-v1', en: english.text, ar: arabic.text },

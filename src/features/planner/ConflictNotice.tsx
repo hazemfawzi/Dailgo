@@ -14,15 +14,15 @@ export function ConflictNotice({
   const conflicts = eventConflicts(entries, date);
   return conflicts.length ? (
     <section className="notice" role="status">
-      <strong dir="auto">{t('Appointments overlap', 'فيه مواعيد متداخلة')}</strong>
+      <strong dir="auto">{t('ui.appointmentsOverlap.2a5cbd')}</strong>
       {conflicts.map(({ a, b, minutes, estimated }) => (
         <p dir="auto" key={`${a.id}-${b.id}`}>
-          {a.title} ↔ {b.title} · {localizedNumber(minutes, t('en', 'ar'))} {t('min', 'د')}
-          {estimated ? ` · ${t('estimated duration', 'مدة تقديرية')}` : ''}
+          {a.title} ↔ {b.title} · {localizedNumber(minutes, t('en', 'ar'))} {t('ui.min.bea689')}
+          {estimated ? ` · ${t('ui.estimatedDuration.43796c')}` : ''}
         </p>
       ))}
       <Link to={`/planner?tab=calendar&date=${date}`}>
-        {t('Review and edit appointments', 'راجع المواعيد وعدّل وقتها')}
+        {t('ui.reviewAndEditAppointments.54a95b')}
       </Link>
     </section>
   ) : null;

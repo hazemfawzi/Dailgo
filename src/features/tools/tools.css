@@ -4,10 +4,10 @@
   min-width: 0;
 }
 .tools-section h2 {
-  font-size: 23px;
+  font-size: var(--text-lg);
 }
 .tools-section p {
-  font-size: 14px;
+  font-size: var(--text-xs);
   line-height: 1.8;
 }
 .tools-tabs {
@@ -83,7 +83,7 @@
 }
 .insight-stats strong {
   display: block;
-  font-size: 30px;
+  font-size: var(--text-2xl);
 }
 .insight-area {
   display: grid;
@@ -112,7 +112,7 @@
   margin-block: 8px;
 }
 .today-task span:first-child {
-  font-size: 22px;
+  font-size: var(--text-lg);
 }
 .tools-section input[type='checkbox'] {
   width: auto;
@@ -139,7 +139,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .tools-tabs {
-    font-size: 13px;
+    font-size: var(--text-xs);
   }
   .tools-inline {
     display: grid;
@@ -167,7 +167,7 @@
 .assistant-mode {
   padding: 12px;
   background: var(--soft);
-  font-size: 13px;
+  font-size: var(--text-xs);
 }
 .assistant-mode input[type='checkbox'] {
   width: auto;
@@ -179,7 +179,7 @@
   flex-basis: 100%;
 }
 .voice-capture {
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 .voice-capture p {
   line-height: 1.7;
@@ -213,7 +213,7 @@
   }
   .bottom-nav .nav-link {
     padding-inline: 6px;
-    font-size: 10px;
+    font-size: var(--text-xs);
   }
 }
 .share-comments {

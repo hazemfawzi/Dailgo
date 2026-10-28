@@ -1,3 +1,4 @@
+import { DateTimeInput } from '../../components/DateTimeInput';
 import { formatNumber as localizedNumber } from '../../i18n/format';
 import { defaultPlanning } from '../../lib/planningConfig';
 import { useEffect, useRef, useState } from 'react';
@@ -91,13 +92,7 @@ export function Onboarding({
     if (ok) {
       setOpen(false);
       setDismissed(true);
-    } else
-      setError(
-        t(
-          'Could not save. Check the connection and retry.',
-          'تعذر الحفظ. راجع الاتصال وحاول تاني.',
-        ),
-      );
+    } else setError(t('ui.couldNotSaveCheckTheConnectionAnd.6c17d6'));
   }
   async function finish() {
     setBusy(true);
@@ -126,13 +121,7 @@ export function Onboarding({
     if (ok) {
       setOpen(false);
       setDismissed(true);
-    } else
-      setError(
-        t(
-          'Nothing was added. Review the fields and connection, then retry.',
-          'لم يُضف شيء. راجع الحقول والاتصال وحاول تاني.',
-        ),
-      );
+    } else setError(t('ui.nothingWasAddedReviewTheFieldsAnd.8f3d13'));
   }
   return (
     <Dialog
@@ -143,18 +132,21 @@ export function Onboarding({
           setDismissed(true);
         }
       }}
-      title={t('Set up your first five minutes', 'أول خمس دقايق في مساحتك')}
+      title={t('ui.setUpYourFirstFiveMinutes.85a0db')}
       description={t(
         `Step ${localizedNumber(step, t('en', 'ar'))} of 3. Review the suggestions; nothing is added until you confirm.`,
         `الخطوة ${localizedNumber(step, t('en', 'ar'))} من ٣. راجع الاقتراحات؛ مش هنضيف بيانات غير بعد تأكيدك.`,
       )}
     >
       <div className="journey-onboarding editor-form">
+        <Button variant="ghost" disabled={busy} onClick={() => void skip()}>
+          {t('ui.skipSetup.916b3c')}
+        </Button>
         {step === 1 && (
           <>
-            <h3 dir="auto">{t('Choose your starting preferences', 'اختار بداية تناسبك')}</h3>
+            <h3 dir="auto">{t('ui.chooseYourStartingPreferences.20d787')}</h3>
             <label>
-              {t('Language', 'اللغة')}
+              {t('ui.language.27836c')}
               <select value={language} onChange={(e) => onLanguage(e.target.value as 'ar' | 'en')}>
                 <option value="ar">العربية</option>
                 <option value="en">English</option>
@@ -162,10 +154,10 @@ export function Onboarding({
             </label>
             <label>
               <input type="checkbox" checked={dark} onChange={(e) => onDark(e.target.checked)} />
-              {t('Dark theme', 'المظهر الداكن')}
+              {t('ui.darkTheme.bdee33')}
             </label>
             <fieldset>
-              <legend>{t('Choose two life areas to start with', 'اختار مجالين تبدأ بيهم')}</legend>
+              <legend>{t('ui.chooseTwoLifeAreasToStartWith.a02338')}</legend>
               {areas.map((value) => (
                 <label key={value}>
                   <input
@@ -185,40 +177,42 @@ export function Onboarding({
               ))}
             </fieldset>
             <label>
-              {t('Wake-up time', 'وقت الصحيان')}
-              <input
+              {t('ui.wakeUpTime.b5d327')}
+              <DateTimeInput
                 type="time"
                 required
                 value={wake}
                 onInput={(e) => setWake(e.currentTarget.value)}
                 onChange={(e) => setWake(e.target.value)}
+                aria-label={t('ui.wakeUpTime.b5d327')}
               />
             </label>
             <label>
-              {t('Evening review time', 'وقت المراجعة المسائية')}
-              <input
+              {t('ui.eveningReviewTime.6d03ba')}
+              <DateTimeInput
                 type="time"
                 required
                 value={evening}
                 onInput={(e) => setEvening(e.currentTarget.value)}
                 onChange={(e) => setEvening(e.target.value)}
+                aria-label={t('ui.eveningReviewTime.6d03ba')}
               />
             </label>
             <label>
-              {t('Week starts on', 'بداية الأسبوع')}
+              {t('ui.weekStartsOn.c9c926')}
               <select value={week} onChange={(e) => setWeek(Number(e.target.value))}>
-                <option value={6}>{t('Saturday', 'السبت')}</option>
-                <option value={0}>{t('Sunday', 'الأحد')}</option>
-                <option value={1}>{t('Monday', 'الاثنين')}</option>
+                <option value={6}>{t('ui.saturday.e29416')}</option>
+                <option value={0}>{t('ui.sunday.4e830a')}</option>
+                <option value={1}>{t('ui.monday.99a6de')}</option>
               </select>
             </label>
           </>
         )}
         {step === 2 && (
           <>
-            <h3 dir="auto">{t('Choose one goal', 'اختار هدف واحد')}</h3>
+            <h3 dir="auto">{t('ui.chooseOneGoal.32a9c4')}</h3>
             <label>
-              {t('Starting template', 'قالب البداية')}
+              {t('ui.startingTemplate.31baf9')}
               <select value={template} onChange={(e) => selectTemplate(e.target.value)}>
                 {goalTemplates.map((option) => (
                   <option value={option.id} key={option.id}>
@@ -228,13 +222,10 @@ export function Onboarding({
               </select>
             </label>
             <p dir="auto" className="muted">
-              {t(
-                'Templates are editable suggestions, not personal assessments or an automatic plan.',
-                'القوالب اقتراحات قابلة للتعديل، مش تقييم شخصي أو خطة تلقائية.',
-              )}
+              {t('ui.templatesAreEditableSuggestionsNotPersonalAssessments.afeaba')}
             </p>
             <label>
-              {t('Your first goal', 'هدفك الأول')}
+              {t('ui.yourFirstGoal.3a103d')}
               <input
                 dir="auto"
                 maxLength={160}
@@ -243,7 +234,7 @@ export function Onboarding({
               />
             </label>
             <label>
-              {t('Goal life area', 'مجال الهدف')}
+              {t('ui.goalLifeArea.dad21c')}
               <select value={area} onChange={(e) => setArea(e.target.value as Area)}>
                 {areas.map((value) => (
                   <option value={value} key={value}>
@@ -253,7 +244,7 @@ export function Onboarding({
               </select>
             </label>
             <label>
-              {t('Success criterion', 'معيار النجاح')}
+              {t('ui.successCriterion.9997a1')}
               <textarea
                 dir="auto"
                 rows={2}
@@ -263,19 +254,20 @@ export function Onboarding({
               />
             </label>
             <label>
-              {t('Goal target date (optional)', 'موعد الهدف (اختياري)')}
-              <input
+              {t('ui.goalTargetDateOptional.152aac')}
+              <DateTimeInput
                 type="date"
                 value={date}
                 onInput={(e) => setDate(e.currentTarget.value)}
                 onChange={(e) => setDate(e.target.value)}
+                aria-label={t('ui.goalTargetDateOptional.152aac')}
               />
             </label>
           </>
         )}
         {step === 3 && (
           <>
-            <h3 dir="auto">{t('Review three first tasks', 'راجع أول ثلاث مهام')}</h3>
+            <h3 dir="auto">{t('ui.reviewThreeFirstTasks.8d1f34')}</h3>
             <p dir="auto">{title}</p>
             {tasks.map((task, index) => (
               <section className="onboarding-task" key={index}>
@@ -298,7 +290,7 @@ export function Onboarding({
                   />
                 </label>
                 <label>
-                  {t('Estimated minutes', 'الدقائق المتوقعة')}
+                  {t('ui.estimatedMinutes.606e16')}
                   <input
                     type="number"
                     min={1}
@@ -316,10 +308,7 @@ export function Onboarding({
               </section>
             ))}
             <p dir="auto" className="muted">
-              {t(
-                'Confirming creates one goal, two milestones and these three linked tasks. You choose their execution days in your morning plan.',
-                'التأكيد هيضيف هدف واحد ومرحلتين والمهام الثلاثة المرتبطة. اختار أيام التنفيذ في خطة الصبح.',
-              )}
+              {t('ui.confirmingCreatesOneGoalTwoMilestonesAnd.b27095')}
             </p>
           </>
         )}
@@ -328,10 +317,16 @@ export function Onboarding({
             {error}
           </p>
         )}
+        {step === 1 && chosen.length !== 2 && (
+          <p role="status">{t('ui.chooseTwoAreasToEnableTheNext.c8d898')}</p>
+        )}
+        {step === 2 && !title.trim() && (
+          <p role="status">{t('ui.writeOneGoalTitleToContinue.31efa9')}</p>
+        )}
         <div className="dialog-actions">
           {step > 1 && (
             <Button disabled={busy} variant="outline" onClick={() => setStep(step - 1)}>
-              {t('Back', 'رجوع')}
+              {t('ui.back.436170')}
             </Button>
           )}
           {step < 3 ? (
@@ -354,7 +349,7 @@ export function Onboarding({
                 setStep(step + 1);
               }}
             >
-              {t('Next', 'التالي')}
+              {t('ui.next.bdd4a0')}
             </Button>
           ) : (
             <Button
@@ -365,13 +360,10 @@ export function Onboarding({
               }
               onClick={() => void finish()}
             >
-              {t('Create my starting plan', 'إنشاء خطة البداية')}
+              {t('ui.createMyStartingPlan.62242a')}
             </Button>
           )}
         </div>
-        <Button variant="ghost" disabled={busy} onClick={() => void skip()}>
-          {t('Skip setup', 'ابدأ بدون المعالج')}
-        </Button>
       </div>
     </Dialog>
   );

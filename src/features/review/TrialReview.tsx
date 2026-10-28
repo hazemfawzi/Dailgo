@@ -1,3 +1,4 @@
+import { DateTimeInput } from '../../components/DateTimeInput';
 import { formatNumber as localizedNumber, formatCalendarDate } from '../../i18n/format';
 import { useState } from 'react';
 import { Button } from '../../components/ui/button';
@@ -31,37 +32,31 @@ export function TrialReview({ t }: { t: Translate }) {
       )
     : 0;
   const fields = [
-    ['captureSeconds', t('Capture time (seconds)', 'وقت التسجيل (ثوانٍ)')],
-    ['reviewMinutes', t('Review time (minutes)', 'وقت المراجعة (دقائق)')],
-    ['clarity', t('Clarity of next step (1–5)', 'وضوح الخطوة التالية (1–5)')],
-    ['duplicates', t('Duplicated items noticed', 'عناصر مكررة لاحظتها')],
-    ['lost', t('Lost items noticed', 'عناصر ضاعت منك')],
+    ['captureSeconds', t('ui.captureTimeSeconds.72d3a1')],
+    ['reviewMinutes', t('ui.reviewTimeMinutes.d23163')],
+    ['clarity', t('ui.clarityOfNextStep15.29ce32')],
+    ['duplicates', t('ui.duplicatedItemsNoticed.ca23da')],
+    ['lost', t('ui.lostItemsNoticed.389cb9')],
   ] as const;
   return (
     <section className="card daily-review">
       <details>
-        <summary>{t('Try it for a real week', 'تجربة الاستخدام لمدة أسبوع')}</summary>
+        <summary>{t('ui.tryItForARealWeek.9a6e14')}</summary>
         <p dir="auto" className="muted">
-          {t(
-            'Self-reported measurements, not automatic productivity scores. Compare with your previous method after a full week. Blank fields mean unmeasured.',
-            'قياسات بتسجلها بنفسك، مش تقييم تلقائي لإنتاجيتك. قارن بطريقتك السابقة بعد أسبوع كامل. الحقول الفارغة تعني إن القياس مش متوفر.',
-          )}
+          {t('ui.selfReportedMeasurementsNotAutomaticProductivityScores.8e8d1c')}
         </p>
         {!trial.startedOn ? (
           <Button onClick={() => setTrial((old) => ({ ...old, startedOn: localDate() }))}>
-            {t('Start my trial today', 'ابدأ تجربتي من النهارده')}
+            {t('ui.startMyTrialToday.73ab7f')}
           </Button>
         ) : (
           <>
             <p dir="auto">
-              {formatCalendarDate(trial.startedOn, t('en', 'ar'))} · {t('Day', 'اليوم')}{' '}
+              {formatCalendarDate(trial.startedOn, t('en', 'ar'))} · {t('ui.day.070e77')}{' '}
               {localizedNumber(elapsed, t('en', 'ar'))}
-              {elapsed >= 7
-                ? ' · ' +
-                  t('A full week has elapsed; review the results', 'عدّى أسبوع كامل؛ راجع النتائج')
-                : ''}
+              {elapsed >= 7 ? ' · ' + t('ui.aFullWeekHasElapsedReviewThe.df51ad') : ''}
             </p>
-            <h3 dir="auto">{t('Before using this app', 'قبل استخدام التطبيق')}</h3>
+            <h3 dir="auto">{t('ui.beforeUsingThisApp.cd6412')}</h3>
             <div className="review-fields">
               {fields.slice(0, 2).map(([field, label]) => (
                 <label key={field}>
@@ -85,8 +80,8 @@ export function TrialReview({ t }: { t: Translate }) {
               ))}
             </div>
             <label className="date-picker">
-              {t('Measurement day', 'يوم القياس')}
-              <input
+              {t('ui.measurementDay.c7d614')}
+              <DateTimeInput
                 type="date"
                 min={trial.startedOn}
                 max={localDate()}
@@ -94,6 +89,7 @@ export function TrialReview({ t }: { t: Translate }) {
                 onChange={(e) => {
                   if (e.target.value) setDay(e.target.value);
                 }}
+                aria-label={t('ui.measurementDay.c7d614')}
               />
             </label>
             <div className="review-fields">
@@ -128,10 +124,7 @@ export function TrialReview({ t }: { t: Translate }) {
               ))}
             </div>
             <label className="editor-form">
-              {t(
-                'Did the app reduce your effort? What needs fixing?',
-                'هل التطبيق قلّل مجهودك؟ وإيه اللي محتاج إصلاح؟',
-              )}
+              {t('ui.didTheAppReduceYourEffortWhat.65ec6d')}
               <textarea
                 dir="auto"
                 rows={3}
@@ -146,7 +139,7 @@ export function TrialReview({ t }: { t: Translate }) {
                 }}
               />
             </label>
-            <h3 dir="auto">{t('Your recorded comparison', 'مقارنتك من القياسات المسجلة')}</h3>
+            <h3 dir="auto">{t('ui.yourRecordedComparison.353278')}</h3>
             {fields.slice(0, 2).map(([field, label]) => {
               const values = Object.values(trial.days)
                 .map((d) => d[field])
@@ -155,7 +148,7 @@ export function TrialReview({ t }: { t: Translate }) {
                 <p dir="auto" key={field}>
                   {label}:{' '}
                   {trial.baseline[field] === undefined
-                    ? t('No baseline', 'بدون قياس سابق')
+                    ? t('ui.noBaseline.8b22b9')
                     : localizedNumber(trial.baseline[field], t('en', 'ar'))}{' '}
                   →{' '}
                   {values.length
@@ -164,9 +157,8 @@ export function TrialReview({ t }: { t: Translate }) {
                         t('en', 'ar'),
                         { minimumFractionDigits: 1, maximumFractionDigits: 1 },
                       )
-                    : t('Not measured', 'لم يُقَس')}{' '}
-                  · {localizedNumber(values.length, t('en', 'ar'))}{' '}
-                  {t('recorded days', 'أيام مسجلة')}
+                    : t('ui.notMeasured.3a12ac')}{' '}
+                  · {localizedNumber(values.length, t('en', 'ar'))} {t('ui.recordedDays.8755eb')}
                 </p>
               );
             })}
@@ -174,7 +166,7 @@ export function TrialReview({ t }: { t: Translate }) {
         )}
         {error && (
           <p dir="auto" role="alert">
-            {t('Trial notes could not be saved.', 'تعذر حفظ قياسات التجربة.')}
+            {t('ui.trialNotesCouldNotBeSaved.2716ff')}
           </p>
         )}
       </details>

@@ -23,18 +23,14 @@ export function ResultSummary({
   return (
     <section className="result-summary">
       <h3 dir="auto">
-        {t('Recorded results', 'الحصيلة المسجلة')} ·{' '}
-        {localizedNumber(results.length, t('en', 'ar'))}
+        {t('ui.recordedResults.acb1e6')} · {localizedNumber(results.length, t('en', 'ar'))}
       </h3>
       <p dir="auto" className="muted">
-        {t(
-          'Your own notes. Task completion and goal achievement are tracked separately.',
-          'ملاحظاتك الفعلية. إكمال المهمة وتحقيق الهدف بيتابعوا بشكل مستقل.',
-        )}
+        {t('ui.yourOwnNotesTaskCompletionAndGoal.df70a0')}
       </p>
       {!results.length && (
         <p dir="auto" className="muted">
-          {t('No results recorded for this period yet.', 'لسه مفيش حصيلة مسجلة للفترة دي.')}
+          {t('ui.noResultsRecordedForThisPeriodYet.7e4403')}
         </p>
       )}
       {results.map((task) => (
@@ -46,11 +42,7 @@ export function ResultSummary({
             </Link>
           </div>
           <p dir="auto">{task.result!.note}</p>
-          <small>
-            {task.done
-              ? t('Task complete', 'المهمة مكتملة')
-              : t('Task still open', 'المهمة لسه مفتوحة')}
-          </small>
+          <small>{task.done ? t('ui.taskComplete.fc4326') : t('ui.taskStillOpen.46fd08')}</small>
         </article>
       ))}
     </section>

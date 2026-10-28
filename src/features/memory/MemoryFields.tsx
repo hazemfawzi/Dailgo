@@ -14,9 +14,9 @@ export function MemoryFields({
   latest.current = draft;
   return (
     <fieldset className="memory-fields">
-      <legend>{t('Organization and local files', 'التنظيم والملفات المحلية')}</legend>
+      <legend>{t('ui.organizationAndLocalFiles.3efca0')}</legend>
       <label>
-        {t('Tags (comma separated)', 'وسوم (افصل بفاصلة)')}
+        {t('ui.tagsCommaSeparated.6f4d9a')}
         <input
           dir="auto"
           maxLength={300}
@@ -33,10 +33,7 @@ export function MemoryFields({
         />
       </label>
       <label>
-        {t(
-          'Reference links (one per line, http/https)',
-          'روابط مراجع (كل رابط في سطر، http/https)',
-        )}
+        {t('ui.referenceLinksOnePerLineHttpHttps.2923bf')}
         <textarea
           dir="auto"
           rows={3}
@@ -46,7 +43,7 @@ export function MemoryFields({
         />
       </label>
       <label>
-        {t('Attach local files (up to 3, 200 KB each)', 'ملفات محلية (حتى 3، كل ملف 200 كيلوبايت)')}
+        {t('ui.attachLocalFilesUpTo3200.d65d68')}
         <input
           type="file"
           accept="image/png,image/jpeg,application/pdf,text/plain"
@@ -62,12 +59,7 @@ export function MemoryFields({
                   !['image/png', 'image/jpeg', 'application/pdf', 'text/plain'].includes(f.type),
               )
             ) {
-              setError(
-                t(
-                  'Choose up to 3 PNG/JPEG/PDF/text files, 200 KB each.',
-                  'اختار لحد 3 ملفات PNG/JPEG/PDF/نص، كل ملف حتى 200 كيلوبايت.',
-                ),
-              );
+              setError(t('ui.chooseUpTo3PngJpegPdf.2a5c8e'));
               return;
             }
             try {
@@ -88,16 +80,13 @@ export function MemoryFields({
                 attachments: [...(latest.current.attachments ?? []), ...added],
               });
             } catch {
-              setError(t('Could not read file.', 'تعذر قراءة الملف.'));
+              setError(t('ui.couldNotReadFile.eea00f'));
             }
           }}
         />
       </label>
       <p dir="auto" className="muted">
-        {t(
-          'Files stay local and are included in backups. Browser storage is limited.',
-          'الملفات محلية وبتدخل النسخ الاحتياطية. مساحة المتصفح محدودة.',
-        )}
+        {t('ui.filesStayLocalAndAreIncludedIn.7a2261')}
       </p>
       {draft.attachments?.map((file, i) => (
         <div className="attachment-row" key={i}>
@@ -113,7 +102,7 @@ export function MemoryFields({
               })
             }
           >
-            {t('Remove from draft', 'إزالة من المسودة')}
+            {t('ui.removeFromDraft.7d0fa0')}
           </button>
         </div>
       ))}

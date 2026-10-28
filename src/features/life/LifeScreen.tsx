@@ -29,25 +29,15 @@ export function LifeScreen({
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">{t('THE BIGGER PICTURE', 'الصورة الأكبر')}</div>
-          <h1 dir="auto">{t('Goals and projects', 'الأهداف والمشروعات')}</h1>
-          <p dir="auto">
-            {t(
-              'Six parts of life. One place to care for them.',
-              'ستة مجالات للحياة. مكان واحد للاهتمام بها.',
-            )}
-          </p>
+          <div className="eyebrow">{t('ui.theBiggerPicture.a3b233')}</div>
+          <h1 dir="auto">{t('ui.goalsAndProjects.c6629d')}</h1>
+          <p dir="auto">{t('ui.sixPartsOfLifeOnePlaceTo.b0593e')}</p>
         </div>
         <GoalTemplates t={t} />
       </div>
       <div className="context-banner">
         <Flag size={18} />
-        <p dir="auto">
-          {t(
-            'Open a goal to add milestones and linked tasks. Progress is now calculated from completed tasks, not the earlier illustrative percentages.',
-            'افتح أي هدف لإضافة مراحل ومهام. التقدم دلوقتي محسوب من المهام المكتملة، بدل نسب العرض التجريبية القديمة.',
-          )}
-        </p>
+        <p dir="auto">{t('ui.openAGoalToAddMilestonesAnd.a4492b')}</p>
       </div>
       <div className="life-grid">
         {areas.map((a, i) => {
@@ -73,7 +63,7 @@ export function LifeScreen({
                 <span style={{ width: `${progress}%` }} />
               </div>
               <small>
-                {localizedNumber(progress, t('en', 'ar'))}% {t('average progress', 'متوسط التقدم')}
+                {localizedNumber(progress, t('en', 'ar'))}% {t('ui.averageProgress.8ed020')}
               </small>
             </button>
           );
@@ -81,30 +71,22 @@ export function LifeScreen({
       </div>
       {area && (
         <button className="text-button clear-filter" onClick={() => setArea(undefined)}>
-          {t('Show all life areas', 'عرض كل مجالات الحياة')}
+          {t('ui.showAllLifeAreas.1ec9e1')}
         </button>
       )}
       <EntryCollection
         key={area ?? 'all'}
         {...{ entries, setEntries, t, area }}
         kinds={['goal']}
-        title={
-          area ? `${areaLabel(area, t)} · ${t('Goals', 'الأهداف')}` : t('Your goals', 'أهدافك')
-        }
-        empty={t(
-          'No goals yet. Add an outcome you want to work toward.',
-          'مفيش أهداف لسه. أضف نتيجة عايز توصل لها.',
-        )}
+        title={area ? `${areaLabel(area, t)} · ${t('ui.goals.2efb59')}` : t('ui.yourGoals.73b57b')}
+        empty={t('ui.noGoalsYetAddAnOutcomeYou.d9faac')}
       />
       <EntryCollection
         key={'projects-' + (area ?? 'all')}
         {...{ entries, setEntries, t, area }}
         kinds={['project']}
-        title={t('Projects with a finish line', 'مشروعات لها نهاية واضحة')}
-        empty={t(
-          'Create a project for a defined piece of work.',
-          'أنشئ مشروعًا لشغل واضح له نهاية.',
-        )}
+        title={t('ui.projectsWithAFinishLine.171b28')}
+        empty={t('ui.createAProjectForADefinedPiece.ce9fd3')}
       />
     </>
   );

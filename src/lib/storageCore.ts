@@ -476,3 +476,5 @@ export { auditWorkspace };
 export { validateGoalDateChanges } from '../features/life/goalDates';
 
 export { makeAIPlan } from '../features/assistant/ai/plan';
+
+export { diffWorkspace, applyWorkspaceDelta } from './workspaceDelta';

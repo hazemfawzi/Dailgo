@@ -1,30 +1,12 @@
 import { getPlanning } from './planningConfig';
 import type { Dispatch, SetStateAction } from 'react';
-export type Translate = (en: string, ar: string) => string;
+export type Translate = import('../i18n/translate').Translator;
 export type Area = 'Work' | 'Family' | 'Health' | 'Learning' | 'Finance' | 'Personal';
 export const areas: Area[] = ['Work', 'Family', 'Health', 'Learning', 'Finance', 'Personal'];
-const arabicAreas = {
-  Work: 'العمل',
-  Family: 'العائلة',
-  Health: 'الصحة',
-  Learning: 'التعلم',
-  Finance: 'المال',
-  Personal: 'الأهداف الشخصية',
-};
-export const areaLabel = (area: Area, t: Translate) => t(area, arabicAreas[area]);
+export const areaLabel = (area: Area, t: Translate) => t('areas.' + area);
 export type EntryKind =
   'project' | 'goal' | 'event' | 'routine' | 'note' | 'preference' | 'decision' | 'personal';
-const labels: Record<EntryKind, [string, string]> = {
-  project: ['Project', 'مشروع'],
-  goal: ['Goal', 'هدف'],
-  event: ['Event', 'موعد'],
-  routine: ['Routine', 'روتين'],
-  note: ['Note', 'ملاحظة'],
-  preference: ['Preference', 'تفضيل'],
-  decision: ['Decision', 'قرار'],
-  personal: ['Personal information', 'معلومة شخصية'],
-};
-export const kindLabel = (kind: EntryKind, t: Translate) => t(...labels[kind]);
+export const kindLabel = (kind: EntryKind, t: Translate) => t('kinds.' + kind);
 export const memoryKinds: EntryKind[] = ['note', 'preference', 'decision', 'personal'];
 export type Milestone = {
   id: string;

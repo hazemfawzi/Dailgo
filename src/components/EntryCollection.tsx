@@ -1,3 +1,4 @@
+import { DateTimeInput } from './DateTimeInput';
 import { formatCalendarDate as localizedDate, formatTime as localizedTime } from '../i18n/format';
 import { formatNumber as localizedNumber } from '../i18n/format';
 import { TargetDate } from '../features/life/TargetDate';
@@ -89,17 +90,14 @@ export function EntryCollection({
           </h2>
           <p dir="auto" className="muted">
             {archive
-              ? t(
-                  'Your archived items. Restore them whenever you like.',
-                  'عناصرك المؤرشفة. يمكنك استعادتها في أي وقت.',
-                )
-              : t('A little structure, on your terms.', 'تنظيم بسيط، بطريقتك.')}
+              ? t('ui.yourArchivedItemsRestoreThemWheneverYou.0197ec')
+              : t('ui.aLittleStructureOnYourTerms.59e555')}
           </p>
         </div>
         {allowCreate && (visible.length > 0 || !!query || archive) && (
           <Button onClick={add}>
             <Plus size={16} />
-            {t('Add new', 'إضافة جديد')}
+            {t('ui.addNew.4666da')}
           </Button>
         )}
       </div>
@@ -108,19 +106,19 @@ export function EntryCollection({
           <Search size={16} />
           <input
             dir="auto"
-            aria-label={t('Search items', 'بحث في العناصر')}
-            placeholder={t('Search your space…', 'ابحث في مساحتك…')}
+            aria-label={t('ui.searchItems.09dfb6')}
+            placeholder={t('ui.searchYourSpace.2d56fb')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
         {kinds.length > 1 && (
           <select
-            aria-label={t('Filter by type', 'تصفية حسب النوع')}
+            aria-label={t('ui.filterByType.1440be')}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           >
-            <option value="all">{t('All types', 'كل الأنواع')}</option>
+            <option value="all">{t('ui.allTypes.09f085')}</option>
             {kinds.map((k) => (
               <option value={k} key={k}>
                 {kindLabel(k, t)}
@@ -130,7 +128,7 @@ export function EntryCollection({
         )}
         <Button variant={archive ? 'default' : 'outline'} onClick={() => setArchive(!archive)}>
           <Archive size={15} />
-          {archive ? t('Show active', 'عرض النشطة') : t('Archive', 'الأرشيف')}
+          {archive ? t('ui.showActive.54503f') : t('ui.archive.468a31')}
         </Button>
       </div>
       <div className="entry-grid">
@@ -157,15 +155,12 @@ export function EntryCollection({
             )}
             {entry.expiresOn && entry.expiresOn < localDate() && (
               <p dir="auto" className="capture-hint">
-                {t(
-                  'Expired information; review before using',
-                  'المعلومة انتهت صلاحيتها؛ راجعها قبل الاستخدام',
-                )}
+                {t('ui.expiredInformationReviewBeforeUsing.924a6d')}
               </p>
             )}
             {entry.sourceLabel && (
               <small>
-                {t('Source', 'المصدر')}: {entry.sourceLabel}
+                {t('ui.source.711b32')}: {entry.sourceLabel}
               </small>
             )}
             {entry.context && (
@@ -173,9 +168,7 @@ export function EntryCollection({
                 {entry.context}
               </p>
             )}
-            {entry.certainty === 'inferred' && (
-              <small>{t('Inference, needs review', 'استنتاج يحتاج مراجعة')}</small>
-            )}
+            {entry.certainty === 'inferred' && <small>{t('ui.inferenceNeedsReview.9d0dcc')}</small>}
             {entry.kind === 'decision' && (
               <p dir="auto" className="muted">
                 {entry.alternatives} · {entry.rationale}
@@ -185,8 +178,8 @@ export function EntryCollection({
               <p dir="auto" className="muted">
                 {entry.successCriteria} ·{' '}
                 {entry.outcomeAchieved
-                  ? t('Outcome achieved', 'النتيجة تحققت')
-                  : t('Outcome not confirmed', 'النتيجة غير مؤكدة')}
+                  ? t('ui.outcomeAchieved.933071')
+                  : t('ui.outcomeNotConfirmed.1b103f')}
               </p>
             )}
             {entry.detail && (
@@ -225,27 +218,24 @@ export function EntryCollection({
                   {localizedDate(entry.date, t('en', 'ar'))} ·{' '}
                   {localizedTime(entry.time, t('en', 'ar'))}
                 </span>
-                <small>{t('Local plan', 'خطة محلية')}</small>
+                <small>{t('ui.localPlan.17fff7')}</small>
               </div>
             )}
             {['goal', 'project'].includes(entry.kind) && (
               <div className="goal-progress">
                 <div>
-                  <span>{t('Task-based progress', 'تقدم المهام')}</span>
+                  <span>{t('ui.taskBasedProgress.b5a26f')}</span>
                   <strong dir="auto">{localizedNumber(entry.progress, t('en', 'ar'))}%</strong>
                 </div>
                 <progress
                   max={100}
                   value={entry.progress}
-                  aria-label={t('Goal progress', 'تقدم الهدف')}
+                  aria-label={t('ui.goalProgress.d6089e')}
                 />
                 {entry.kind === 'goal' && entry.progress === 100 && !entry.outcomeAchieved && (
                   <p dir="auto" className="muted">
-                    {t(
-                      'Tasks complete. Review success criteria and confirm the outcome in the goal. Active means not archived.',
-                      'المهام اكتملت. راجع معيار النجاح وأكد النتيجة داخل الهدف. نشط يعني غير مؤرشف.',
-                    )}{' '}
-                    <Link to={`/life/${entry.id}`}>{t('Review outcome', 'راجع النتيجة')}</Link>
+                    {t('ui.tasksCompleteReviewSuccessCriteriaAndConfirm.ad8c82')}{' '}
+                    <Link to={`/life/${entry.id}`}>{t('ui.reviewOutcome.af74ad')}</Link>
                   </p>
                 )}
               </div>
@@ -264,8 +254,8 @@ export function EntryCollection({
               >
                 <Check size={16} />
                 {entry.doneDates.includes(localDate())
-                  ? t('Done today · Undo', 'مكتمل اليوم · تراجع')
-                  : t('Mark done today', 'إكمال اليوم')}
+                  ? t('ui.doneTodayUndo.3211df')
+                  : t('ui.markDoneToday.74780e')}
                 {entry.time && <span dir="ltr">{localizedTime(entry.time, t('en', 'ar'))}</span>}
               </button>
             )}
@@ -275,16 +265,14 @@ export function EntryCollection({
                   className="goal-open-link"
                   to={entry.kind === 'project' ? `/projects/${entry.id}` : `/life/${entry.id}`}
                 >
-                  {entry.kind === 'project'
-                    ? t('Open project', 'افتح المشروع')
-                    : t('Open goal', 'افتح الهدف')}{' '}
+                  {entry.kind === 'project' ? t('ui.openProject.dae96c') : t('ui.openGoal.aad51b')}{' '}
                   ↗
                 </Link>
               )}
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label={`${t('Edit', 'تعديل')}: ${entry.title}`}
+                aria-label={`${t('ui.edit.c554f4')}: ${entry.title}`}
                 onClick={() => setDraft({ ...entry })}
               >
                 <Pencil size={15} />
@@ -292,7 +280,7 @@ export function EntryCollection({
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label={`${archive ? t('Restore', 'استعادة') : t('Archive', 'أرشفة')}: ${entry.title}`}
+                aria-label={`${archive ? t('ui.restore.82172b') : t('ui.archive.b24a9a')}: ${entry.title}`}
                 onClick={() => update(entry.id, { archived: !entry.archived })}
               >
                 {archive ? <RotateCcw size={15} /> : <Archive size={15} />}
@@ -300,7 +288,7 @@ export function EntryCollection({
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label={`${t('Delete', 'حذف')}: ${entry.title}`}
+                aria-label={`${t('ui.delete.010491')}: ${entry.title}`}
                 onClick={() => setDeleting(entry)}
               >
                 <Trash2 size={15} />
@@ -314,17 +302,15 @@ export function EntryCollection({
           <NotebookPen size={29} />
           <h3 dir="auto">
             {query
-              ? t('No matching items', 'لا توجد نتائج مطابقة')
+              ? t('ui.noMatchingItems.a09bbd')
               : archive
-                ? t('Your archive is empty', 'الأرشيف فارغ')
+                ? t('ui.yourArchiveIsEmpty.4d3f7e')
                 : empty}
           </h3>
-          <p dir="auto">
-            {t('Add an item, or adjust your filters.', 'أضف عنصراً أو غيّر خيارات التصفية.')}
-          </p>
+          <p dir="auto">{t('ui.addAnItemOrAdjustYourFilters.c105f4')}</p>
           <Button variant="outline" onClick={add}>
             <Plus size={15} />
-            {t('Create an item', 'إنشاء عنصر')}
+            {t('ui.createAnItem.73afc0')}
           </Button>
         </div>
       )}
@@ -333,8 +319,8 @@ export function EntryCollection({
         onOpenChange={() => setDraft(null)}
         title={
           draft && entries.some((e) => e.id === draft.id)
-            ? t('Edit item', 'تعديل العنصر')
-            : t('Make a little space for it', 'أضف ما يهمك')
+            ? t('ui.editItem.50b4ab')
+            : t('ui.makeALittleSpaceForIt.f32642')
         }
         description={storageText(t, 'entryEditor')}
       >
@@ -353,7 +339,7 @@ export function EntryCollection({
           >
             {kinds.length > 1 && (
               <label>
-                {t('Type', 'النوع')}
+                {t('ui.type.28bca4')}
                 <select
                   value={draft.kind}
                   onChange={(e) => setDraft({ ...draft, kind: e.target.value as EntryKind })}
@@ -367,7 +353,7 @@ export function EntryCollection({
               </label>
             )}
             <label>
-              {t('Title', 'العنوان')}
+              {t('ui.title.770d09')}
               <input
                 dir="auto"
                 autoFocus
@@ -378,7 +364,7 @@ export function EntryCollection({
               />
             </label>
             <label>
-              {t('Details', 'التفاصيل')}
+              {t('ui.details.725c0d')}
               <textarea
                 dir="auto"
                 rows={4}
@@ -388,7 +374,7 @@ export function EntryCollection({
               />
             </label>
             <label>
-              {t('Life area', 'مجال الحياة')}
+              {t('ui.lifeArea.d4e236')}
               <select
                 value={draft.area}
                 onChange={(e) => setDraft({ ...draft, area: e.target.value as Area })}
@@ -403,17 +389,17 @@ export function EntryCollection({
             {draft.kind === 'project' && (
               <>
                 <label>
-                  {t('Parent goal (optional)', 'الهدف اللي بيخدمه المشروع (اختياري)')}
+                  {t('ui.parentGoalOptional.dba82b')}
                   <select
                     value={draft.parentGoalId ?? ''}
                     onChange={(e) =>
                       setDraft({ ...draft, parentGoalId: e.target.value || undefined })
                     }
                   >
-                    <option value="">{t('Independent project', 'مشروع مستقل')}</option>
+                    <option value="">{t('ui.independentProject.4c6b00')}</option>
                     {draft.parentGoalId && !entries.some((x) => x.id === draft.parentGoalId) && (
                       <option value={draft.parentGoalId}>
-                        {t('Goal no longer available', 'الهدف لم يعد متاحًا')}
+                        {t('ui.goalNoLongerAvailable.e8a9f9')}
                       </option>
                     )}
                     {entries
@@ -426,7 +412,7 @@ export function EntryCollection({
                   </select>
                 </label>
                 <label>
-                  {t('Work context', 'سياق الشغل')}
+                  {t('ui.workContext.1cc3a3')}
                   <input
                     dir="auto"
                     maxLength={300}
@@ -435,7 +421,7 @@ export function EntryCollection({
                   />
                 </label>
                 <label>
-                  {t('Completion criteria', 'معيار اكتمال المشروع')}
+                  {t('ui.completionCriteria.a9b409')}
                   <textarea
                     dir="auto"
                     maxLength={2000}
@@ -450,42 +436,41 @@ export function EntryCollection({
                     checked={!!draft.outcomeAchieved}
                     onChange={(e) => setDraft({ ...draft, outcomeAchieved: e.target.checked })}
                   />
-                  {t('Project outcome achieved', 'نتيجة المشروع تحققت')}
+                  {t('ui.projectOutcomeAchieved.a20cd8')}
                 </label>
               </>
             )}
             {['goal', 'project'].includes(draft.kind) && (
               <>
                 <p dir="auto" className="muted">
-                  {t(
-                    'Progress comes from linked tasks. Open the goal to add them.',
-                    'التقدم بيتحسب من المهام المرتبطة. افتح الهدف لإضافتها.',
-                  )}
+                  {t('ui.progressComesFromLinkedTasksOpenThe.dae92c')}
                 </p>
                 <label>
-                  {t('Target date (optional)', 'التاريخ المستهدف (اختياري)')}
-                  <input
+                  {t('ui.targetDateOptional.0eb380')}
+                  <DateTimeInput
                     type="date"
                     value={draft.date}
                     onChange={(e) => setDraft({ ...draft, date: e.target.value })}
+                    aria-label={t('ui.targetDateOptional.0eb380')}
                   />
                 </label>
               </>
             )}
             {draft.kind === 'event' && (
               <label>
-                {t('Date', 'التاريخ')}
-                <input
+                {t('ui.date.5568e5')}
+                <DateTimeInput
                   type="date"
                   required
                   value={draft.date}
                   onChange={(e) => setDraft({ ...draft, date: e.target.value })}
+                  aria-label={t('ui.date.5568e5')}
                 />
               </label>
             )}
             {draft.kind === 'event' && (
               <label>
-                {t('Duration (minutes)', 'المدة (دقيقة)')}
+                {t('ui.durationMinutes.5b7f68')}
                 <input
                   type="number"
                   min={5}
@@ -498,47 +483,43 @@ export function EntryCollection({
             )}
             {(draft.kind === 'event' || draft.kind === 'routine') && (
               <label>
-                {t('Time', 'الوقت')}
-                <input
+                {t('ui.time.d46229')}
+                <DateTimeInput
                   type="time"
                   required
                   value={draft.time}
                   onChange={(e) => setDraft({ ...draft, time: e.target.value })}
+                  aria-label={t('ui.time.d46229')}
                 />
               </label>
             )}
             {memoryKinds.includes(draft.kind) && (
               <>
                 <label>
-                  {t('Source / reference', 'المصدر أو المرجع')}
+                  {t('ui.sourceReference.5eadd7')}
                   <input
                     dir="auto"
                     maxLength={500}
                     value={draft.sourceLabel ?? ''}
-                    placeholder={t(
-                      'Where did this information come from?',
-                      'المعلومة دي جاية منين؟',
-                    )}
+                    placeholder={t('ui.whereDidThisInformationComeFrom.c0f2c1')}
                     onChange={(e) => setDraft({ ...draft, sourceLabel: e.target.value })}
                   />
                 </label>
                 <label>
-                  {t('Information basis', 'أساس المعلومة')}
+                  {t('ui.informationBasis.5b2b6c')}
                   <select
                     value={draft.certainty ?? 'unspecified'}
                     onChange={(e) =>
                       setDraft({ ...draft, certainty: e.target.value as Entry['certainty'] })
                     }
                   >
-                    <option value="unspecified">{t('Not specified', 'غير محدد')}</option>
-                    <option value="explicit">{t('Explicitly stated by me', 'قلتُها صراحة')}</option>
-                    <option value="inferred">
-                      {t('An inference, needs review', 'استنتاج يحتاج مراجعة')}
-                    </option>
+                    <option value="unspecified">{t('ui.notSpecified.e063da')}</option>
+                    <option value="explicit">{t('ui.explicitlyStatedByMe.0e86eb')}</option>
+                    <option value="inferred">{t('ui.anInferenceNeedsReview.a8e4fe')}</option>
                   </select>
                 </label>
                 <label>
-                  {t('Context / project scope', 'السياق أو نطاق المشروع')}
+                  {t('ui.contextProjectScope.c49382')}
                   <input
                     dir="auto"
                     maxLength={500}
@@ -547,11 +528,12 @@ export function EntryCollection({
                   />
                 </label>
                 <label>
-                  {t('Valid until (optional)', 'صالحة حتى (اختياري)')}
-                  <input
+                  {t('ui.validUntilOptional.b6582c')}
+                  <DateTimeInput
                     type="date"
                     value={draft.expiresOn ?? ''}
                     onChange={(e) => setDraft({ ...draft, expiresOn: e.target.value })}
+                    aria-label={t('ui.validUntilOptional.b6582c')}
                   />
                 </label>
               </>
@@ -559,7 +541,7 @@ export function EntryCollection({
             {draft.kind === 'decision' && (
               <>
                 <label>
-                  {t('Options considered', 'البدائل اللي فكرت فيها')}
+                  {t('ui.optionsConsidered.a829a6')}
                   <textarea
                     dir="auto"
                     maxLength={2000}
@@ -569,7 +551,7 @@ export function EntryCollection({
                   />
                 </label>
                 <label>
-                  {t('Why this decision?', 'ليه القرار ده؟')}
+                  {t('ui.whyThisDecision.90acf5')}
                   <textarea
                     dir="auto"
                     maxLength={2000}
@@ -582,20 +564,15 @@ export function EntryCollection({
             )}
             {draft.kind === 'routine' && (
               <fieldset className="routine-days">
-                <legend>
-                  {t(
-                    'Repeat on (none selected means daily)',
-                    'يتكرر أيام (بدون تحديد يعني يوميًا)',
-                  )}
-                </legend>
+                <legend>{t('ui.repeatOnNoneSelectedMeansDaily.77020a')}</legend>
                 {[
-                  t('Sun', 'أحد'),
-                  t('Mon', 'اثنين'),
-                  t('Tue', 'ثلاثاء'),
-                  t('Wed', 'أربعاء'),
-                  t('Thu', 'خميس'),
-                  t('Fri', 'جمعة'),
-                  t('Sat', 'سبت'),
+                  t('ui.sun.6fa57f'),
+                  t('ui.mon.ed7a4c'),
+                  t('ui.tue.80e772'),
+                  t('ui.wed.8e443f'),
+                  t('ui.thu.52926d'),
+                  t('ui.fri.ca0ba0'),
+                  t('ui.sat.5d621f'),
                 ].map((day, i) => (
                   <label key={i}>
                     <input
@@ -632,16 +609,13 @@ export function EntryCollection({
             <History item={draft} t={t} />
             {saveError && (
               <p dir="auto" role="alert">
-                {t(
-                  'Save failed or item changed elsewhere. Your draft is kept; copy it and reopen the latest item.',
-                  'تعذر الحفظ أو العنصر اتغير في مكان تاني. مسودتك محفوظة هنا؛ انسخها وافتح النسخة الأحدث.',
-                )}
+                {t('ui.saveFailedOrItemChangedElsewhereYour.9fc4a5')}
               </p>
             )}
             {draft.kind === 'goal' && <GoalDateReview goal={draft} onChange={setDraft} t={t} />}
             <div className="dialog-actions">
               <Button type="button" variant="outline" onClick={() => setDraft(null)}>
-                {t('Cancel', 'إلغاء')}
+                {t('ui.cancel.428808')}
               </Button>
               <Button
                 disabled={
@@ -650,7 +624,7 @@ export function EntryCollection({
                   (draft.kind === 'goal' && !!milestoneDateIssue(draft))
                 }
               >
-                {t('Save item', 'حفظ العنصر')}
+                {t('ui.saveItem.b43e30')}
               </Button>
             </div>
           </form>
@@ -659,18 +633,15 @@ export function EntryCollection({
       <Dialog
         open={!!deleting}
         onOpenChange={() => setDeleting(null)}
-        title={t('Delete this item?', 'حذف هذا العنصر؟')}
-        description={t(
-          'Moves the item to Recently deleted. Restore it from Data and backup.',
-          'ينتقل العنصر للمحذوفات. يمكن استعادته من البيانات والنسخ الاحتياطي.',
-        )}
+        title={t('ui.deleteThisItem.17ae38')}
+        description={t('ui.movesTheItemToRecentlyDeletedRestore.56c582')}
       >
         <p dir="auto" className="entry-detail">
           {deleting?.title}
         </p>
         <div className="dialog-actions">
           <Button variant="outline" onClick={() => setDeleting(null)}>
-            {t('Keep it', 'الاحتفاظ به')}
+            {t('ui.keepIt.d7c925')}
           </Button>
           <Button
             onClick={() => {
@@ -679,7 +650,7 @@ export function EntryCollection({
             }}
           >
             <Trash2 size={15} />
-            {t('Delete item', 'حذف العنصر')}
+            {t('ui.deleteItem.ee2b64')}
           </Button>
         </div>
       </Dialog>

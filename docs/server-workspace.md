@@ -41,31 +41,43 @@ snapshot can subsequently be restored through a reviewed backup replacement.
 
 ## Persistence and conflicts
 
-The frontend sends atomic workspace commits and updates its confirmed snapshot only
-after server acknowledgement. Autosave controls show a temporary in-memory preview
-while requests are pending, so typing is responsive on slow connections. A failed
-request rolls the preview back and shows an error; it is not queued as an offline save. The backend validates the complete data and generates task/entry
-revisions, history and recoverable deletions. Multi-record actions (for example
-assistant confirmation plus the resulting task) commit together. Project reparenting
-through the record API updates linked task goals in the same transaction.
+The server stores tasks, goals, entries, conversations, focus sessions and deleted
+records in SQLite rows, isolated by account. Other workspace values have individual
+rows. `PUT /api/workspace/changes` sends a validated record delta and commits it with
+history and a workspace revision in one transaction. Unchanged large notes are not
+sent again. The full snapshot endpoints remain available for compatible clients and
+reviewed backup replacement.
 
-Every write carries the observed workspace `revision`. SQLite compares it in a write
-transaction and rejects stale writes with HTTP 409. The frontend loads the latest
-confirmed state and asks the user to review/retry; task and entry editor drafts remain
-open on a rejected save. There is no automatic conflict merge. Other devices refresh
-every 10 seconds and when their window receives focus. They must use the same server;
-separate local servers have separate databases.
+Existing snapshot databases migrate lazily without resetting data. By default a
+legacy snapshot projection is retained for safe rollback. Administrators can enable
+`WORKSPACE_RECORDS_ONLY=true` after accepting the new release; see
+[rollout and rollback](readability-rollout.md) before changing this setting.
 
-Network failures stop writes, show an error and require a refresh/retry. There is no
-silent fallback to browser storage and no offline write queue. A lost response can
-mean the server already committed; refresh before retrying. A 401 returns the user to
-sign-in. The service worker caches application files only, never API responses.
-Opening an account after a cold reload requires server connectivity.
+Writes compare the observed workspace revision and reject stale online edits with
+HTTP 409. Editor drafts remain visible on rejected saves. Authenticated SSE announces
+revision changes without sending workspace contents. Focus/online events refresh the
+view; a 60-second fallback runs only while the event stream is unavailable.
 
-Backup exports include the active server workspace. Backup restore replaces that
-workspace with revision protection. It is not a merge. Old exported files and the
-preserved pre-migration browser copy are independent copies: permanent deletion from
-the server cannot erase them. SQLite data and JSON backup files are not encrypted.
+Offline editing is an explicit per-device opt-in in Settings. IndexedDB keeps a
+private account-scoped copy and durable base/draft outbox. The app accepts queued
+edits only after local persistence succeeds. Reconnection merges independent fields;
+same-field changes and deletions require explicit choices against the current server
+version. Family boards, external integrations, full replacement and permanent purge
+are not queued. Logout is unavailable while changes remain pending. Expired sessions
+retain the outbox for the original account without exposing it to another account.
+This local copy is unencrypted; enable it only on a trusted device. Browser storage
+can be cleared or evicted, so it is not a backup.
+
+Without that opt-in, network failures reject writes. A lost response can mean the
+server already committed; refresh before retrying. A 401 returns the user to sign-in.
+The service worker caches application files only, never API responses. An opted-in
+account with a cached shell can reopen its private copy offline.
+
+Backup exports contain the active personal workspace and are unencrypted JSON.
+Restore replaces that workspace after preview and revision checks. Exports and old
+browser copies remain independent: server deletion cannot erase them. The server's
+scheduled SQLite backups support optional authenticated encryption; see rollout
+instructions. The live database itself still requires host/volume encryption.
 
 ## Daily cycle
 

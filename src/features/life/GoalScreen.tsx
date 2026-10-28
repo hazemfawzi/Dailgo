@@ -1,3 +1,4 @@
+import { DateTimeInput } from '../../components/DateTimeInput';
 import { formatCalendarDate, formatNumber } from '../../i18n/format';
 import { GoalDateReview } from './GoalDateReview';
 import { closeGoal } from './goalModel';
@@ -56,15 +57,10 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
     return (
       <section className="card scope-page">
         <Target size={30} />
-        <h1 dir="auto">{t('This goal isn’t here.', 'الهدف مش موجود هنا.')}</h1>
-        <p dir="auto">
-          {t(
-            'It may have been removed. Your tasks remain in Planner.',
-            'قد يكون تم حذفه. مهامك بتفضل موجودة في المخطط.',
-          )}
-        </p>
+        <h1 dir="auto">{t('ui.thisGoalIsnTHere.290e23')}</h1>
+        <p dir="auto">{t('ui.itMayHaveBeenRemovedYourTasks.f25ea3')}</p>
         <Button asChild>
-          <Link to="/life">{t('Back to my life', 'العودة لحياتي')}</Link>
+          <Link to="/life">{t('ui.backToMyLife.f7157d')}</Link>
         </Button>
       </section>
     );
@@ -94,7 +90,7 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
     <div className="goal-page">
       <Link className="goal-back" to="/life">
         <ArrowRight size={14} />
-        {t('My life', 'حياتي')}
+        {t('ui.myLife.907c1a')}
       </Link>
       <div className="goal-page-header">
         <span className="goal-page-icon">
@@ -103,82 +99,69 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
         <div>
           <div className="eyebrow">
             {areaLabel(goal.area, t)} ·{' '}
-            {goal.archived
-              ? t('ARCHIVED GOAL', 'هدف مؤرشف')
-              : t('YOUR NEXT CHAPTER', 'خطوتك الجاية')}
+            {goal.archived ? t('ui.archivedGoal.c32d5b') : t('ui.yourNextChapter.8f8f18')}
           </div>
           <h1 dir="auto">{goal.title}</h1>
         </div>
         <Button variant="outline" onClick={() => setDraft({ ...goal })}>
           <Pencil size={15} />
-          {t('Edit goal', 'تعديل الهدف')}
+          {t('ui.editGoal.530683')}
         </Button>
       </div>
       <section className="goal-summary card">
         <div className="goal-progress-main">
           <div>
             <strong dir="auto">{formatNumber(stats.progress, t('en', 'ar'))}%</strong>
-            <span>{t('From completed tasks', 'من المهام المكتملة')}</span>
+            <span>{t('ui.fromCompletedTasks.4c83ee')}</span>
           </div>
           <progress
             value={formatNumber(stats.progress, t('en', 'ar'))}
             max={100}
-            aria-label={t('Automatic goal progress', 'تقدم الهدف التلقائي')}
+            aria-label={t('ui.automaticGoalProgress.e8528f')}
           />
-          <p dir="auto">
-            {t(
-              'Each non-archived task has equal weight. Subtasks are steps within a task.',
-              'كل مهمة غير مؤرشفة ليها نفس الوزن. الخطوات الفرعية جزء من المهمة.',
-            )}
-          </p>
+          <p dir="auto">{t('ui.eachNonArchivedTaskHasEqualWeight.270168')}</p>
         </div>
         <div className="goal-summary-number">
           <CheckCheck size={20} />
           <strong dir="auto">
             {formatNumber(stats.done, t('en', 'ar'))}/{formatNumber(stats.total, t('en', 'ar'))}
           </strong>
-          <span>{t('Tasks completed', 'مهام مكتملة')}</span>
+          <span>{t('ui.tasksCompleted.401b59')}</span>
         </div>
         <div className="goal-summary-number">
           <Layers size={20} />
           <strong dir="auto">{formatNumber(phases.length, t('en', 'ar'))}</strong>
-          <span>{t('Milestones', 'مراحل')}</span>
+          <span>{t('ui.milestones.6a1e1a')}</span>
         </div>
         <div className="goal-summary-number">
           <CalendarDays size={20} />
           <strong dir="auto" className="goal-date">
-            {goal.date ? formatCalendarDate(goal.date, t('en', 'ar')) : t('Flexible', 'بدون موعد')}
+            {goal.date ? formatCalendarDate(goal.date, t('en', 'ar')) : t('ui.flexible.1ea0e9')}
           </strong>
-          <span>{t('Target date', 'الموعد المستهدف')}</span>
+          <span>{t('ui.targetDate.ff8c28')}</span>
         </div>
       </section>
       <div className="goal-detail-columns">
         <section className="card goal-description">
-          <h3 dir="auto">{t('Why this matters', 'ليه الهدف ده مهم؟')}</h3>
-          <p dir="auto">
-            {goal.detail ||
-              t(
-                'Add your reason, your definition of success, and what comes next.',
-                'اكتب السبب، وشكل النجاح، والخطوة الجاية.',
-              )}
-          </p>
+          <h3 dir="auto">{t('ui.whyThisMatters.87b77f')}</h3>
+          <p dir="auto">{goal.detail || t('ui.addYourReasonYourDefinitionOfSuccess.6a8ade')}</p>
           <Button variant="ghost" onClick={() => setDraft({ ...goal })}>
             <Pencil size={14} />
-            {t('Edit notes', 'تعديل الملاحظات')}
+            {t('ui.editNotes.99ce68')}
           </Button>
         </section>
         <section className="card milestone-panel">
           <div className="home-section-title">
             <h3 dir="auto">
               <Flag size={16} />
-              {t('One milestone at a time', 'مرحلة كل مرة')}
+              {t('ui.oneMilestoneAtATime.773c44')}
             </h3>
             <Button
               variant="ghost"
               onClick={() => setPhase({ id: crypto.randomUUID(), title: '', date: '' })}
             >
               <Plus size={15} />
-              {t('Add milestone', 'إضافة مرحلة')}
+              {t('ui.addMilestone.ddf297')}
             </Button>
           </div>
           {phases.map((m) => {
@@ -189,27 +172,24 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
                   <h4 dir="auto">{m.title}</h4>
                   {goal.date && m.date > goal.date && (
                     <p dir="auto" className="capture-hint">
-                      {t(
-                        'Milestone is after the goal target; review its date.',
-                        'المرحلة بعد موعد الهدف؛ راجع تاريخها.',
-                      )}
+                      {t('ui.milestoneIsAfterTheGoalTargetReview.034383')}
                     </p>
                   )}
                   <span>
                     {formatNumber(progress.done, t('en', 'ar'))}/
-                    {formatNumber(progress.total, t('en', 'ar'))} {t('tasks', 'مهام')}
+                    {formatNumber(progress.total, t('en', 'ar'))} {t('ui.tasks.1c126f')}
                     {m.date && ` · ${formatCalendarDate(m.date, t('en', 'ar'))}`}
                   </span>
                   <progress
                     value={progress.progress}
                     max={100}
-                    aria-label={`${t('Milestone progress', 'تقدم المرحلة')}: ${m.title}`}
+                    aria-label={`${t('ui.milestoneProgress.a874ae')}: ${m.title}`}
                   />
                 </div>
                 <Button
                   size="icon"
                   variant="ghost"
-                  aria-label={`${t('Edit milestone', 'تعديل المرحلة')}: ${m.title}`}
+                  aria-label={`${t('ui.editMilestone.ad7dbb')}: ${m.title}`}
                   onClick={() => setPhase({ ...m })}
                 >
                   <Pencil size={14} />
@@ -217,7 +197,7 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
                 <Button
                   size="icon"
                   variant="ghost"
-                  aria-label={`${t('Delete milestone', 'حذف المرحلة')}: ${m.title}`}
+                  aria-label={`${t('ui.deleteMilestone.5ebb75')}: ${m.title}`}
                   onClick={() => setRemoving(m)}
                 >
                   <Trash2 size={14} />
@@ -227,10 +207,7 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
           })}
           {!phases.length && (
             <p dir="auto" className="milestone-empty">
-              {t(
-                'Break the goal into a few meaningful milestones. Then assign tasks to each one.',
-                'قسّم الهدف لمراحل واضحة، وبعدها اربط مهامك بكل مرحلة.',
-              )}
+              {t('ui.breakTheGoalIntoAFewMeaningful.23c068')}
             </p>
           )}
         </section>
@@ -238,54 +215,35 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
       <section className="goal-execution-banner">
         <Target size={21} />
         <div>
-          <h3 dir="auto">
-            {t('From an ambition to the next action.', 'من هدف كبير لخطوة عملية.')}
-          </h3>
-          <p dir="auto">
-            {t(
-              'Add a task here, or link an existing task from its editor in Planner.',
-              'أضف مهمة هنا، أو اربط مهمة موجودة من محررها في المخطط.',
-            )}
-          </p>
+          <h3 dir="auto">{t('ui.fromAnAmbitionToTheNextAction.577c88')}</h3>
+          <p dir="auto">{t('ui.addATaskHereOrLinkAn.4fbd60')}</p>
         </div>
         <Button onClick={addTask}>
           <Plus size={15} />
-          {t('Add linked task', 'إضافة مهمة للهدف')}
+          {t('ui.addLinkedTask.8a99bc')}
         </Button>
       </section>
       <section className="card outcome-evidence">
-        <h3 dir="auto">{t('Outcome, beyond task completion', 'نتيجة الهدف، غير نسبة المهام')}</h3>
+        <h3 dir="auto">{t('ui.outcomeBeyondTaskCompletion.42214e')}</h3>
         <p dir="auto">
-          {goal.successCriteria ||
-            t(
-              'Add a measurable success criterion in Edit goal.',
-              'أضف معيار نجاح واضح من تعديل الهدف.',
-            )}
+          {goal.successCriteria || t('ui.addAMeasurableSuccessCriterionInEdit.182782')}
         </p>
         <strong dir="auto">
           {goal.outcomeAchieved
-            ? t('Outcome achieved (self-assessed)', 'النتيجة متحققة (تقييمك)')
-            : t('Outcome not confirmed yet', 'تحقق النتيجة لم يتأكد بعد')}
+            ? t('ui.outcomeAchievedSelfAssessed.5d77c1')
+            : t('ui.outcomeNotConfirmedYet.1925ab')}
         </strong>
         {stats.progress === 100 && !goal.outcomeAchieved && (
           <p dir="auto" className="muted">
-            {t(
-              'All linked tasks are complete. Review your success criteria, then confirm the outcome in Edit goal. The goal stays active until you archive it.',
-              'كل المهام المرتبطة اكتملت. راجع معيار النجاح، وبعدها أكد تحقق النتيجة من تعديل الهدف. الهدف يفضل نشط لحد ما تأرشفه.',
-            )}
+            {t('ui.allLinkedTasksAreCompleteReviewYour.3b2134')}
           </p>
         )}
         <Button variant="outline" onClick={() => setDraft({ ...goal })}>
-          {t('Review goal outcome', 'راجع نتيجة الهدف')}
+          {t('ui.reviewGoalOutcome.afd023')}
         </Button>
         {stats.progress === 100 && !goal.archived && (
           <>
-            <p dir="auto">
-              {t(
-                'Did you achieve the outcome? Confirm and close this goal when you are satisfied.',
-                'هل حققت النتيجة؟ لو راضي عن النتيجة، أكدها وأغلق الهدف.',
-              )}
-            </p>
+            <p dir="auto">{t('ui.didYouAchieveTheOutcomeConfirmAnd.3df47d')}</p>
             <Button
               disabled={closing}
               onClick={async () => {
@@ -294,18 +252,12 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
                 setClosing(false);
                 setClosedNotice(
                   ok
-                    ? t(
-                        '🎉 Goal outcome confirmed and goal closed.',
-                        '🎉 أكدت النتيجة وأغلقت الهدف.',
-                      )
-                    : t(
-                        'Could not close the goal. Review the latest tasks and retry.',
-                        'تعذر إغلاق الهدف. راجع أحدث مهام وحاول تاني.',
-                      ),
+                    ? t('ui.goalOutcomeConfirmedAndGoalClosed.ca0c4b')
+                    : t('ui.couldNotCloseTheGoalReviewThe.71ff20'),
                 );
               }}
             >
-              {t('Confirm outcome and close goal', 'تأكيد النتيجة وإغلاق الهدف')}
+              {t('ui.confirmOutcomeAndCloseGoal.7119a8')}
             </Button>
           </>
         )}
@@ -317,10 +269,10 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
       </section>
       <div className="goal-task-filter">
         <label>
-          {t('Milestone filter', 'تصفية المرحلة')}
+          {t('ui.milestoneFilter.771f01')}
           <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">{t('All milestones', 'كل المراحل')}</option>
-            <option value="unassigned">{t('No milestone', 'بدون مرحلة')}</option>
+            <option value="">{t('ui.allMilestones.65450c')}</option>
+            <option value="unassigned">{t('ui.noMilestone.f8706d')}</option>
             {phases.map((m) => (
               <option value={m.id} key={m.id}>
                 {m.title}
@@ -349,11 +301,8 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
       <Dialog
         open={!!phase}
         onOpenChange={() => setPhase(null)}
-        title={t('Shape this milestone', 'حدد المرحلة')}
-        description={t(
-          'Progress comes from tasks assigned to this milestone.',
-          'تقدم المرحلة بيتحسب من المهام المرتبطة بيها.',
-        )}
+        title={t('ui.shapeThisMilestone.934693')}
+        description={t('ui.progressComesFromTasksAssignedToThis.fe9748')}
       >
         {phase && (
           <form
@@ -377,7 +326,7 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
             }}
           >
             <label>
-              {t('Milestone title', 'عنوان المرحلة')}
+              {t('ui.milestoneTitle.b244a4')}
               <input
                 dir="auto"
                 autoFocus
@@ -388,22 +337,20 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
               />
             </label>
             <label>
-              {t('Target date (optional)', 'التاريخ المستهدف (اختياري)')}
-              <input
+              {t('ui.targetDateOptional.0eb380')}
+              <DateTimeInput
                 type="date"
                 value={phase.date}
                 onChange={(e) =>
                   setPhase({ ...phase, date: e.target.value, targetDateAcknowledgement: undefined })
                 }
+                aria-label={t('ui.targetDateOptional.0eb380')}
               />
             </label>
             {phase.date && goal.date && phase.date > goal.date && (
               <>
                 <p dir="auto" role="alert">
-                  {t(
-                    'This milestone is after the goal target. You can explicitly keep this date, or change the goal target.',
-                    'المرحلة بعد موعد الهدف. تقدر تحفظ التاريخ ده بموافقة صريحة، أو تغيّر موعد الهدف.',
-                  )}
+                  {t('ui.thisMilestoneIsAfterTheGoalTarget.6d3fd1')}
                 </p>
                 <label>
                   <input
@@ -418,24 +365,18 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
                       })
                     }
                   />
-                  {t(
-                    'Keep this milestone after the goal target',
-                    'احفظ المرحلة بعد موعد الهدف بموافقتي',
-                  )}
+                  {t('ui.keepThisMilestoneAfterTheGoalTarget.be3aea')}
                 </label>
               </>
             )}
             {saveError && (
               <p dir="auto" role="alert">
-                {t(
-                  'Could not save the milestone. Review the latest goal and retry.',
-                  'تعذر حفظ المرحلة. راجع أحدث نسخة من الهدف وحاول تاني.',
-                )}
+                {t('ui.couldNotSaveTheMilestoneReviewThe.32d3b7')}
               </p>
             )}
             <div className="dialog-actions">
               <Button type="button" variant="outline" onClick={() => setPhase(null)}>
-                {t('Cancel', 'إلغاء')}
+                {t('ui.cancel.428808')}
               </Button>
               <Button
                 disabled={
@@ -444,7 +385,7 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
                   !!milestoneDateIssue({ date: goal.date, milestones: [phase] })
                 }
               >
-                {t('Save milestone', 'حفظ المرحلة')}
+                {t('ui.saveMilestone.e818a2')}
               </Button>
             </div>
           </form>
@@ -453,16 +394,13 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
       <Dialog
         open={!!removing}
         onOpenChange={() => setRemoving(null)}
-        title={t('Remove this milestone?', 'حذف المرحلة؟')}
-        description={t(
-          'Tasks are kept under this goal without a milestone.',
-          'المهام هتفضل مرتبطة بالهدف، لكن بدون مرحلة.',
-        )}
+        title={t('ui.removeThisMilestone.7b6ffc')}
+        description={t('ui.tasksAreKeptUnderThisGoalWithout.1030c0')}
       >
         <p dir="auto">{removing?.title}</p>
         <div className="dialog-actions">
           <Button variant="outline" onClick={() => setRemoving(null)}>
-            {t('Cancel', 'إلغاء')}
+            {t('ui.cancel.428808')}
           </Button>
           <Button
             onClick={() => {
@@ -484,18 +422,15 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
               setRemoving(null);
             }}
           >
-            {t('Remove milestone', 'حذف المرحلة')}
+            {t('ui.removeMilestone.4eb062')}
           </Button>
         </div>
       </Dialog>
       <Dialog
         open={!!draft}
         onOpenChange={() => setDraft(null)}
-        title={t('Give your goal a clear direction', 'وضح اتجاه هدفك')}
-        description={t(
-          'Progress is calculated automatically from linked tasks.',
-          'نسبة التقدم بتتحسب تلقائياً من المهام المرتبطة.',
-        )}
+        title={t('ui.giveYourGoalAClearDirection.25c863')}
+        description={t('ui.progressIsCalculatedAutomaticallyFromLinkedTasks.0990ab')}
       >
         {draft && (
           <form
@@ -509,7 +444,7 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
             }}
           >
             <label>
-              {t('Goal title', 'عنوان الهدف')}
+              {t('ui.goalTitle.4e7615')}
               <input
                 dir="auto"
                 autoFocus
@@ -520,7 +455,7 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
               />
             </label>
             <label>
-              {t('Notes and success criteria', 'الملاحظات ومعيار النجاح')}
+              {t('ui.notesAndSuccessCriteria.d647c0')}
               <textarea
                 dir="auto"
                 rows={6}
@@ -530,7 +465,7 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
               />
             </label>
             <label>
-              {t('Life area', 'مجال الحياة')}
+              {t('ui.lifeArea.d4e236')}
               <select
                 value={draft.area}
                 onChange={(e) => setDraft({ ...draft, area: e.target.value as Area })}
@@ -543,7 +478,7 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
               </select>
             </label>
             <label>
-              {t('Success criteria', 'معيار تحقق الهدف')}
+              {t('ui.successCriteria.1c57ee')}
               <textarea
                 dir="auto"
                 rows={3}
@@ -558,32 +493,30 @@ export function GoalScreen({ t, entries, setEntries, tasks, setTasks, edit, setR
                 checked={!!draft.outcomeAchieved}
                 onChange={(e) => setDraft({ ...draft, outcomeAchieved: e.target.checked })}
               />
-              {t('Outcome achieved (my assessment)', 'النتيجة تحققت (تقييمي الشخصي)')}
+              {t('ui.outcomeAchievedMyAssessment.96f290')}
             </label>
             <History item={goal} t={t} />
             {saveError && (
               <p dir="auto" role="alert">
-                {t(
-                  'Save failed or goal changed elsewhere. Copy your draft and reopen the latest version.',
-                  'تعذر الحفظ أو الهدف اتغير في مكان تاني. انسخ مسودتك وافتح النسخة الأحدث.',
-                )}
+                {t('ui.saveFailedOrGoalChangedElsewhereCopy.ffc2f7')}
               </p>
             )}
             <label>
-              {t('Target date (optional)', 'التاريخ المستهدف (اختياري)')}
-              <input
+              {t('ui.targetDateOptional.0eb380')}
+              <DateTimeInput
                 type="date"
                 value={draft.date}
                 onChange={(e) => setDraft({ ...draft, date: e.target.value })}
+                aria-label={t('ui.targetDateOptional.0eb380')}
               />
             </label>
             <GoalDateReview goal={draft} onChange={setDraft} t={t} />
             <div className="dialog-actions">
               <Button type="button" variant="outline" onClick={() => setDraft(null)}>
-                {t('Cancel', 'إلغاء')}
+                {t('ui.cancel.428808')}
               </Button>
               <Button disabled={!draft.title.trim() || !!milestoneDateIssue(draft)}>
-                {t('Save goal', 'حفظ الهدف')}
+                {t('ui.saveGoal.465173')}
               </Button>
             </div>
           </form>

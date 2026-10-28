@@ -92,12 +92,7 @@ export function FamilyTransfer({
     } catch {
       if (observed === readId.current) {
         setPreview(null);
-        setNotice(
-          t(
-            'Unsupported family backup. Nothing changed.',
-            'نسخة العائلة غير مدعومة. لم يتغير شيء.',
-          ),
-        );
+        setNotice(t('ui.unsupportedFamilyBackupNothingChanged.8df25d'));
       }
     }
   }
@@ -105,10 +100,10 @@ export function FamilyTransfer({
     <section className="family-transfer">
       <div className="tools-tabs">
         <Button variant="outline" onClick={download}>
-          {t('Export shared tasks', 'تصدير المهام المشتركة')}
+          {t('ui.exportSharedTasks.7f65cc')}
         </Button>
         <label className="button button-outline">
-          {t('Preview family backup', 'معاينة نسخة العائلة')}
+          {t('ui.previewFamilyBackup.336fa8')}
           <input
             type="file"
             accept="application/json,.json"
@@ -118,10 +113,7 @@ export function FamilyTransfer({
         </label>
       </div>
       <p dir="auto" className="muted">
-        {t(
-          'Personal backups do not include shared tasks. This separate export contains this space’s tasks, not account passwords or membership invitations.',
-          'النسخة الشخصية لا تشمل المهام المشتركة. التصدير المنفصل بيحتوي مهام المساحة دي، مش كلمات المرور أو دعوات العضوية.',
-        )}
+        {t('ui.personalBackupsDoNotIncludeSharedTasks.586a9a')}
       </p>
       <Dialog
         open={!!preview}
@@ -131,11 +123,8 @@ export function FamilyTransfer({
             setPreview(null);
           }
         }}
-        title={t('Review family task copies', 'راجع نسخ المهام العائلية')}
-        description={t(
-          'Copies tasks into this space without replacing existing tasks or changing membership. Assignments to missing members are cleared.',
-          'نسخ المهام للمساحة دي بدون استبدال الموجود أو تغيير العضوية. إسناد المهام لأعضاء غير موجودين بيتشال.',
-        )}
+        title={t('ui.reviewFamilyTaskCopies.346d53')}
+        description={t('ui.copiesTasksIntoThisSpaceWithoutReplacing.a90561')}
       >
         <p dir="auto">
           {preview?.name} · {formatNumber(preview?.tasks.length ?? 0, t('en', 'ar'))}
@@ -159,16 +148,10 @@ export function FamilyTransfer({
             ]);
             setBusy(false);
             if (ok) setPreview(null);
-            else
-              setNotice(
-                t(
-                  'The space changed or copying failed. Review the latest tasks before retrying.',
-                  'المساحة اتغيرت أو النسخ فشل. راجع أحدث مهام قبل المحاولة.',
-                ),
-              );
+            else setNotice(t('ui.theSpaceChangedOrCopyingFailedReview.139509'));
           }}
         >
-          {t('Confirm shared task copies', 'تأكيد نسخ المهام المشتركة')}
+          {t('ui.confirmSharedTaskCopies.ecb82e')}
         </Button>
       </Dialog>
       {notice && (

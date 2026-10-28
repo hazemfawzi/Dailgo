@@ -47,21 +47,21 @@ export const isActionable = (task: Task) =>
   !task.archived && ['todo', 'doing'].includes(statusOf(task));
 export const statusLabel = (status: TaskStatus, t: Translate) =>
   ({
-    todo: t('To do', 'لم تبدأ'),
-    doing: t('In progress', 'قيد التنفيذ'),
-    waiting: t('Waiting', 'في انتظار'),
-    blocked: t('Blocked', 'متعطلة'),
-    deferred: t('Deferred', 'مؤجلة'),
-    cancelled: t('Cancelled', 'ملغاة'),
-    done: t('Completed', 'مكتملة'),
+    todo: t('ui.toDo.e180a4'),
+    doing: t('ui.inProgress.63d24b'),
+    waiting: t('ui.waiting.656ea8'),
+    blocked: t('ui.blocked.486a9f'),
+    deferred: t('ui.deferred.7d343e'),
+    cancelled: t('ui.cancelled.00a275'),
+    done: t('ui.completed.bba94f'),
   })[status];
 export const priorityOf = (task: Task) => task.priority ?? 'medium';
 export const priorityLabel = (value: string, t: Translate) =>
   value === 'high'
-    ? t('High', 'عالية')
+    ? t('ui.high.ae9b8c')
     : value === 'low'
-      ? t('Low', 'منخفضة')
-      : t('Medium', 'متوسطة');
+      ? t('ui.low.929517')
+      : t('ui.medium.c5f506');
 export const isOverdue = (task: Task) =>
   !task.done &&
   !task.archived &&

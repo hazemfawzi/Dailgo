@@ -1,3 +1,5 @@
+import { messagePair } from './i18n/translate';
+import { createTranslator } from './i18n/translate';
 import { lazyView } from './lib/lazyView';
 import { shortcutAction } from './lib/shortcuts';
 import { Onboarding } from './features/journey/Onboarding';
@@ -68,12 +70,42 @@ const TodayView = lazyView(() =>
 );
 const initialTasks: Task[] = [];
 const sections = [
-  { path: '/', en: 'Home', ar: 'الرئيسية', icon: Home },
-  { path: '/assistant', en: 'AI Assistant', ar: 'المساعد', icon: Sparkles },
-  { path: '/life', en: 'My Life', ar: 'حياتي', icon: Layers },
-  { path: '/planner', en: 'Planner', ar: 'المخطط', icon: CalendarDays },
-  { path: '/memory', en: 'Memory', ar: 'الذاكرة', icon: Brain },
-  { path: '/tools', en: 'Life tools', ar: 'أدوات حياتك', icon: Layers },
+  {
+    path: '/',
+    en: messagePair('content.a7e49d2ebdfb').en,
+    ar: messagePair('content.a7e49d2ebdfb').ar,
+    icon: Home,
+  },
+  {
+    path: '/assistant',
+    en: messagePair('content.81a0716edd1e').en,
+    ar: messagePair('content.81a0716edd1e').ar,
+    icon: Sparkles,
+  },
+  {
+    path: '/life',
+    en: messagePair('content.18769707fe48').en,
+    ar: messagePair('content.18769707fe48').ar,
+    icon: Layers,
+  },
+  {
+    path: '/planner',
+    en: messagePair('content.e7665d2bdb88').en,
+    ar: messagePair('content.e7665d2bdb88').ar,
+    icon: CalendarDays,
+  },
+  {
+    path: '/memory',
+    en: messagePair('content.eee0ded69112').en,
+    ar: messagePair('content.eee0ded69112').ar,
+    icon: Brain,
+  },
+  {
+    path: '/tools',
+    en: messagePair('content.0e12345976cb').en,
+    ar: messagePair('content.0e12345976cb').ar,
+    icon: Layers,
+  },
 ];
 export default function App() {
   const [lang, setLang] = usePersisted<'en' | 'ar'>('personal-os.language', 'ar');
@@ -112,14 +144,27 @@ export default function App() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
+  useEffect(() => {
+    const open = () => {
+      const id = location.hash.slice(1);
+      if (id) document.getElementById(id)?.closest('details')?.setAttribute('open', '');
+    };
+    const frame = requestAnimationFrame(open);
+    window.addEventListener('hashchange', open);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('hashchange', open);
+    };
+  }, [location.pathname, location.hash]);
   const ar = lang === 'ar';
-  const t = (en: string, arabic: string) => (ar ? arabic : en);
+  const t = createTranslator(lang);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [assistantHistory, setAssistantHistory] = useState(false);
   const [editor, setEditor] = useState<Task | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [remove, setRemove] = useState<Task | null>(null);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   useEffect(() => {
     document.documentElement.dir = ar ? 'rtl' : 'ltr';
     document.documentElement.lang = lang;
@@ -173,6 +218,7 @@ export default function App() {
         if (location.pathname !== '/') navigate('/');
         requestAnimationFrame(() => {
           const focus = document.getElementById('daily-focus');
+          focus?.closest('details')?.setAttribute('open', '');
           focus?.scrollIntoView({ block: 'center' });
           focus?.querySelector('select')?.focus();
         });
@@ -184,15 +230,41 @@ export default function App() {
   function propose(text: string) {
     if (!text.trim()) return;
     const message =
-      text === t('Help me prioritize', 'ساعدني في ترتيب الأولويات')
-        ? t('Plan my day', 'خطط يومي')
-        : text === t('Make time for a break', 'خصص وقتاً للاستراحة')
-          ? t('Task: Take a short break', 'مهمة: استراحة قصيرة')
-          : text === t('Remind me to call family', 'ذكرني بالاتصال بالعائلة')
-            ? t('Task: Call family', 'مهمة: الاتصال بالعائلة')
+      text === t('ui.helpMePrioritize.fed84c')
+        ? t('ui.planMyDay.fec857')
+        : text === t('ui.makeTimeForABreak.944033')
+          ? t('ui.taskTakeAShortBreak.35be98')
+          : text === t('ui.remindMeToCallFamily.07c24d')
+            ? t('ui.taskCallFamily.3bd63a')
             : text;
     navigate('/assistant', { state: { prompt: message } });
   }
+  const appearanceControls = (
+    <>
+      <OfflineApp t={t} />
+      <Button
+        variant="ghost"
+        onClick={() => setLang(ar ? 'en' : 'ar')}
+        aria-label={t('ui.switchToArabic.1b1851')}
+      >
+        {ar ? 'EN' : 'العربية'}
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setDark(!dark)}
+        aria-label={t('ui.toggleColorTheme.2331b0')}
+      >
+        {dark ? <Sun size={18} /> : <Moon size={18} />}
+      </Button>
+    </>
+  );
+  const preferenceControls = (
+    <>
+      <DataSettings t={t} />
+      {appearanceControls}
+    </>
+  );
   const navigation = (
     <>
       {sections.map((s) => (
@@ -215,22 +287,19 @@ export default function App() {
       <Dialog
         open={assistantOpen}
         onOpenChange={setAssistantOpen}
-        title={t('Assistant and changes', 'المساعد والتغييرات')}
-        description={t(
-          'Ctrl/Cmd+K · Review every proposal before saving.',
-          'Ctrl/Cmd+K · راجع كل اقتراح قبل الحفظ.',
-        )}
+        title={t('ui.assistantAndChanges.c3f1e2')}
+        description={t('ui.ctrlCmdKReviewEveryProposalBefore.83220b')}
       >
         <div className="assistant-drawer">
           <div className="tools-tabs">
             <button onClick={() => setAssistantHistory(false)}>
-              {t('Conversation', 'المحادثة')}
+              {t('ui.conversation.627a03')}
             </button>
             <button onClick={() => setAssistantHistory(true)}>
-              {t('Change history', 'سجل التغييرات')}
+              {t('ui.changeHistory.a2db94')}
             </button>
           </div>
-          <Suspense fallback={<p dir="auto">{t('Opening assistant…', 'جاري فتح المساعد…')}</p>}>
+          <Suspense fallback={<p dir="auto">{t('ui.openingAssistant.ddc30b')}</p>}>
             {assistantHistory ? (
               <ActionsScreen t={t} />
             ) : (
@@ -242,7 +311,7 @@ export default function App() {
       <UndoNotice t={t} />
       <Onboarding t={t} language={lang} dark={dark} onLanguage={setLang} onDark={setDark} />
       <a className="skip-link" href="#main-content">
-        {t('Skip to content', 'انتقل للمحتوى')}
+        {t('ui.skipToContent.bbc2aa')}
       </a>
       <aside className={`sidebar ${mobileMenu ? 'mobile-open' : ''}`}>
         <Link to="/" className="brand">
@@ -251,26 +320,26 @@ export default function App() {
           </span>
           <span>
             {t(branding.name, branding.nameAr)}
-            <small>{t('YOUR PERSONAL OS', 'نظام حياتك الشخصي')}</small>
+            <small>{t('ui.yourPersonalOs.371ac2')}</small>
           </span>
         </Link>
-        <div className="workspace-label">{t('WORKSPACE', 'مساحة العمل')}</div>
-        <nav aria-label={t('Main navigation', 'التنقل الرئيسي')}>{navigation}</nav>
+        <div className="workspace-label">{t('ui.workspace.b0c0df')}</div>
+        <nav aria-label={t('ui.mainNavigation.42cf8b')}>{navigation}</nav>
         <div className="sidebar-bottom">
           <div className="local-note">
             <span className="status-dot" />
-            {t('A space that’s only yours', 'مساحة تخصك وحدك')}
+            {t('ui.aSpaceThatSOnlyYours.2c0a6e')}
             <small>
               {isServerStorage()
                 ? storageText(t, 'serverSaved')
-                : t('Prototype · Stored on this device', 'نموذج أولي · محفوظ على هذا الجهاز')}
+                : t('ui.prototypeStoredOnThisDevice.e72558')}
             </small>
           </div>
           <div className="profile">
             <span className="avatar">Y</span>
             <div>
-              {t('Your workspace', 'مساحتك الشخصية')}
-              <small>{t('Personal account · Demo', 'حساب شخصي · تجريبي')}</small>
+              {t('ui.yourWorkspace.eecb50')}
+              <small>{t('ui.personalAccountDemo.09e94a')}</small>
             </div>
             <Leaf size={17} />
           </div>
@@ -283,68 +352,53 @@ export default function App() {
               variant="ghost"
               size="icon"
               className="mobile-menu-button"
-              aria-label={t('Toggle menu', 'فتح القائمة')}
+              aria-label={t('ui.toggleMenu.28abaa')}
               onClick={() => setMobileMenu(!mobileMenu)}
             >
               <Menu size={20} />
             </Button>
             <span className="breadcrumb">
-              {t('Your workspace', 'مساحتك الشخصية')}
+              {t('ui.yourWorkspace.eecb50')}
               <span>/</span>
               {location.pathname === '/'
-                ? t('Personal overview', 'نظرة شخصية')
+                ? t('ui.personalOverview.ce5964')
                 : (sections.find((s) => s.path === location.pathname)?.[ar ? 'ar' : 'en'] ??
                   (location.pathname.startsWith('/life/')
-                    ? t('Goal details', 'تفاصيل الهدف')
-                    : t('Page', 'صفحة')))}
+                    ? t('ui.goalDetails.3d0520')
+                    : t('ui.page.1c3616')))}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <GlobalSearch t={t} tasks={tasks} entries={entries} edit={edit} />
             <QuickCapture t={t} />
-            <DataSettings t={t} />
-            <OfflineApp t={t} />
-            <span className="prototype-tag">
-              {isServerStorage()
-                ? t('SERVER WORKSPACE', 'مساحة متصلة بالسيرفر')
-                : t('LOCAL PROTOTYPE', 'نموذج محلي')}
-            </span>
-            <Button
-              variant="ghost"
-              onClick={() => setLang(ar ? 'en' : 'ar')}
-              aria-label={t('Switch to Arabic', 'التبديل إلى الإنجليزية')}
-            >
-              {ar ? 'EN' : 'العربية'}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setDark(!dark)}
-              aria-label={t('Toggle color theme', 'تغيير المظهر')}
-            >
-              {dark ? <Sun size={18} /> : <Moon size={18} />}
-            </Button>
-            <span className="avatar small">Y</span>
+            <div className="desktop-preferences">{preferenceControls}</div>
+            <div id="account-controls" />
           </div>
         </header>
         <main id="main-content" tabIndex={-1}>
           {(storageError || entriesError) && (
             <div role="alert" className="notice">
-              {t(
-                'Saving needs attention. Open Data and backup above.',
-                'الحفظ يحتاج مراجعة. افتح البيانات والنسخ الاحتياطي بالأعلى.',
-              )}
+              {t('ui.savingNeedsAttentionOpenDataAndBackup.c4758b')}
             </div>
           )}
           <ErrorBoundary t={t}>
             <Suspense
               fallback={
                 <p dir="auto" className="notice" role="status">
-                  {t('Loading your space…', 'جاري فتح مساحتك…')}
+                  {t('ui.loadingYourSpace.9aabea')}
                 </p>
               }
             >
               <Routes>
+                <Route
+                  path="/settings"
+                  element={
+                    <>
+                      <div className="settings-appearance">{appearanceControls}</div>
+                      <DataSettings t={t} inline />
+                    </>
+                  }
+                />
                 <Route
                   path="/"
                   element={
@@ -390,9 +444,9 @@ export default function App() {
                   path="*"
                   element={
                     <section className="card scope-page">
-                      <h1 dir="auto">{t('Page not found', 'الصفحة غير موجودة')}</h1>
+                      <h1 dir="auto">{t('ui.pageNotFound.c1e58b')}</h1>
                       <Button asChild>
-                        <Link to="/">{t('Back to Home', 'العودة للرئيسية')}</Link>
+                        <Link to="/">{t('ui.backToHome.91e378')}</Link>
                       </Button>
                     </section>
                   }
@@ -402,9 +456,40 @@ export default function App() {
           </ErrorBoundary>
         </main>
       </div>
-      <nav className="bottom-nav" aria-label={t('Mobile navigation', 'التنقل للجوال')}>
-        {navigation}
+      <nav className="bottom-nav" aria-label={t('ui.mobileNavigation.499dfb')}>
+        {sections.slice(0, 4).map((section) => (
+          <NavLink
+            key={section.path}
+            to={section.path}
+            end={section.path === '/'}
+            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+          >
+            <section.icon size={20} />
+            <span>{ar ? section.ar : section.en}</span>
+          </NavLink>
+        ))}
+        <button className="nav-link" onClick={() => setMoreOpen(true)}>
+          <Menu size={20} />
+          {t('ui.more.5ac23a')}
+        </button>
       </nav>
+      <Dialog
+        open={moreOpen}
+        onOpenChange={setMoreOpen}
+        title={t('ui.more.5ac23a')}
+        description={t('ui.additionalToolsAndSavedInformation.3302db')}
+      >
+        <nav className="more-navigation">
+          {sections.slice(4).map((section) => (
+            <Link key={section.path} to={section.path} onClick={() => setMoreOpen(false)}>
+              {ar ? section.ar : section.en}
+            </Link>
+          ))}
+          <Link to="/settings" onClick={() => setMoreOpen(false)}>
+            {t('ui.settings.fc4a53')}
+          </Link>
+        </nav>
+      </Dialog>
       {formOpen && editor && (
         <TaskEditor
           key={editor.id}
@@ -422,18 +507,15 @@ export default function App() {
       <Dialog
         open={!!remove}
         onOpenChange={() => setRemove(null)}
-        title={t('Delete this priority?', 'حذف هذه الأولوية؟')}
-        description={t(
-          'Moves it to Recently deleted, where it can be restored.',
-          'تنتقل للمحذوفات القابلة للاستعادة من البيانات والنسخ الاحتياطي.',
-        )}
+        title={t('ui.deleteThisPriority.90dc8e')}
+        description={t('ui.movesItToRecentlyDeletedWhereIt.2930bc')}
       >
         <p dir="auto" className="mb-6">
           {remove?.title}
         </p>
         <div className="dialog-actions">
           <Button variant="outline" onClick={() => setRemove(null)}>
-            {t('Keep priority', 'الاحتفاظ بالأولوية')}
+            {t('ui.keepPriority.4d6777')}
           </Button>
           <Button
             onClick={() => {
@@ -442,7 +524,7 @@ export default function App() {
             }}
           >
             <Trash2 size={15} />
-            {t('Delete', 'حذف')}
+            {t('ui.delete.010491')}
           </Button>
         </div>
       </Dialog>

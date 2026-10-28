@@ -10,44 +10,18 @@ export function ProPanel({ t }: { t: Translate }) {
   useEffect(() => {
     void apiRequest('billing')
       .then(setStatus)
-      .catch(() =>
-        setNotice(t('Could not load subscription status.', 'تعذر تحميل حالة الاشتراك.')),
-      );
+      .catch(() => setNotice(t('ui.couldNotLoadSubscriptionStatus.d25943')));
   }, []);
   return (
     <section className="card tools-section">
       <h2 dir="auto">Dailgo Pro</h2>
-      <p dir="auto">
-        {t(
-          'Your personal records remain yours. Export and account access do not require Pro. Paid features activate only after a verified payment notification from the provider.',
-          'بياناتك الشخصية بتفضل ملكك. التصدير والدخول للحساب لا يحتاجان Pro. مزايا الاشتراك بتتفعل بعد تأكيد الدفع الموثق من المزود فقط.',
-        )}
-      </p>
-      <p dir="auto">
-        {status?.pro ? t('Pro active', 'Pro نشط') : t('Free plan', 'الخطة المجانية')}
-      </p>
+      <p dir="auto">{t('ui.yourPersonalRecordsRemainYoursExportAnd.e6cd21')}</p>
+      <p dir="auto">{status?.pro ? t('ui.proActive.c0c544') : t('ui.freePlan.4accba')}</p>
       <ul>
-        <li>
-          {t(
-            'Larger configured Claude allowance, with server spending limits',
-            'حصة Claude أكبر حسب إعداد السيرفر وحدود الإنفاق',
-          )}
-        </li>
-        <li>
-          {t(
-            'Goal sharing and advanced planning insights',
-            'مشاركة الأهداف وإحصائيات التخطيط المتقدمة',
-          )}
-        </li>
+        <li>{t('ui.largerConfiguredClaudeAllowanceWithServerSpending.8f5a6f')}</li>
+        <li>{t('ui.goalSharingAndAdvancedPlanningInsights.789b2f')}</li>
       </ul>
-      {!status?.enabled && (
-        <p dir="auto">
-          {t(
-            'Payment setup is pending. No checkout or charge is available. Sharing and insights are available in the current beta.',
-            'إعداد الدفع لسه ناقص. مفيش دفع أو خصم متاح حاليًا. المشاركة والإحصائيات متاحة في النسخة التجريبية الحالية.',
-          )}
-        </p>
-      )}
+      {!status?.enabled && <p dir="auto">{t('ui.paymentSetupIsPendingNoCheckoutOr.1a21a9')}</p>}
       {status?.price && (
         <p dir="auto">
           {new Intl.NumberFormat(localeFor(t('en', 'ar')), {
@@ -63,9 +37,9 @@ export function ProPanel({ t }: { t: Translate }) {
           )}{' '}
           /{' '}
           {status.price.interval === 'month'
-            ? t('month', 'شهر')
+            ? t('ui.month.a8a289')
             : status.price.interval === 'year'
-              ? t('year', 'سنة')
+              ? t('ui.year.80a66c')
               : status.price.interval}
         </p>
       )}
@@ -77,12 +51,12 @@ export function ProPanel({ t }: { t: Translate }) {
             try {
               location.assign((await apiRequest('billing/checkout', 'POST', {})).url);
             } catch {
-              setNotice(t('Could not open the provider checkout.', 'تعذر فتح صفحة الدفع.'));
+              setNotice(t('ui.couldNotOpenTheProviderCheckout.9d97ee'));
               setBusy(false);
             }
           }}
         >
-          {t('Open Pro checkout', 'فتح اشتراك Pro')}
+          {t('ui.openProCheckout.b190ea')}
         </Button>
         <Button
           disabled={busy || !status?.enabled || !status.canManage}
@@ -92,12 +66,12 @@ export function ProPanel({ t }: { t: Translate }) {
             try {
               location.assign((await apiRequest('billing/portal', 'POST', {})).url);
             } catch {
-              setNotice(t('Could not open subscription management.', 'تعذر فتح إدارة الاشتراك.'));
+              setNotice(t('ui.couldNotOpenSubscriptionManagement.24ee78'));
               setBusy(false);
             }
           }}
         >
-          {t('Manage or cancel subscription', 'إدارة الاشتراك أو إلغاؤه')}
+          {t('ui.manageOrCancelSubscription.aff2a1')}
         </Button>
       </div>
       {notice && (

@@ -6,11 +6,11 @@
   margin-bottom: 26px;
 }
 .home-heading h1 {
-  font-size: 31px;
+  font-size: var(--text-2xl);
   margin-top: 14px;
 }
 .home-heading p {
-  font-size: 13px;
+  font-size: var(--text-xs);
   color: var(--muted);
   margin: 0;
 }
@@ -42,7 +42,7 @@
   z-index: 1;
 }
 .hero-kicker {
-  font-size: 10px;
+  font-size: var(--text-xs);
   letter-spacing: 1.8px;
   color: #c1d4c7;
   display: flex;
@@ -56,14 +56,14 @@
   border-radius: 50%;
 }
 .daily-hero h2 {
-  font-size: 29px;
+  font-size: var(--text-xl);
   font-weight: 500;
   line-height: 1.5;
   margin: 16px 0 11px;
   letter-spacing: -0.6px;
 }
 .daily-hero p {
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.9;
   color: #b4c8bf;
   max-width: 440px;
@@ -76,7 +76,7 @@
   min-height: 42px;
 }
 .hero-disclaimer {
-  font-size: 8px;
+  font-size: var(--text-xs);
   color: #9bb5a9;
   display: block;
   margin-top: 13px;
@@ -108,22 +108,22 @@
   transform: rotate(15deg);
 }
 .progress-orbit span {
-  font-size: 44px;
+  font-size: var(--text-2xl);
   letter-spacing: -2px;
   font-weight: 300;
   line-height: 1.1;
 }
 .progress-orbit small {
-  font-size: 18px;
+  font-size: var(--text-md);
   letter-spacing: 0;
 }
 .progress-orbit p {
-  font-size: 8px;
+  font-size: var(--text-xs);
   margin: 9px 0 0;
   text-align: center;
 }
 .hero-progress > span {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: #b4c8bf;
   display: flex;
   align-items: center;
@@ -148,14 +148,14 @@
   justify-content: space-between;
   gap: 8px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 .stat-card > div > svg {
   color: var(--purple);
 }
 .stat-card strong {
   display: block;
-  font-size: 30px;
+  font-size: var(--text-2xl);
   font-weight: 500;
   line-height: 1.6;
   margin-top: 8px;
@@ -165,7 +165,7 @@
   justify-content: space-between;
   align-items: center;
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--text-xs);
   gap: 5px;
 }
 .home-assistant-bar {
@@ -187,7 +187,7 @@
 }
 .home-assistant-bar input {
   font: inherit;
-  font-size: 12px;
+  font-size: var(--text-xs);
   border: 0;
   outline: 0;
   background: none;
@@ -215,7 +215,7 @@
   border-radius: 6px;
   padding: 9px;
   color: var(--purple);
-  font-size: 9px;
+  font-size: var(--text-xs);
   white-space: nowrap;
 }
 .home-content-grid {
@@ -238,11 +238,11 @@
   gap: 15px;
 }
 .home-section-title h3 {
-  font-size: 15px;
+  font-size: var(--text-sm);
   line-height: 1.6;
 }
 .home-section-title .eyebrow {
-  font-size: 8px;
+  font-size: var(--text-xs);
   margin-bottom: 7px;
 }
 .home-section-title > a,
@@ -250,7 +250,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--purple);
   white-space: nowrap;
 }
@@ -266,7 +266,7 @@
   border-top: 1px solid var(--border);
 }
 .focus-index {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 .home-focus-task > div {
@@ -275,7 +275,7 @@
 }
 .task-title-button {
   font: inherit;
-  font-size: 13px;
+  font-size: var(--text-xs);
   text-align: start;
   background: none;
   border: 0;
@@ -295,7 +295,7 @@
   flex-wrap: wrap;
   color: var(--muted);
   margin-top: 8px;
-  font-size: 9px;
+  font-size: var(--text-xs);
 }
 .task-badges > span {
   display: inline-flex;
@@ -342,7 +342,7 @@
   width: 100%;
   padding: 17px 23px;
   color: var(--purple);
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 .home-add-task:hover {
   background: var(--soft);
@@ -357,7 +357,7 @@
   color: #a5b8aa;
 }
 .home-empty p {
-  font-size: 11px;
+  font-size: var(--text-xs);
   margin: 13px 0;
   line-height: 1.7;
 }
@@ -365,7 +365,7 @@
   display: flex;
   gap: 6px;
   justify-content: center;
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--purple);
   padding: 6px;
 }
@@ -387,11 +387,11 @@
   color: var(--text);
 }
 .home-week small {
-  font-size: 8px;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 .home-week strong {
-  font-size: 16px;
+  font-size: var(--text-sm);
   font-weight: 500;
 }
 .home-week button > span {
@@ -419,7 +419,7 @@
   padding: 18px 0;
 }
 .home-agenda-events time {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 .agenda-stem {
@@ -434,14 +434,14 @@
   min-width: 0;
 }
 .home-agenda-events strong {
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 500;
   display: block;
   overflow-wrap: anywhere;
 }
 .home-agenda-events small {
   display: block;
-  font-size: 9px;
+  font-size: var(--text-xs);
   color: var(--muted);
   margin-top: 6px;
 }
@@ -466,12 +466,12 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  font-size: 9px;
+  font-size: var(--text-xs);
   letter-spacing: 1.4px;
 }
 .focus-time {
   direction: ltr;
-  font-size: 53px;
+  font-size: var(--text-2xl);
   font-weight: 300;
   letter-spacing: 1px;
   line-height: 1.7;
@@ -481,7 +481,7 @@
   color: #98a18d;
 }
 .focus-widget p {
-  font-size: 10px;
+  font-size: var(--text-xs);
   margin: 0 0 18px;
   opacity: 0.8;
 }
@@ -496,7 +496,7 @@
   border-color: #cdd1c2;
 }
 .focus-widget small {
-  font-size: 8px;
+  font-size: var(--text-xs);
   opacity: 0.65;
   display: block;
   margin-top: 12px;
@@ -515,7 +515,7 @@
   padding: 12px 23px;
   color: var(--text);
   text-align: start;
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 .home-routine > .checkbox {
   flex-shrink: 0;
@@ -525,13 +525,13 @@
   overflow-wrap: anywhere;
 }
 .home-routine small {
-  font-size: 9px;
+  font-size: var(--text-xs);
   color: var(--muted);
   direction: ltr;
 }
 .home-section-link {
   margin: 17px 23px 0;
-  font-size: 10px;
+  font-size: var(--text-xs);
   white-space: normal;
 }
 .home-goal {
@@ -542,7 +542,7 @@
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1.7;
   margin-bottom: 8px;
 }
@@ -559,7 +559,7 @@
   justify-content: space-between;
   gap: 20px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--text-xs);
   padding: 26px 0 30px;
 }
 .task-workspace {
@@ -576,7 +576,7 @@
   border: 1px solid var(--border);
   border-radius: 20px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--text-xs);
   padding: 8px 14px;
 }
 .task-filter-chips .selected {
@@ -595,7 +595,7 @@
   border: 1px solid var(--border);
   border-radius: 7px;
   background: var(--surface);
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--muted);
   max-width: 100%;
 }
@@ -619,7 +619,7 @@
   padding: 15px 4px;
   min-height: 60px;
   flex-wrap: wrap;
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 .selection-toolbar > label {
@@ -653,7 +653,7 @@
   gap: 12px;
 }
 .task-item-top .task-title-button {
-  font-size: 14px;
+  font-size: var(--text-xs);
   font-weight: 500;
 }
 .task-item.finished .task-title-button {
@@ -661,7 +661,7 @@
   color: var(--muted);
 }
 .task-description {
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1.8;
   color: var(--muted);
   margin: 10px 0 12px;
@@ -686,7 +686,7 @@
   padding-inline-start: 49px;
 }
 .task-item-bottom select {
-  font-size: 10px;
+  font-size: var(--text-xs);
   padding: 6px 9px;
 }
 .task-item-bottom .entry-actions {
@@ -709,7 +709,7 @@
 }
 .kanban-column > h3 {
   padding: 9px 5px 17px;
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 .kanban-column .task-item {
   background: var(--surface);
@@ -719,7 +719,7 @@
   padding: 15px 12px;
 }
 .kanban-column .task-title-button {
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 .kanban-column .task-item-top {
   gap: 8px;
@@ -755,7 +755,7 @@
   margin-bottom: 20px;
 }
 .subtasks-editor h3 {
-  font-size: 12px;
+  font-size: var(--text-xs);
   margin-bottom: 12px;
 }
 .subtask-line {
@@ -763,7 +763,7 @@
   align-items: center;
   gap: 10px;
   padding: 5px 0;
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 .subtask-line > span {
   flex: 1;
@@ -824,7 +824,7 @@
     padding: 30px;
   }
   .daily-hero h2 {
-    font-size: 26px;
+    font-size: var(--text-xl);
   }
   .hero-progress {
     min-width: 145px;
@@ -847,18 +847,18 @@
     margin-bottom: 22px;
   }
   .home-heading h1 {
-    font-size: 26px;
+    font-size: var(--text-xl);
     line-height: 1.5;
     letter-spacing: -0.5px;
     max-width: 250px;
   }
   .home-heading p {
-    font-size: 11px;
+    font-size: var(--text-xs);
     line-height: 1.7;
     max-width: 240px;
   }
   .home-heading > .button {
-    font-size: 10px;
+    font-size: var(--text-xs);
     padding: 0 10px;
     margin-top: 35px;
     gap: 5px;
@@ -870,17 +870,17 @@
     min-height: 280px;
   }
   .daily-hero h2 {
-    font-size: 25px;
+    font-size: var(--text-xl);
     line-height: 1.6;
     max-width: 260px;
     letter-spacing: 0;
   }
   .daily-hero p {
-    font-size: 11px;
+    font-size: var(--text-xs);
     max-width: 290px;
   }
   .hero-kicker {
-    font-size: 9px;
+    font-size: var(--text-xs);
     letter-spacing: 1px;
   }
   .hero-content {
@@ -890,7 +890,7 @@
     display: none;
   }
   .hero-disclaimer {
-    font-size: 8px;
+    font-size: var(--text-xs);
   }
   .home-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -901,13 +901,13 @@
     padding: 17px;
   }
   .stat-card > div {
-    font-size: 11px;
+    font-size: var(--text-xs);
   }
   .stat-card strong {
-    font-size: 29px;
+    font-size: var(--text-xl);
   }
   .stat-card small {
-    font-size: 8px;
+    font-size: var(--text-xs);
   }
   .home-assistant-bar {
     padding: 11px 12px;
@@ -919,7 +919,7 @@
     width: 33px;
   }
   .home-assistant-bar input {
-    font-size: 11px;
+    font-size: var(--text-xs);
   }
   .home-content-grid {
     grid-template-columns: 1fr;
@@ -933,10 +933,10 @@
     padding: 21px 18px;
   }
   .home-section-title h3 {
-    font-size: 14px;
+    font-size: var(--text-xs);
   }
   .home-section-title > a {
-    font-size: 9px;
+    font-size: var(--text-xs);
   }
   .home-focus-task {
     padding: 18px;
@@ -946,14 +946,14 @@
     display: none;
   }
   .home-focus-task .task-title-button {
-    font-size: 13px;
+    font-size: var(--text-xs);
   }
   .home-focus-task > .button {
     width: 27px;
     flex-shrink: 0;
   }
   .task-badges {
-    font-size: 9px;
+    font-size: var(--text-xs);
     gap: 6px;
   }
   .home-week {
@@ -961,10 +961,10 @@
     gap: 5px;
   }
   .home-week small {
-    font-size: 8px;
+    font-size: var(--text-xs);
   }
   .home-week strong {
-    font-size: 15px;
+    font-size: var(--text-sm);
   }
   .home-agenda-events {
     padding-inline: 18px;
@@ -973,14 +973,14 @@
     padding: 24px;
   }
   .focus-time {
-    font-size: 57px;
+    font-size: var(--text-2xl);
     line-height: 1.6;
   }
   .home-goal {
     margin-inline: 20px;
   }
   .home-footer {
-    font-size: 8px;
+    font-size: var(--text-xs);
     line-height: 1.8;
     gap: 15px;
   }
@@ -988,7 +988,7 @@
     align-items: flex-start;
   }
   .task-workspace .collection-top h2 {
-    font-size: 19px;
+    font-size: var(--text-lg);
     line-height: 1.6;
   }
   .task-workspace .collection-top > .button {
@@ -999,7 +999,7 @@
     gap: 6px;
   }
   .task-filter-chips button {
-    font-size: 10px;
+    font-size: var(--text-xs);
     padding: 9px 12px;
   }
   .task-toolbar .search-field {
@@ -1008,7 +1008,7 @@
   .task-toolbar select {
     flex: 1;
     min-width: 90px;
-    font-size: 10px;
+    font-size: var(--text-xs);
     padding: 10px 7px;
   }
   .view-toggle .button {
@@ -1021,7 +1021,7 @@
     gap: 10px;
   }
   .task-item-top .task-title-button {
-    font-size: 13px;
+    font-size: var(--text-xs);
   }
   .task-item-top > .button {
     width: 28px;
@@ -1040,18 +1040,18 @@
     min-height: 35px;
   }
   .selection-toolbar {
-    font-size: 10px;
+    font-size: var(--text-xs);
     gap: 7px;
   }
   .selection-toolbar .button {
-    font-size: 10px;
+    font-size: var(--text-xs);
     padding: 0 7px;
   }
   .form-pair {
     gap: 10px;
   }
   .task-editor .form-pair select {
-    font-size: 12px;
+    font-size: var(--text-xs);
     padding-inline: 8px;
   }
   .kanban-column .task-item-bottom {
@@ -1065,7 +1065,7 @@
     letter-spacing: 0.8px;
   }
   .home-focus-task .task-badges > span {
-    font-size: 8px;
+    font-size: var(--text-xs);
   }
 }
 .quick-dates {
@@ -1076,7 +1076,7 @@
 }
 .quick-dates .button {
   min-height: 32px;
-  font-size: 10px;
+  font-size: var(--text-xs);
 }
 
 /* Separate selection from completion and keep mixed-direction user text readable. */
@@ -1085,7 +1085,7 @@
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 .task-completion-control {
@@ -1097,7 +1097,7 @@
   color: var(--text);
   border-radius: 18px;
   padding: 6px 10px;
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 .task-completion-control.is-complete {
   color: var(--purple);
@@ -1123,12 +1123,12 @@
   padding-block: 10px;
 }
 .entry-target-date {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--muted);
   margin-block: 10px;
 }
 .week-due-tasks h4 {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--muted);
   margin-block: 12px 6px;
 }
@@ -1145,7 +1145,7 @@
   margin-block: 6px;
 }
 .week-deadline small {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 
@@ -1177,8 +1177,56 @@
   margin-block: 12px;
 }
 .goal-date-review p {
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 .entry-target-date span {
   display: inline-block;
+}
+.home-v2 {
+  max-width: 1120px;
+  margin-inline: auto;
+}
+.home-content-grid {
+  display: block;
+}
+.home-main-column {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: var(--space-6);
+}
+.home-secondary {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  padding: var(--space-3) var(--space-4);
+  margin-block: var(--space-4);
+}
+.home-secondary > summary {
+  font-size: var(--text-md);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+}
+.home-heading {
+  margin-bottom: var(--space-6);
+}
+.home-assistant-bar {
+  margin-bottom: var(--space-6);
+}
+.home-side-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+@media (max-width: 850px) {
+  .home-main-column,
+  .home-side-column {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .home-heading-actions {
+    flex-wrap: wrap;
+  }
+  .home-heading-actions .button {
+    min-height: 44px;
+  }
 }

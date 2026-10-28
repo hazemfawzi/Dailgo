@@ -22,12 +22,12 @@ export function PrayerPanel({ t, compact = false }: { t: Translate; compact?: bo
     parameters,
   );
   const label = {
-    fajr: t('Fajr', 'الفجر'),
-    sunrise: t('Sunrise', 'الشروق'),
-    dhuhr: t('Dhuhr', 'الظهر'),
-    asr: t('Asr', 'العصر'),
-    maghrib: t('Maghrib', 'المغرب'),
-    isha: t('Isha', 'العشاء'),
+    fajr: t('ui.fajr.0f3aa3'),
+    sunrise: t('ui.sunrise.ce7e03'),
+    dhuhr: t('ui.dhuhr.e3d7d5'),
+    asr: t('ui.asr.c84e4d'),
+    maghrib: t('ui.maghrib.11b4f3'),
+    isha: t('ui.isha.246656'),
   };
   const grid = (
     <dl className="prayer-grid">
@@ -41,7 +41,7 @@ export function PrayerPanel({ t, compact = false }: { t: Translate; compact?: bo
                   hour: '2-digit',
                   minute: '2-digit',
                 }).format(times[key as keyof typeof label] as Date)
-              : t('Unavailable', 'غير متاح')}
+              : t('ui.unavailable.459b9e')}
           </dd>
         </div>
       ))}
@@ -50,30 +50,25 @@ export function PrayerPanel({ t, compact = false }: { t: Translate; compact?: bo
   if (compact)
     return settings.enabled ? (
       <section className="card tools-section">
-        <h3 dir="auto">{t('Prayer breaks', 'فواصل الصلاة')}</h3>
+        <h3 dir="auto">{t('ui.prayerBreaks.08b46f')}</h3>
         {grid}
       </section>
     ) : null;
   return (
     <section className="card tools-section editor-form">
-      <h2 dir="auto">{t('Prayer breaks (optional)', 'فواصل الصلاة (اختياري)')}</h2>
+      <h2 dir="auto">{t('ui.prayerBreaksOptional.2fa956')}</h2>
       <label>
         <input
           type="checkbox"
           checked={settings.enabled}
           onChange={(e) => setSettings((old) => ({ ...old, enabled: e.target.checked }))}
         />
-        {t('Show prayer breaks in my day', 'عرض فواصل الصلاة في يومي')}
+        {t('ui.showPrayerBreaksInMyDay.25ca02')}
       </label>
-      <p dir="auto">
-        {t(
-          'Calculated locally from the coordinates and method you choose. Confirm times with your local mosque; these are planning cues, not automatic notifications. The default coordinates are Cairo until you change them.',
-          'الحساب محلي حسب الإحداثيات والطريقة اللي تختارها. راجع التوقيت مع مسجدك؛ دي فواصل للتخطيط، مش إشعارات تلقائية. الإحداثيات الافتراضية للقاهرة لحد ما تغيرها.',
-        )}
-      </p>
+      <p dir="auto">{t('ui.calculatedLocallyFromTheCoordinatesAndMethod.b817cd')}</p>
       <div className="form-pair">
         <label>
-          {t('Latitude', 'دائرة العرض')}
+          {t('ui.latitude.b26390')}
           <input
             type="number"
             min={-66}
@@ -88,7 +83,7 @@ export function PrayerPanel({ t, compact = false }: { t: Translate; compact?: bo
           />
         </label>
         <label>
-          {t('Longitude', 'خط الطول')}
+          {t('ui.longitude.6907c2')}
           <input
             type="number"
             min={-180}
@@ -107,23 +102,13 @@ export function PrayerPanel({ t, compact = false }: { t: Translate; compact?: bo
         className="button button-outline"
         onClick={() => {
           if (!navigator.geolocation) {
-            setError(
-              t(
-                'Location is unavailable; enter coordinates manually.',
-                'الموقع غير متاح؛ أدخل الإحداثيات يدويًا.',
-              ),
-            );
+            setError(t('ui.locationIsUnavailableEnterCoordinatesManually.87d344'));
             return;
           }
           navigator.geolocation.getCurrentPosition(
             (result) => {
               if (Math.abs(result.coords.latitude) > 66) {
-                setError(
-                  t(
-                    'This latitude needs a local high-latitude timetable.',
-                    'الموقع ده محتاج جدول محلي لخطوط العرض العليا.',
-                  ),
-                );
+                setError(t('ui.thisLatitudeNeedsALocalHighLatitude.f88ca0'));
                 return;
               }
               setSettings((old) => ({
@@ -132,20 +117,14 @@ export function PrayerPanel({ t, compact = false }: { t: Translate; compact?: bo
                 longitude: result.coords.longitude,
               }));
             },
-            () =>
-              setError(
-                t(
-                  'Location permission was declined or unavailable.',
-                  'إذن الموقع مرفوض أو غير متاح.',
-                ),
-              ),
+            () => setError(t('ui.locationPermissionWasDeclinedOrUnavailable.24003f')),
           );
         }}
       >
-        {t('Use my location', 'استخدم موقعي')}
+        {t('ui.useMyLocation.72cd55')}
       </button>
       <label>
-        {t('Calculation method', 'طريقة الحساب')}
+        {t('ui.calculationMethod.c01b57')}
         <select
           value={settings.method}
           onChange={(e) =>
@@ -155,15 +134,13 @@ export function PrayerPanel({ t, compact = false }: { t: Translate; compact?: bo
             }))
           }
         >
-          <option value="Egyptian">{t('Egyptian authority', 'الهيئة المصرية للمساحة')}</option>
-          <option value="MuslimWorldLeague">
-            {t('Muslim World League', 'رابطة العالم الإسلامي')}
-          </option>
-          <option value="UmmAlQura">{t('Umm al-Qura', 'أم القرى')}</option>
+          <option value="Egyptian">{t('ui.egyptianAuthority.62137f')}</option>
+          <option value="MuslimWorldLeague">{t('ui.muslimWorldLeague.fc2ecc')}</option>
+          <option value="UmmAlQura">{t('ui.ummAlQura.a4389d')}</option>
         </select>
       </label>
       <label>
-        {t('Asr method', 'حساب العصر')}
+        {t('ui.asrMethod.1cdc60')}
         <select
           value={settings.madhab}
           onChange={(e) =>
@@ -173,8 +150,8 @@ export function PrayerPanel({ t, compact = false }: { t: Translate; compact?: bo
             }))
           }
         >
-          <option value="Shafi">{t('Standard', 'الجمهور')}</option>
-          <option value="Hanafi">{t('Hanafi', 'حنفي')}</option>
+          <option value="Shafi">{t('ui.standard.3a0014')}</option>
+          <option value="Hanafi">{t('ui.hanafi.79aac8')}</option>
         </select>
       </label>
       {settings.enabled && grid}

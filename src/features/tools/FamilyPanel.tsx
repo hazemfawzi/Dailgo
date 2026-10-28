@@ -1,3 +1,5 @@
+import { diffWorkspace, applyWorkspaceDelta } from '../../lib/workspaceDelta';
+import { DateTimeInput } from '../../components/DateTimeInput';
 import { FamilyTransfer } from './FamilyTransfer';
 import { useEffect, useRef, useState } from 'react';
 import { apiRequest, ApiError } from '../../lib/serverStorage';
@@ -37,26 +39,38 @@ export function FamilyPanel({ t }: { t: Translate }) {
     const observed = ++generation.current;
     try {
       const value = await apiRequest('family');
-      if (observed === generation.current) setSpaces(value.spaces);
+      if (observed === generation.current) {
+        setSpaces(value.spaces);
+        if (undo && !value.spaces.some((space: Space) => space.id === undo.space.id)) setUndo(null);
+      }
     } catch {
-      setNotice(t('Could not load shared spaces.', 'تعذر تحميل المساحات المشتركة.'));
+      setNotice(t('ui.couldNotLoadSharedSpaces.431fcb'));
     }
   }
   useEffect(() => {
     if (busy) return;
     void load();
-    const id = setInterval(() => {
+    const refresh = () => {
       if (!document.hidden && !busy) void load();
-    }, 10000);
-    return () => clearInterval(id);
+    };
+    window.addEventListener('dailgo-family-changed', refresh);
+    window.addEventListener('dailgo-family-refresh', refresh);
+    return () => {
+      window.removeEventListener('dailgo-family-changed', refresh);
+      window.removeEventListener('dailgo-family-refresh', refresh);
+    };
   }, [busy]);
   async function write(space: Space, tasks: Task[]) {
     setBusy(true);
     try {
-      const saved = await apiRequest('family/' + space.id, 'PUT', {
+      const result = await apiRequest('family/' + space.id, 'PUT', {
         revision: space.revision,
-        data: { 'personal-os.tasks.v1': tasks },
+        changes: diffWorkspace(space.data, { 'personal-os.tasks.v1': tasks }),
       });
+      const saved: Space = {
+        ...result,
+        data: applyWorkspaceDelta(space.data, result.changes) as Space['data'],
+      };
       setSpaces((old) => old.map((x) => (x.id === space.id ? saved : x)));
       if (
         tasks.some((task) => {
@@ -73,11 +87,8 @@ export function FamilyPanel({ t }: { t: Translate }) {
     } catch (error) {
       setNotice(
         error instanceof ApiError && error.status === 409
-          ? t(
-              'Someone updated this space. The latest version has been loaded; review and retry.',
-              'حد عدّل المساحة. حمّلنا أحدث نسخة؛ راجع وحاول تاني.',
-            )
-          : t('Could not save the shared task.', 'تعذر حفظ المهمة المشتركة.'),
+          ? t('ui.someoneUpdatedThisSpaceTheLatestVersion.e19410')
+          : t('ui.couldNotSaveTheSharedTask.1c74b1'),
       );
       await load();
       return false;
@@ -87,13 +98,8 @@ export function FamilyPanel({ t }: { t: Translate }) {
   }
   return (
     <section className="card tools-section">
-      <h2 dir="auto">{t('Family spaces', 'المساحات العائلية')}</h2>
-      <p dir="auto">
-        {t(
-          'Only tasks you add here are shared. Personal tasks, finances, memories and conversations remain private to each account. Everyone in a space can manage its shared tasks.',
-          'المشاركة للمهام اللي تضيفها هنا فقط. المهام الشخصية والمالية والذاكرة والمحادثات خاصة بكل حساب. أعضاء المساحة يقدروا ينظموا مهامها المشتركة.',
-        )}
-      </p>
+      <h2 dir="auto">{t('ui.familySpaces.f6943c')}</h2>
+      <p dir="auto">{t('ui.onlyTasksYouAddHereAreShared.d45ea0')}</p>
       <form
         className="editor-form tools-inline"
         onSubmit={async (e) => {
@@ -107,40 +113,35 @@ export function FamilyPanel({ t }: { t: Translate }) {
             setSpaces((old) => [...old, space]);
             form.reset();
           } catch {
-            setNotice(t('Could not create the family space.', 'تعذر إنشاء المساحة العائلية.'));
+            setNotice(t('ui.couldNotCreateTheFamilySpace.44748b'));
           }
           setBusy(false);
         }}
       >
         <label>
-          {t('Family space name', 'اسم المساحة العائلية')}
+          {t('ui.familySpaceName.f2d464')}
           <input name="title" maxLength={100} required dir="auto" />
         </label>
-        <Button disabled={busy}>{t('Create family space', 'إنشاء مساحة عائلية')}</Button>
+        <Button disabled={busy}>{t('ui.createFamilySpace.f83cb4')}</Button>
       </form>
       {spaces.map((space) => (
         <section className="saving-goal" key={space.id}>
           <h3 dir="auto">{space.title}</h3>
           <p dir="auto">
-            {formatNumber(space.members.length, t('en', 'ar'))} {t('members', 'أعضاء')}
+            {formatNumber(space.members.length, t('en', 'ar'))} {t('ui.members.d4b737')}
           </p>
           <ul className="tools-records">
             {space.members.map((member) => (
               <li key={member.principal}>
                 <span dir="auto">{member.username}</span>
                 {member.role === 'owner'
-                  ? t('Owner', 'المالك')
+                  ? t('ui.owner.3d1143')
                   : space.role === 'owner' && (
                       <Button
                         disabled={busy}
                         variant="ghost"
                         onClick={async () => {
-                          if (
-                            !window.confirm(
-                              t('Remove this member’s access?', 'إلغاء وصول العضو ده؟'),
-                            )
-                          )
-                            return;
+                          if (!window.confirm(t('ui.removeThisMemberSAccess.6fad35'))) return;
                           try {
                             const next = await apiRequest(
                               `family/${space.id}/members/${member.principal}`,
@@ -149,11 +150,11 @@ export function FamilyPanel({ t }: { t: Translate }) {
                             );
                             setSpaces((old) => old.map((x) => (x.id === space.id ? next : x)));
                           } catch {
-                            setNotice(t('Could not remove access.', 'تعذر إلغاء الوصول.'));
+                            setNotice(t('ui.couldNotRemoveAccess.be21f5'));
                           }
                         }}
                       >
-                        {t('Remove access', 'إلغاء الوصول')}
+                        {t('ui.removeAccess.b9a790')}
                       </Button>
                     )}
               </li>
@@ -168,21 +169,16 @@ export function FamilyPanel({ t }: { t: Translate }) {
                   const result = await apiRequest('family/' + space.id + '/invite', 'POST', {});
                   setInvitation({ space: space.id, ...result });
                 } catch {
-                  setNotice(t('Could not create the invitation.', 'تعذر إنشاء الدعوة.'));
+                  setNotice(t('ui.couldNotCreateTheInvitation.813a5c'));
                 }
               }}
             >
-              {t('Create one-use invitation', 'إنشاء دعوة لمرة واحدة')}
+              {t('ui.createOneUseInvitation.657e19')}
             </Button>
           )}
           {invitation?.space === space.id && (
             <aside>
-              <p dir="auto">
-                {t(
-                  'This link grants access to this family space. It expires in seven days and works once. Share it only with the intended person.',
-                  'الرابط بيدي وصول للمساحة العائلية دي. صالح لسبعة أيام ولمرة واحدة. شاركه مع الشخص المقصود فقط.',
-                )}
-              </p>
+              <p dir="auto">{t('ui.thisLinkGrantsAccessToThisFamily.a19321')}</p>
               <a
                 className="tools-secret-link"
                 href={location.origin + '/invite#' + invitation.token}
@@ -197,7 +193,7 @@ export function FamilyPanel({ t }: { t: Translate }) {
                   )
                 }
               >
-                {t('Copy invitation', 'نسخ الدعوة')}
+                {t('ui.copyInvitation.a2d24b')}
               </Button>
               <Button
                 variant="ghost"
@@ -206,11 +202,11 @@ export function FamilyPanel({ t }: { t: Translate }) {
                     await apiRequest(`family/${space.id}/invite/${invitation.id}`, 'DELETE', {});
                     setInvitation(null);
                   } catch {
-                    setNotice(t('Could not revoke the invitation.', 'تعذر إلغاء الدعوة.'));
+                    setNotice(t('ui.couldNotRevokeTheInvitation.640c5c'));
                   }
                 }}
               >
-                {t('Revoke invitation', 'إلغاء الدعوة')}
+                {t('ui.revokeInvitation.70bf68')}
               </Button>
             </aside>
           )}
@@ -233,17 +229,17 @@ export function FamilyPanel({ t }: { t: Translate }) {
             }}
           >
             <label>
-              {t('Shared task title', 'عنوان المهمة المشتركة')}
+              {t('ui.sharedTaskTitle.4cffb6')}
               <input name="title" maxLength={160} dir="auto" required />
             </label>
             <label>
-              {t('Shared task due date', 'موعد تسليم المهمة المشتركة')}
-              <input name="due" type="date" />
+              {t('ui.sharedTaskDueDate.4d081e')}
+              <DateTimeInput name="due" type="date" aria-label={t('ui.sharedTaskDueDate.4d081e')} />
             </label>
             <label>
-              {t('Assigned to', 'المسؤول')}
+              {t('ui.assignedTo.c6e22a')}
               <select name="assignee">
-                <option value="">{t('Anyone', 'أي عضو')}</option>
+                <option value="">{t('ui.anyone.107333')}</option>
                 {space.members.map((member) => (
                   <option value={member.principal} key={member.principal}>
                     {member.username}
@@ -251,7 +247,7 @@ export function FamilyPanel({ t }: { t: Translate }) {
                 ))}
               </select>
             </label>
-            <Button disabled={busy}>{t('Add shared task', 'إضافة مهمة مشتركة')}</Button>
+            <Button disabled={busy}>{t('ui.addSharedTask.ca2999')}</Button>
           </form>
           <FamilyTransfer space={space} t={t} restore={(tasks) => write(space, tasks)} />
           <label>
@@ -260,7 +256,7 @@ export function FamilyPanel({ t }: { t: Translate }) {
               checked={showArchive}
               onChange={(e) => setShowArchive(e.target.checked)}
             />
-            {t('Show archived shared tasks', 'عرض المهام المشتركة المؤرشفة')}
+            {t('ui.showArchivedSharedTasks.8a0a89')}
           </label>
           <ul className="tools-records">
             {space.data['personal-os.tasks.v1']
@@ -271,7 +267,7 @@ export function FamilyPanel({ t }: { t: Translate }) {
                     className="task-completion-control"
                     disabled={busy}
                     aria-pressed={task.done}
-                    aria-label={`${t('Complete shared task', 'إكمال المهمة المشتركة')}: ${task.title}`}
+                    aria-label={`${t('ui.completeSharedTask.dee46f')}: ${task.title}`}
                     onClick={() =>
                       void write(
                         space,
@@ -288,7 +284,7 @@ export function FamilyPanel({ t }: { t: Translate }) {
                   <span dir="auto">{task.title}</span>
                   <small>
                     {space.members.find((x) => x.principal === task.assigneeId)?.username ??
-                      t('Anyone', 'أي عضو')}
+                      t('ui.anyone.107333')}
                   </small>
                   <Button
                     disabled={busy}
@@ -303,28 +299,18 @@ export function FamilyPanel({ t }: { t: Translate }) {
                     }
                   >
                     {task.archived
-                      ? t('Restore shared task', 'استعادة المهمة المشتركة')
-                      : t('Archive shared task', 'أرشفة المهمة المشتركة')}
+                      ? t('ui.restoreSharedTask.fedb0b')
+                      : t('ui.archiveSharedTask.cf61f4')}
                   </Button>
                 </li>
               ))}
           </ul>
         </section>
       ))}
-      {!spaces.length && (
-        <p dir="auto">
-          {t(
-            'Create a family space, then invite someone to share household tasks.',
-            'أنشئ مساحة عائلية، وبعدها ادعُ حد يشاركك مهام البيت.',
-          )}
-        </p>
-      )}
+      {!spaces.length && <p dir="auto">{t('ui.createAFamilySpaceThenInviteSomeone.544008')}</p>}
       {undo && (
         <aside className="undo-notice" role="status">
-          {t(
-            'Shared change saved · 20 seconds to undo',
-            'اتحفظ التغيير المشترك · التراجع متاح ٢٠ ثانية',
-          )}
+          {t('ui.sharedChangeSaved20SecondsToUndo.e611a6')}
           <Button
             disabled={busy}
             variant="outline"
@@ -348,19 +334,14 @@ export function FamilyPanel({ t }: { t: Translate }) {
                 });
                 setSpaces((old) => old.map((x) => (x.id === saved.id ? saved : x)));
               } catch {
-                setNotice(
-                  t(
-                    'Someone changed the shared tasks. Undo was refused; review the latest space.',
-                    'حد عدّل المهام المشتركة. التراجع اترفض؛ راجع أحدث نسخة.',
-                  ),
-                );
+                setNotice(t('ui.someoneChangedTheSharedTasksUndoWas.1f53df'));
                 await load();
               }
               setUndo(null);
               setBusy(false);
             }}
           >
-            {t('Undo shared change', 'تراجع عن التغيير المشترك')}
+            {t('ui.undoSharedChange.2a184b')}
           </Button>
         </aside>
       )}

@@ -1,3 +1,4 @@
+import { DateTimeInput } from '../../components/DateTimeInput';
 import { WeekStartSetting } from '../settings/PlanningSettings';
 import { storageText } from '../../i18n/messages';
 import { formatNumber, formatCalendarDate } from '../../i18n/format';
@@ -68,10 +69,10 @@ export function PlannerScreen({
     }
   }, [requestedDate]);
   const tabs = [
-    { id: 'tasks', icon: ListTodo, label: t('Tasks', 'المهام') },
-    { id: 'week', icon: CalendarRange, label: t('Week plan', 'خطة الأسبوع') },
-    { id: 'calendar', icon: CalendarDays, label: t('Calendar', 'التقويم') },
-    { id: 'routines', icon: Repeat2, label: t('Routines', 'الروتين') },
+    { id: 'tasks', icon: ListTodo, label: t('ui.tasks.19a9e5') },
+    { id: 'week', icon: CalendarRange, label: t('ui.weekPlan.10c604') },
+    { id: 'calendar', icon: CalendarDays, label: t('ui.calendar.33a4a9') },
+    { id: 'routines', icon: Repeat2, label: t('ui.routines.4daff4') },
   ];
   const [settings] = usePlanning();
   const start = (month.getDay() - settings.weekStartsOn + 7) % 7;
@@ -80,21 +81,12 @@ export function PlannerScreen({
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">{t('ONE STEP AT A TIME', 'خطوة بخطوة')}</div>
-          <h1 dir="auto">{t('Tasks and planning', 'المهام والتخطيط')}</h1>
-          <p dir="auto">
-            {t(
-              'Plan your tasks, appointments and daily routines.',
-              'خطط مهامك ومواعيدك وروتينك اليومي.',
-            )}
-          </p>
+          <div className="eyebrow">{t('ui.oneStepAtATime.a0a953')}</div>
+          <h1 dir="auto">{t('ui.tasksAndPlanning.110b20')}</h1>
+          <p dir="auto">{t('ui.planYourTasksAppointmentsAndDailyRoutines.1b4061')}</p>
         </div>
       </div>
-      <div
-        className="segmented-tabs"
-        role="tablist"
-        aria-label={t('Planner views', 'طرق عرض المخطط')}
-      >
+      <div className="segmented-tabs" role="tablist" aria-label={t('ui.plannerViews.16d6d6')}>
         {tabs.map((item) => (
           <button
             key={item.id}
@@ -122,11 +114,6 @@ export function PlannerScreen({
           </button>
         ))}
       </div>
-      {(tab === 'week' || tab === 'calendar') && (
-        <div className="editor-form">
-          <WeekStartSetting t={t} />
-        </div>
-      )}
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === 'week' && <WeekScreen {...{ t, ar, tasks, setTasks, entries, edit }} />}
         {tab === 'tasks' && <TaskBoard {...{ t, tasks, setTasks, edit, setRemove }} />}
@@ -134,12 +121,7 @@ export function PlannerScreen({
           <>
             <div className="context-banner">
               <CalendarDays size={18} />
-              <p dir="auto">
-                {t(
-                  'Appointments are saved to your workspace. Optional Google transfers and reminders are managed in Life tools.',
-                  'المواعيد بتتحفظ في مساحتك. الربط الاختياري مع Google والتذكيرات من أدوات حياتك.',
-                )}
-              </p>
+              <p dir="auto">{t('ui.appointmentsAreSavedToYourWorkspaceOptional.b3ce15')}</p>
             </div>
             <section className="card calendar-card">
               <div className="calendar-heading">
@@ -153,7 +135,7 @@ export function PlannerScreen({
                   <Button
                     variant="ghost"
                     size="icon"
-                    aria-label={t('Previous month', 'الشهر السابق')}
+                    aria-label={t('ui.previousMonth.e8fd0b')}
                     onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
                   >
                     <ChevronLeft size={18} />
@@ -166,12 +148,12 @@ export function PlannerScreen({
                       setMonth(calendarMonth(today));
                     }}
                   >
-                    {t('Today', 'اليوم')}
+                    {t('ui.today.7981a9')}
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    aria-label={t('Next month', 'الشهر التالي')}
+                    aria-label={t('ui.nextMonth.439c36')}
                     onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
                   >
                     <ChevronRight size={18} />
@@ -207,7 +189,7 @@ export function PlannerScreen({
                     <button
                       key={value}
                       className={`${day === value ? 'selected' : ''} ${value === localDate() ? 'today' : ''}`}
-                      aria-label={`${formatCalendarDate(value, t('en', 'ar'))}${count ? ` · ${formatNumber(count, t('en', 'ar'))} ${t('events', 'مواعيد')}` : ''}${taskCount ? ` · ${formatNumber(taskCount, t('en', 'ar'))} ${t('tasks', 'مهام')}` : ''}`}
+                      aria-label={`${formatCalendarDate(value, t('en', 'ar'))}${count ? ` · ${formatNumber(count, t('en', 'ar'))} ${t('ui.events.7b96f0')}` : ''}${taskCount ? ` · ${formatNumber(taskCount, t('en', 'ar'))} ${t('ui.tasks.1c126f')}` : ''}`}
                       aria-pressed={day === value}
                       onClick={() => setDay(value)}
                     >
@@ -219,8 +201,8 @@ export function PlannerScreen({
               </div>
             </section>
             <label className="date-picker">
-              {t('Selected day', 'اليوم المحدد')}
-              <input
+              {t('ui.selectedDay.c6511b')}
+              <DateTimeInput
                 type="date"
                 value={day}
                 onChange={(e) => {
@@ -229,6 +211,7 @@ export function PlannerScreen({
                     setMonth(calendarMonth(e.target.value));
                   }
                 }}
+                aria-label={t('ui.selectedDay.c6511b')}
               />
             </label>
             <ConflictNotice entries={entries} date={day} t={t} />
@@ -238,11 +221,8 @@ export function PlannerScreen({
               {...{ entries, setEntries, t }}
               kinds={['event']}
               date={day}
-              title={t('Plans for this day', 'خطط هذا اليوم')}
-              empty={t(
-                'No appointments for this day. Add one to reserve its time.',
-                'مفيش مواعيد لليوم ده. أضف موعد عشان تحجز وقته.',
-              )}
+              title={t('ui.plansForThisDay.d2fb58')}
+              empty={t('ui.noAppointmentsForThisDayAddOne.c224c1')}
             />
           </>
         )}
@@ -255,8 +235,8 @@ export function PlannerScreen({
             <EntryCollection
               {...{ entries, setEntries, t }}
               kinds={['routine']}
-              title={t('Small rituals, lasting change.', 'عادات صغيرة، أثر مستمر.')}
-              empty={t('Start a routine you can return to.', 'ابدأ روتيناً يمكنك الاستمرار عليه.')}
+              title={t('ui.smallRitualsLastingChange.94a531')}
+              empty={t('ui.startARoutineYouCanReturnTo.0954eb')}
             />
           </>
         )}

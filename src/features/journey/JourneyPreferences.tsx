@@ -1,3 +1,4 @@
+import { DateTimeInput } from '../../components/DateTimeInput';
 import type { Area, Translate } from '../../lib/workspace';
 import { areas, areaLabel } from '../../lib/workspace';
 import { useJourney } from './useJourney';
@@ -15,10 +16,10 @@ export function JourneyPreferences({ t }: { t: Translate }) {
   }
   return (
     <section className="editor-form">
-      <h3 dir="auto">{t('Daily cycle preferences', 'إعدادات الدورة اليومية')}</h3>
+      <h3 dir="auto">{t('ui.dailyCyclePreferences.fa3a0c')}</h3>
       <label>
-        {t('Wake-up time', 'وقت الصحيان')}
-        <input
+        {t('ui.wakeUpTime.b5d327')}
+        <DateTimeInput
           type="time"
           value={journey.wakeTime}
           onInput={(e) => {
@@ -28,11 +29,12 @@ export function JourneyPreferences({ t }: { t: Translate }) {
           onChange={(e) => {
             if (e.target.value) setJourney((old) => ({ ...old, wakeTime: e.target.value }));
           }}
+          aria-label={t('ui.wakeUpTime.b5d327')}
         />
       </label>
       <label>
-        {t('Evening review time', 'وقت المراجعة المسائية')}
-        <input
+        {t('ui.eveningReviewTime.6d03ba')}
+        <DateTimeInput
           type="time"
           value={journey.eveningTime}
           onInput={(e) => {
@@ -42,10 +44,11 @@ export function JourneyPreferences({ t }: { t: Translate }) {
           onChange={(e) => {
             if (e.target.value) setJourney((old) => ({ ...old, eveningTime: e.target.value }));
           }}
+          aria-label={t('ui.eveningReviewTime.6d03ba')}
         />
       </label>
       <fieldset>
-        <legend>{t('Two preferred life areas', 'مجالان مفضلان')}</legend>
+        <legend>{t('ui.twoPreferredLifeAreas.bf142b')}</legend>
         {areas.map((area) => (
           <label key={area}>
             <input
@@ -59,10 +62,7 @@ export function JourneyPreferences({ t }: { t: Translate }) {
         ))}
       </fieldset>
       <p dir="auto" className="muted">
-        {t(
-          'In-app reminders use your planning timezone. Enable optional email or Push reminders from Life tools → Connections.',
-          'التذكير داخل التطبيق حسب المنطقة الزمنية للتخطيط. فعّل تذكيرات البريد أو Push الاختيارية من أدوات الحياة ← الاتصالات.',
-        )}
+        {t('ui.inAppRemindersUseYourPlanningTimezone.b83ae2')}
       </p>
     </section>
   );

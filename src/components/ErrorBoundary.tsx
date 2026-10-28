@@ -13,15 +13,10 @@ export class ErrorBoundary extends Component<
     const { t } = this.props;
     return this.state.failed ? (
       <section className="card scope-page" role="alert">
-        <h1 dir="auto">{t('This view could not open', 'تعذر فتح الشاشة')}</h1>
-        <p dir="auto">
-          {t(
-            'Your stored data has not been cleared. Reload to retry. Data and backup remains available above.',
-            'بياناتك المحفوظة لم يتم مسحها. أعد التحميل للمحاولة. البيانات والنسخ الاحتياطي متاحة بالأعلى.',
-          )}
-        </p>
+        <h1 dir="auto">{t('ui.thisViewCouldNotOpen.d19d25')}</h1>
+        <p dir="auto">{t('ui.yourStoredDataHasNotBeenCleared.00e7d3')}</p>
         <button className="button" onClick={() => location.reload()}>
-          {t('Reload', 'إعادة التحميل')}
+          {t('ui.reload.1ec0bd')}
         </button>
       </section>
     ) : (

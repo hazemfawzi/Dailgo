@@ -8,17 +8,16 @@ export function TargetDate({ date, t }: { date: string; t: Translate }) {
   const number = days === null ? '' : formatNumber(Math.abs(days), locale);
   return (
     <p dir="auto" className="entry-target-date">
-      {t('Target date', 'الموعد المستهدف')}:{' '}
-      <time dateTime={date}>{formatCalendarDate(date, locale)}</time>
+      {t('ui.targetDate.ff8c28')}: <time dateTime={date}>{formatCalendarDate(date, locale)}</time>
       {days !== null && (
         <span className={days < 0 ? 'overdue-text' : ''}>
           {' '}
           ·{' '}
           {days === 0
-            ? t('Due today', 'الموعد اليوم')
+            ? t('ui.dueToday.0e2db9')
             : days > 0
-              ? t(`${number} days left`, `فاضل ${number} يوم`)
-              : t(`${number} days past target`, `فات الموعد بـ${number} يوم`)}
+              ? t('ui.daysLeft.991c9a', { en0: number, ar0: number })
+              : t('ui.daysPastTarget.98e76e', { en0: number, ar0: number })}
         </span>
       )}
     </p>

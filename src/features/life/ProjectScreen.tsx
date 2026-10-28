@@ -30,8 +30,8 @@ export function ProjectScreen({
   if (!project)
     return (
       <section className="card scope-page">
-        <h1 dir="auto">{t('Project no longer available', 'المشروع لم يعد متاحًا')}</h1>
-        <Link to="/life">{t('Back to My life', 'العودة لحياتي')}</Link>
+        <h1 dir="auto">{t('ui.projectNoLongerAvailable.7f22c1')}</h1>
+        <Link to="/life">{t('ui.backToMyLife.a5a86d')}</Link>
       </section>
     );
   const stats = projectStats(tasks, project.id);
@@ -50,37 +50,34 @@ export function ProjectScreen({
     });
   return (
     <>
-      <Link to="/life">← {t('My life', 'حياتي')}</Link>
+      <Link to="/life">← {t('ui.myLife.907c1a')}</Link>
       <div className="page-heading">
         <div>
           <div className="eyebrow">
-            {t('PROJECT', 'مشروع')}
-            {project.archived ? ' · ' + t('Archived', 'مؤرشف') : ''}
+            {t('ui.project.3a5c5e')}
+            {project.archived ? ' · ' + t('ui.archived.799523') : ''}
           </div>
           <h1 dir="auto">{project.title}</h1>
           <p dir="auto">{project.context}</p>
         </div>
-        <Button onClick={addTask}>{t('Add project task', 'إضافة مهمة للمشروع')}</Button>
+        <Button onClick={addTask}>{t('ui.addProjectTask.baac63')}</Button>
       </div>
       {parent && (
         <p dir="auto">
-          {t('Supports goal', 'بيخدم هدف')}: <Link to={`/life/${parent.id}`}>{parent.title}</Link>
+          {t('ui.supportsGoal.ae6cd5')}: <Link to={`/life/${parent.id}`}>{parent.title}</Link>
         </p>
       )}
       <p dir="auto">
         {localizedNumber(stats.done, t('en', 'ar'))}/{localizedNumber(stats.total, t('en', 'ar'))} ·{' '}
         {localizedNumber(stats.progress, t('en', 'ar'))}%{' '}
-        {t(
-          'task completion; outcome is reviewed separately',
-          'إنجاز المهام؛ تحقق النتيجة يُراجع بشكل مستقل',
-        )}
+        {t('ui.taskCompletionOutcomeIsReviewedSeparately.c0ce6a')}
       </p>
       <EntryCollection
         allowCreate={false}
         entries={related}
         {...{ setEntries, t }}
         kinds={['project']}
-        title={t('Project brief and success criteria', 'وصف المشروع ومعيار نجاحه')}
+        title={t('ui.projectBriefAndSuccessCriteria.5a50d0')}
         empty=""
       />
       <History item={project} t={t} />

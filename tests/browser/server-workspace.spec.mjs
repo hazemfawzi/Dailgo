@@ -45,6 +45,21 @@ async function createTask(page, title) {
   await page.getByRole('button', { name: 'Save task', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 }
+async function openAccountMenu(page) {
+  const menu = page.locator('.account-menu');
+  if ((await menu.getAttribute('open')) === null) await menu.locator('> summary').click();
+}
+async function openHomeSection(page, key) {
+  const section = page.locator('details[data-home-section="' + key + '"]');
+  if ((await section.getAttribute('open')) === null) await section.locator('> summary').click();
+}
+async function setWeekStart(page, value) {
+  await page.getByRole('button', { name: /^(Data and backup|البيانات والنسخ الاحتياطي)$/ }).click();
+  await page
+    .getByRole('combobox', { name: /^(Week starts on|بداية الأسبوع)$/ })
+    .selectOption(value);
+  await page.getByRole('button', { name: 'Close / إغلاق', exact: true }).click();
+}
 test('account bootstrap, explicit local migration, automatic server saves, multiple devices, conflicts and offline failures', async ({
   page,
   browser,
@@ -95,10 +110,13 @@ test('account bootstrap, explicit local migration, automatic server saves, multi
   await signIn(device);
   await device.goto('/planner?tab=tasks');
   await expect(device.getByText('Automatically saved task', { exact: true }).first()).toBeVisible();
-  // A second device changes the same record after the first device opened its editor.
-  await page.getByRole('button', { name: 'New task', exact: true }).click();
+  // A second device edits the same record after this editor captured its revision.
+  await page.getByRole('button', { name: 'Automatically saved task', exact: true }).first().click();
   await page.getByLabel('Task title', { exact: true }).fill('Must reject stale workspace');
-  await device.getByRole('button', { name: 'New task', exact: true }).click();
+  await device
+    .getByRole('button', { name: 'Automatically saved task', exact: true })
+    .first()
+    .click();
   await device.getByLabel('Task title', { exact: true }).fill('Second device task');
   await device.getByRole('button', { name: 'Save task', exact: true }).click();
   await expect(device.getByRole('dialog')).toHaveCount(0);
@@ -118,7 +136,7 @@ test('account bootstrap, explicit local migration, automatic server saves, multi
   await expect(page.getByText('Second device task', { exact: true }).first()).toBeVisible();
   await page.goto('/');
   await expect(page.getByRole('button', { name: 'New task', exact: true })).toBeVisible();
-  await page.route('**/api/workspace/commit', (route) => route.abort());
+  await page.route('**/api/workspace/changes', (route) => route.abort());
   await page.getByRole('button', { name: 'New task', exact: true }).click();
   await page.getByLabel('Task title', { exact: true }).fill('Never saved offline');
   await page.getByRole('button', { name: 'Save task', exact: true }).click();
@@ -131,12 +149,11 @@ test('account bootstrap, explicit local migration, automatic server saves, multi
     await page.evaluate(() => JSON.parse(localStorage.getItem('personal-os.workspace.v3'))),
   ).toEqual(original);
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
-  await page.unroute('**/api/workspace/commit');
-  await page.getByRole('button', { name: 'إعادة الاتصال / تحميل أحدث نسخة' }).click();
-  await expect(
-    page.getByText('متصل بحساب السيرفر · الحفظ تلقائي · تحديث الأجهزة كل ١٠ ثوانٍ'),
-  ).toBeVisible();
-  await page.getByRole('button', { name: 'تسجيل الخروج', exact: true }).click();
+  await page.unroute('**/api/workspace/changes');
+  await openAccountMenu(page);
+  await page.getByRole('button', { name: 'Reconnect and review', exact: true }).click();
+  await expect(page.locator('.save-status')).toHaveText('Saved ✓');
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'تسجيل الدخول', exact: true })).toBeVisible();
   expect((await page.request.get('/api/workspace')).status()).toBe(401);
   await second.close();
@@ -212,10 +229,11 @@ test('autosave keeps fast typing intact over a slow connection and expires sessi
   page,
 }) => {
   await signIn(page);
-  await page.route('**/api/workspace/commit', async (route) => {
+  await page.route('**/api/workspace/changes', async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 120));
     await route.continue();
   });
+  await openHomeSection(page, 'review');
   const field = page.getByRole('textbox', { name: 'What moved forward?', exact: true });
   await field.fill('');
   await field.pressSequentially('Quick review', { delay: 5 });
@@ -231,7 +249,7 @@ test('autosave keeps fast typing intact over a slow connection and expires sessi
       { timeout: 10000 },
     )
     .toBe(true);
-  await page.unroute('**/api/workspace/commit');
+  await page.unroute('**/api/workspace/changes');
   await page.request.post('/api/account/logout', {
     headers: { Origin: 'http://127.0.0.1:5187' },
     data: {},
@@ -331,12 +349,15 @@ test('Arabic connection bar stays clear of the sidebar, follows dark mode and is
   const bounds = await bar.boundingBox();
   const side = await sidebar.boundingBox();
   expect(bounds.x + bounds.width).toBeLessThanOrEqual(side.x + 1);
-  const light = await bar.evaluate((element) => getComputedStyle(element).backgroundColor);
+  await expect(page.getByRole('button', { name: 'تسجيل الخروج', exact: true })).not.toBeVisible();
+  const light = await page
+    .locator('.topbar')
+    .evaluate((element) => getComputedStyle(element).backgroundColor);
   await page.getByRole('button', { name: 'تغيير المظهر', exact: true }).click();
   await expect(page.locator('html')).toHaveClass(/dark/);
-  expect(await bar.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(
-    light,
-  );
+  expect(
+    await page.locator('.topbar').evaluate((element) => getComputedStyle(element).backgroundColor),
+  ).not.toBe(light);
   await page.goto('/assistant');
   await page.getByRole('textbox', { name: 'رسالتك', exact: true }).fill('عايز أذاكر بكرة الساعة 8');
   await page.getByRole('button', { name: 'إرسال الرسالة', exact: true }).click();
@@ -528,6 +549,7 @@ test('routine check-ins persist and linked focus sessions record paused and elap
   await seedUxWorkspace(page, 'en', {
     'personal-os.entries.v1': { version: 2, demoVersion: 1, entries: [routine] },
   });
+  await openHomeSection(page, 'focus');
   const routineButton = page.getByRole('button', { name: /Practice routine/ });
   await routineButton.click();
   await expect(routineButton).toHaveAttribute('aria-pressed', 'true');
@@ -537,6 +559,7 @@ test('routine check-ins persist and linked focus sessions record paused and elap
       return data['personal-os.entries.v1'].entries[0].doneDates;
     })
     .toEqual(['2026-10-27']);
+  await openHomeSection(page, 'focus');
   await page.getByRole('combobox', { name: 'Focus task', exact: true }).selectOption('due-only');
   await page.getByRole('button', { name: 'Start focus', exact: true }).click();
   await expect
@@ -622,14 +645,15 @@ test('password change keeps the current session and revokes the other device', a
   const replacement = 'browser-fixture-replacement-password';
   let changed = false;
   try {
-    await page.locator('.server-connection summary').click();
-    await page.getByLabel('كلمة المرور الحالية', { exact: true }).fill(password);
-    await page.getByLabel('كلمة المرور الجديدة', { exact: true }).fill(replacement);
+    await openAccountMenu(page);
+    await page.locator('.account-panel details > summary').click();
+    await page.getByLabel('Current password', { exact: true }).fill(password);
+    await page.getByLabel('New password', { exact: true }).fill(replacement);
     const responsePromise = page.waitForResponse(
       (response) =>
         response.url().endsWith('/api/account/password') && response.request().method() === 'POST',
     );
-    await page.getByRole('button', { name: 'تغيير كلمة المرور', exact: true }).click();
+    await page.getByRole('button', { name: 'Change password', exact: true }).click();
     const response = await responsePromise;
     expect(response.status()).toBe(200);
     changed = true;
@@ -739,6 +763,7 @@ test('morning focus choices show capacity and preserve deadlines with explicit o
       { id: 'd', title: 'Walk', category: 'Health', done: false, archived: false, estimate: 40 },
     ],
   });
+  await openHomeSection(page, 'planning');
   for (const title of ['Overdue call', 'Study', 'Read'])
     await page.getByRole('checkbox', { name: 'Focus choice: ' + title, exact: true }).check();
   await expect(
@@ -756,6 +781,7 @@ test('morning focus choices show capacity and preserve deadlines with explicit o
   expect(tasks[0].dueDate).toBe('2026-10-26');
   expect(tasks.slice(0, 3).every((task) => task.plannedDate === '2026-10-27')).toBe(true);
   await page.reload();
+  await openHomeSection(page, 'planning');
   await expect(
     page.getByRole('button', { name: 'Review today’s plan', exact: true }),
   ).toBeVisible();
@@ -871,6 +897,7 @@ test('evening review rolls only selected tasks and weekly review saves three res
   await page.clock.setFixedTime(new Date('2026-10-27T19:00:00Z'));
   await page.reload();
   await expect(page.getByRole('link', { name: 'Open evening review', exact: true })).toBeVisible();
+  await openHomeSection(page, 'review');
   const review = page.locator('#daily-review');
   await review.locator('summary').click();
   await review.getByRole('checkbox', { name: 'Move tomorrow: Deadline only', exact: true }).check();
@@ -894,15 +921,17 @@ test('evening review rolls only selected tasks and weekly review saves three res
     dueDate: '2026-10-27',
   });
   await page.goto('/planner?tab=week&week=2026-10-27&review=1');
+  await page.getByRole('button', { name: 'Next review step', exact: true }).click();
   await expect(
     page.getByRole('img', { name: 'Life areas recorded activity radar', exact: true }),
   ).toBeVisible();
   expect(await page.locator('.area-activity button').count()).toBe(6);
+  await page.getByRole('button', { name: 'Next review step', exact: true }).click();
   for (let i = 1; i <= 3; i++)
     await page.getByLabel('Next week result ' + i, { exact: true }).fill('Next result ' + i);
   // Keep the new week absent during the first read, as on a slower CI connection.
   // A polling assertion must tolerate its absence until the commit is acknowledged.
-  await page.route('**/api/workspace/commit', async (route) => {
+  await page.route('**/api/workspace/changes', async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 300));
     await route.continue();
   });
@@ -919,6 +948,7 @@ test('elapsed focus asks before completion, records once, and accepts an explici
 }) => {
   await signIn(page);
   await seedUxWorkspace(page, 'en', { 'personal-os.journey.v1': completeJourney });
+  await openHomeSection(page, 'focus');
   const focus = page.locator('#daily-focus');
   await focus.getByRole('combobox', { name: 'Focus task', exact: true }).selectOption('due-only');
   await focus.getByRole('button', { name: 'Start focus', exact: true }).click();
@@ -968,6 +998,7 @@ test('overdue Today, Defer and Cancel decisions preserve the original due dates'
     'personal-os.journey.v1': completeJourney,
     'personal-os.tasks.v1': tasks,
   });
+  await openHomeSection(page, 'planning');
   await page.locator('.daily-cycle summary').click();
   const rows = page.locator('.overdue-choice');
   await rows
@@ -1198,7 +1229,7 @@ test('family invitations create a separate personal account and share household 
     expect(
       (await workspace(page))['personal-os.tasks.v1'].some((x) => x.title === 'مهمة البيت'),
     ).toBe(false);
-    await page.reload();
+    // SSE refreshes the shared board without a page reload.
     await expect(page.getByText('مهمة البيت', { exact: true })).toBeVisible();
     await page
       .getByRole('button', { name: 'Complete shared task: مهمة البيت', exact: true })
@@ -1262,7 +1293,12 @@ test('Claude tools stay as proposals until confirmation and support undo in the 
       },
     });
   });
-  await page.goto('/assistant');
+  await page.getByLabel('Ask your assistant', { exact: true }).fill('عايز أذاكر بكرة الساعة 8');
+  await page.getByRole('button', { name: 'Send to assistant', exact: true }).click();
+  await expect(page.getByLabel('Your message', { exact: true })).toHaveValue(
+    'عايز أذاكر بكرة الساعة 8',
+  );
+  await expect(page.locator('.chat-message.assistant')).toHaveCount(0);
   await expect(page.getByRole('combobox', { name: 'Assistant mode', exact: true })).toHaveValue(
     'claude',
   );
@@ -1404,13 +1440,13 @@ test('Oct 28 Arabic review: rendered digits, evening date and editable week-star
       },
     },
   });
+  await openHomeSection(page, 'planning');
   await expect(page.getByRole('button', { name: 'ابدأ يومي (٠/٣)', exact: true })).toBeVisible();
   await expect(page.locator('.home-stats .stat-card strong')).toHaveText(['٠', '٠', '٠', '٠/٠']);
   await expect(page.locator('.daily-review').first()).toContainText('٢٨ أكتوبر ٢٠٢٦');
   await expect(page.locator('.daily-review').first()).not.toContainText('2026-10-28');
   await page.goto('/planner?tab=week&week=2026-10-26');
-  await expect(page.getByLabel('بداية الأسبوع', { exact: true })).toBeVisible();
-  await page.getByLabel('بداية الأسبوع', { exact: true }).selectOption('6');
+  await setWeekStart(page, '6');
   await expect(page.locator('.week-day-heading').first()).toContainText('السبت');
   await expect(page.locator('.outcome-index')).toHaveText(['٠١', '٠٢', '٠٣']);
   expect((await workspace(page))['personal-os.weeks.v1']['2026-10-26'].outcomes[0].title).toBe(
@@ -1423,7 +1459,7 @@ test('Oct 28 Arabic review: rendered digits, evening date and editable week-star
   await expect(page.locator('.week-day-heading').first()).toContainText('السبت');
   await page.goto('/planner?tab=calendar&date=2026-10-27');
   await expect(page.locator('.weekday').first()).toHaveText('سب');
-  await page.getByLabel('بداية الأسبوع', { exact: true }).selectOption('0');
+  await setWeekStart(page, '0');
   await expect(page.locator('.weekday').first()).toHaveText('أح');
   await page.goto('/');
   await expect(page.locator('.home-week button').first()).toContainText('الأحد');
@@ -1470,7 +1506,9 @@ test('Oct 28 Arabic review: assistant shows inferred and editable life area and 
     page.getByRole('dialog').getByRole('combobox', { name: 'مجال الحياة', exact: true }),
   ).toHaveValue('Learning');
   await page.getByRole('button', { name: 'Close / إغلاق', exact: true }).click();
-  await expect(page.getByRole('status').filter({ hasText: 'Claude مش مفعّل' })).toBeVisible();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'المساعد الذكي غير متاح' }),
+  ).toBeVisible();
   await page.getByLabel('رسالتك', { exact: true }).fill('عايز أذاكر بكرة الساعة 8');
   await page.getByRole('button', { name: 'إرسال الرسالة', exact: true }).click();
   await expect(page.getByLabel('مجال الحياة المقترح', { exact: true })).toHaveValue('Learning');
@@ -1484,4 +1522,234 @@ test('Oct 28 Arabic review: assistant shows inferred and editable life area and 
     })
     .toBe('Personal');
   expect((await workspace(page))['personal-os.conversations.v1'][0].messages[0].text).toBe(english);
+});
+
+async function enableOffline(page) {
+  await page.getByRole('button', { name: 'Data and backup', exact: true }).click();
+  await page
+    .getByRole('checkbox', {
+      name: 'Keep a private copy on this device and save edits offline',
+      exact: true,
+    })
+    .check();
+  await page.getByRole('button', { name: 'Close / إغلاق', exact: true }).click();
+}
+test('offline edits persist on the device and reconnect without duplicating a task', async ({
+  page,
+  browser,
+}) => {
+  await signIn(page);
+  await seedUxWorkspace(page, 'en', { 'personal-os.journey.v1': completeJourney });
+  await enableOffline(page);
+  const context = await browser.newContext();
+  const remote = await context.newPage();
+  try {
+    await signIn(remote);
+    await page.context().setOffline(true);
+    await createTask(page, 'Created without connection');
+    await expect(page.locator('.save-status')).toHaveText('Saved on device');
+    expect(
+      (await workspace(remote))['personal-os.tasks.v1'].some(
+        (task) => task.title === 'Created without connection',
+      ),
+    ).toBe(false);
+    await page.context().setOffline(false);
+    await expect
+      .poll(
+        async () =>
+          (await workspace(remote))['personal-os.tasks.v1'].filter(
+            (task) => task.title === 'Created without connection',
+          ).length,
+      )
+      .toBe(1);
+    await expect(page.locator('.save-status')).toHaveText('Saved ✓');
+    await page.reload();
+    expect(
+      (await workspace(remote))['personal-os.tasks.v1'].filter(
+        (task) => task.title === 'Created without connection',
+      ),
+    ).toHaveLength(1);
+  } finally {
+    await page
+      .context()
+      .setOffline(false)
+      .catch(() => {});
+    await context.close();
+  }
+});
+test('offline conflict review preserves the other device until an explicit choice', async ({
+  page,
+  browser,
+}) => {
+  await signIn(page);
+  await seedUxWorkspace(page, 'en', {
+    'personal-os.journey.v1': completeJourney,
+    'personal-os.tasks.v1': [
+      {
+        id: 'shared-offline',
+        title: 'Shared title',
+        category: 'Work',
+        done: false,
+        archived: false,
+      },
+    ],
+  });
+  await enableOffline(page);
+  const context = await browser.newContext();
+  const remote = await context.newPage();
+  try {
+    await signIn(remote);
+    await page.context().setOffline(true);
+    await page.getByRole('button', { name: 'Shared title', exact: true }).first().click();
+    await page.getByLabel('Task title', { exact: true }).fill('Offline title');
+    await page.getByRole('button', { name: 'Save task', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await remote.getByRole('button', { name: 'Shared title', exact: true }).first().click();
+    await remote.getByLabel('Task title', { exact: true }).fill('Online title');
+    await remote.getByRole('button', { name: 'Save task', exact: true }).click();
+    await expect(remote.getByRole('dialog')).toHaveCount(0);
+    await page.context().setOffline(false);
+    await page.getByRole('button', { name: 'Data and backup', exact: true }).click();
+    await expect(
+      page.getByRole('combobox', { name: 'Conflict choice 1', exact: true }),
+    ).toBeVisible();
+    expect((await workspace(remote))['personal-os.tasks.v1'][0].title).toBe('Online title');
+    await page
+      .getByRole('combobox', { name: 'Conflict choice 1', exact: true })
+      .selectOption('local');
+    await page
+      .getByRole('button', { name: 'Confirm reviewed synchronization', exact: true })
+      .click();
+    await expect
+      .poll(async () => (await workspace(remote))['personal-os.tasks.v1'][0].title)
+      .toBe('Offline title');
+  } finally {
+    await page
+      .context()
+      .setOffline(false)
+      .catch(() => {});
+    await context.close();
+  }
+});
+test('core Home is readable and compact, with five mobile destinations', async ({ page }) => {
+  await signIn(page);
+  await seedUxWorkspace(page, 'ar', { 'personal-os.journey.v1': completeJourney });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.locator('[data-home-section=planning]')).not.toHaveAttribute('open');
+  await expect(page.locator('#daily-focus')).not.toBeVisible();
+  await expect(page.locator('#daily-review')).not.toBeVisible();
+  await expect(page.locator('.home-focus-list')).toBeVisible();
+  await expect(page.locator('.home-agenda')).toBeVisible();
+  expect(
+    await page.locator('.home-v2').evaluate((element) => element.getBoundingClientRect().height),
+  ).toBeLessThan(2200);
+  const tiny = await page.locator('main').evaluate((element) =>
+    [...element.querySelectorAll('*')]
+      .filter((item) => {
+        const r = item.getBoundingClientRect();
+        const style = getComputedStyle(item);
+        return (
+          r.width > 4 &&
+          r.height > 4 &&
+          style.display !== 'none' &&
+          item.childNodes.length &&
+          [...item.childNodes].some((node) => node.nodeType === 3 && node.textContent?.trim()) &&
+          parseFloat(style.fontSize) < 13
+        );
+      })
+      .map((item) => item.className),
+  );
+  expect(tiny).toEqual([]);
+  await page.screenshot({ path: '/tmp/dailgo-core-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(
+    page.getByRole('navigation', { name: 'التنقل للجوال' }).locator('.nav-link'),
+  ).toHaveCount(5);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: '/tmp/dailgo-core-mobile.png', fullPage: true });
+  await page.getByRole('button', { name: 'المزيد', exact: true }).click();
+  await expect(
+    page.getByRole('dialog').getByRole('link', { name: 'الذاكرة', exact: true }),
+  ).toBeVisible();
+});
+
+test('offline outbox remains bound to its account when another session replaces the cookie', async ({
+  page,
+}) => {
+  await signIn(page);
+  await seedUxWorkspace(page, 'en', { 'personal-os.journey.v1': completeJourney });
+  await enableOffline(page);
+  const space = await page.request.post('/api/family', {
+    headers: { Origin: 'http://127.0.0.1:5187' },
+    data: { title: 'Outbox isolation' },
+  });
+  const id = (await space.json()).id;
+  const invitation = await page.request.post('/api/family/' + id + '/invite', {
+    headers: { Origin: 'http://127.0.0.1:5187' },
+    data: {},
+  });
+  const token = (await invitation.json()).token;
+  await page.context().setOffline(true);
+  await createTask(page, 'Owner-only offline draft');
+  const accepted = await page.request.post('/api/account/accept-invite', {
+    headers: { Origin: 'http://127.0.0.1:5187' },
+    data: {
+      token,
+      username: 'offline-member-' + Date.now(),
+      password: 'member-offline-test-password',
+    },
+  });
+  expect(accepted.status()).toBe(201);
+  await page.context().setOffline(false);
+  await expect(page.getByRole('heading', { name: 'تسجيل الدخول', exact: true })).toBeVisible();
+  expect((await workspace(page))['personal-os.tasks.v1']).toHaveLength(0);
+  const ownerQueue = await page.evaluate(async () => {
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open('dailgo-offline-v1', 1);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    return new Promise((resolve) => {
+      const request = db.transaction('accounts').objectStore('accounts').get('owner');
+      request.onsuccess = () =>
+        resolve(
+          request.result?.outbox?.draft.data['personal-os.tasks.v1'].some(
+            (task) => task.title === 'Owner-only offline draft',
+          ),
+        );
+    });
+  });
+  expect(ownerQueue).toBe(true);
+});
+
+test('a second offline tab cannot overwrite another tab’s pending edits', async ({ page }) => {
+  await signIn(page);
+  await seedUxWorkspace(page, 'en', { 'personal-os.journey.v1': completeJourney });
+  await enableOffline(page);
+  const second = await page.context().newPage();
+  await second.goto('/');
+  await expect(second.getByRole('button', { name: 'New task', exact: true })).toBeVisible();
+  await page.context().setOffline(true);
+  try {
+    await createTask(page, 'First tab durable draft');
+    await second.getByRole('button', { name: 'New task', exact: true }).click();
+    await second
+      .getByLabel('Task title', { exact: true })
+      .fill('Second tab must not replace draft');
+    await second.getByRole('button', { name: 'Save task', exact: true }).click();
+    await expect(second.getByRole('alert').filter({ hasText: 'Could not save' })).toBeVisible();
+    const titles = await page.evaluate(async () => {
+      const cache = await import('/src/lib/offlineCache.ts');
+      const stored = await cache.readOffline();
+      return stored.outbox.draft.data['personal-os.tasks.v1'].map((task) => task.title);
+    });
+    expect(titles).toContain('First tab durable draft');
+    expect(titles).not.toContain('Second tab must not replace draft');
+  } finally {
+    await second.close();
+    await page
+      .context()
+      .setOffline(false)
+      .catch(() => {});
+  }
 });

@@ -16,11 +16,11 @@ export function PlanningSettings({ t }: { t: Translate }) {
   );
   return (
     <section className="editor-form">
-      <h3 dir="auto">{t('Planning preferences', 'إعدادات التخطيط')}</h3>
+      <h3 dir="auto">{t('ui.planningPreferences.fd414f')}</h3>
       <WeekStartSetting t={t} />
       <div className="form-pair">
         <label>
-          {t('Daily total minutes', 'إجمالي وقت اليوم بالدقائق')}
+          {t('ui.dailyTotalMinutes.5298c2')}
           <input
             type="number"
             min={0}
@@ -33,7 +33,7 @@ export function PlanningSettings({ t }: { t: Translate }) {
           />
         </label>
         <label>
-          {t('Reserve minutes', 'وقت احتياطي بالدقائق')}
+          {t('ui.reserveMinutes.7d4b73')}
           <input
             type="number"
             min={0}
@@ -47,7 +47,7 @@ export function PlanningSettings({ t }: { t: Translate }) {
         </label>
       </div>
       <label>
-        {t('Planning timezone', 'المنطقة الزمنية للتخطيط')}
+        {t('ui.planningTimezone.57137b')}
         <select
           value={settings.timezone}
           onChange={(e) => {
@@ -61,10 +61,7 @@ export function PlanningSettings({ t }: { t: Translate }) {
         </select>
       </label>
       <p dir="auto" className="muted">
-        {t(
-          'Times are wall-clock times in this zone. Changing the zone reinterprets existing appointment times; it does not convert them. Per-day capacities override the default. Displayed numbers and dates follow your chosen language.',
-          'المواعيد تُقرأ كتوقيت محلي للمنطقة المختارة. تغيير المنطقة يعيد تفسير الوقت الموجود ولا يحوّله. سعة كل يوم لها الأولوية على الافتراضي. الأرقام والتواريخ المعروضة حسب اللغة المختارة.',
-        )}
+        {t('ui.timesAreWallClockTimesInThis.17f271')}
       </p>
     </section>
   );
@@ -74,18 +71,18 @@ export function WeekStartSetting({ t }: { t: Translate }) {
   const [settings, setSettings] = usePlanning();
   return (
     <label>
-      {t('Week starts on', 'بداية الأسبوع')}
+      {t('ui.weekStartsOn.c9c926')}
       <select
-        aria-label={t('Week starts on', 'بداية الأسبوع')}
+        aria-label={t('ui.weekStartsOn.c9c926')}
         value={settings.weekStartsOn}
         onChange={(e) => {
           const value = Number(e.target.value);
           setSettings((old) => ({ ...old, weekStartsOn: value }));
         }}
       >
-        <option value={6}>{t('Saturday', 'السبت')}</option>
-        <option value={0}>{t('Sunday', 'الأحد')}</option>
-        <option value={1}>{t('Monday', 'الاثنين')}</option>
+        <option value={6}>{t('ui.saturday.e29416')}</option>
+        <option value={0}>{t('ui.sunday.4e830a')}</option>
+        <option value={1}>{t('ui.monday.99a6de')}</option>
       </select>
     </label>
   );

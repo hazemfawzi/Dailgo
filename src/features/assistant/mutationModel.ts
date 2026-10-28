@@ -137,10 +137,7 @@ export function mutationResponse(
     const record = found[0];
     if (['move', 'due'].includes(operation) && !isActionable(record as Task))
       return {
-        text: t(
-          'Only open actionable tasks can be planned. Reopen a completed task in its editor before scheduling it.',
-          'التخطيط متاح للمهام المفتوحة القابلة للتنفيذ فقط. لو المهمة مكتملة، افتحها من المحرر وأعدها لحالة مفتوحة الأول.',
-        ),
+        text: t('ui.onlyOpenActionableTasksCanBePlanned.597943'),
       };
     const field =
       operation === 'rename'
@@ -163,34 +160,19 @@ export function mutationResponse(
             new Date(value + 'T12:00:00Z').toISOString().slice(0, 10) !== value)))
     )
       return {
-        text: t(
-          'Invalid replacement value. Review the title, date or note length.',
-          'القيمة البديلة غير صالحة. راجع العنوان أو التاريخ أو طول الملاحظة.',
-        ),
+        text: t('ui.invalidReplacementValueReviewTheTitleDate.7db912'),
       };
     if (((record as unknown as Record<string, unknown>)[field] ?? null) === value)
       return {
-        text: t(
-          'This record already has that value. No action is needed.',
-          'السجل عنده نفس القيمة بالفعل. مش محتاج إجراء.',
-        ),
+        text: t('ui.thisRecordAlreadyHasThatValueNo.0e87b3'),
       };
     return {
       text:
         operation === 'due'
-          ? t(
-              'This changes the due date only. The execution day stays unchanged. Review and confirm.',
-              'ده بيغيّر موعد التسليم فقط. يوم التنفيذ هيفضل زي ما هو. راجع وأكد.',
-            )
+          ? t('ui.thisChangesTheDueDateOnlyThe.8fc76f')
           : operation === 'move'
-            ? t(
-                'This changes the execution day only. The due date stays unchanged. Review and confirm.',
-                'ده بيغيّر يوم التنفيذ فقط. موعد التسليم هيفضل زي ما هو. راجع وأكد.',
-              )
-            : t(
-                'Review the before/after change. Only confirmation updates the existing record.',
-                'راجع الفرق قبل وبعد. السجل الموجود مش هيتغير غير بعد تأكيدك.',
-              ),
+            ? t('ui.thisChangesTheExecutionDayOnlyThe.623d13')
+            : t('ui.reviewTheBeforeAfterChangeOnlyConfirmation.fb3803'),
       status: 'pending',
       mutation: {
         collection: record.kind === 'task' ? 'personal-os.tasks.v1' : 'personal-os.entries.v1',
