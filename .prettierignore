@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.release/
+.local-data/
+test-results/
+playwright-report/
+package-lock.json
+server/domain.mjs
+server/application.mjs
+native/android/.gradle/
+native/android/**/build/
+native/ios/*.xcodeproj/
+*.tsbuildinfo

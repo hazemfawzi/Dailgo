@@ -1,3 +1,29 @@
 import { defineConfig } from '@playwright/test';
 import { existsSync } from 'node:fs';
-export default defineConfig({testDir:'./tests/production',outputDir:'test-results/production',workers:1,timeout:45000,use:{baseURL:'http://127.0.0.1:5188',headless:true,serviceWorkers:'block',trace:'retain-on-failure',screenshot:'only-on-failure',launchOptions:{...(process.env.DAILGO_BROWSER_PATH?{executablePath:process.env.DAILGO_BROWSER_PATH}:existsSync('/usr/bin/chromium')?{executablePath:'/usr/bin/chromium'}:{})}},webServer:{command:'node scripts/production-browser-server.mjs',url:'http://127.0.0.1:5188',timeout:30000,reuseExistingServer:false},reporter:'list'});
+export default defineConfig({
+  testDir: './tests/production',
+  outputDir: 'test-results/production',
+  workers: 1,
+  timeout: 45000,
+  use: {
+    baseURL: 'http://127.0.0.1:5188',
+    headless: true,
+    serviceWorkers: 'block',
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    launchOptions: {
+      ...(process.env.DAILGO_BROWSER_PATH
+        ? { executablePath: process.env.DAILGO_BROWSER_PATH }
+        : existsSync('/usr/bin/chromium')
+          ? { executablePath: '/usr/bin/chromium' }
+          : {}),
+    },
+  },
+  webServer: {
+    command: 'node scripts/production-browser-server.mjs',
+    url: 'http://127.0.0.1:5188',
+    timeout: 30000,
+    reuseExistingServer: false,
+  },
+  reporter: 'list',
+});

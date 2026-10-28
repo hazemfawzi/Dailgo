@@ -1,3 +1,338 @@
-.daily-cycle,.guided-weekly{padding:20px;margin-block:20px;min-width:0}.daily-cycle h2{font-size:22px;margin-block:6px}.daily-cycle p,.guided-weekly p{font-size:13px;line-height:1.8}.morning-candidates{display:grid;gap:8px;max-height:290px;overflow:auto;margin-block:14px}.morning-candidates label{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 10px;align-items:center;padding:10px;background:var(--soft);border-radius:8px}.morning-candidates small{grid-column:2;color:var(--muted)}.capacity-summary{padding:14px;background:var(--soft);border-radius:10px}.capacity-summary progress{display:block;width:100%;height:8px;margin-top:10px}.capacity-summary.overloaded{border:1px solid #bf6c67}.overdue-choice{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-block:12px;padding-block:12px;border-bottom:1px solid var(--border)}.overdue-choice>div{display:flex;flex-wrap:wrap;gap:6px}.overdue-choice label{display:grid;gap:8px;width:100%}.overdue-choice input{padding:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px}.cycle-links{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:18px;font-size:13px;color:var(--purple)}.evening-reminder{padding:16px;border:1px solid var(--purple);border-radius:10px;margin-block:16px;display:flex;gap:14px;justify-content:space-between;flex-wrap:wrap}.evening-reminder a{text-decoration:underline}.task-extra-details{border:1px solid var(--border);border-radius:10px;padding:12px;margin-block:18px}.task-extra-details summary{cursor:pointer;font-weight:600}.task-extra-details[open]>summary{margin-bottom:18px}.editor-form input[type=checkbox]{display:inline-block;width:auto;margin:0 8px 0 0;padding:0}.journey-onboarding fieldset{border:1px solid var(--border);border-radius:8px;padding:10px;margin-block:15px}.journey-onboarding fieldset label{display:flex;align-items:center;gap:8px;margin:8px 0}.onboarding-task{padding:12px;background:var(--soft);border-radius:8px;margin-block:10px}.journey-onboarding textarea{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px}.undo-notice{position:fixed;inset-inline-end:20px;bottom:20px;z-index:60;background:var(--surface);color:var(--text);border:1px solid var(--purple);box-shadow:0 5px 25px #0002;border-radius:12px;display:flex;align-items:center;gap:12px;padding:12px;max-width:calc(100vw - 40px);font-size:13px}.focus-question{border:1px solid var(--purple);padding:14px;border-radius:10px;margin-block:12px}.focus-question h4{margin-block:0 8px}.focus-question .button{margin:4px}.mood-picker{border:0;padding:14px 0;display:flex;gap:10px;flex-wrap:wrap}.mood-picker button{font-size:25px;min-width:44px;min-height:44px;background:var(--surface);border:1px solid var(--border);border-radius:10px}.mood-picker button[aria-pressed=true]{border:2px solid var(--purple);background:var(--soft)}.daily-review>label{display:grid;gap:8px;font-size:13px;margin-block:12px}.daily-review>label input{padding:10px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px}.rollover-day{padding:12px;background:var(--soft);border-radius:10px;margin-block:14px}.review-task>label{display:flex;align-items:center;gap:8px;font-size:12px}.life-wheel{max-width:400px;margin:16px auto}.life-wheel svg{width:100%;height:auto}.life-wheel figcaption{font-size:12px;color:var(--muted);line-height:1.8}.area-activity{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.area-activity button{border:1px solid var(--border);color:var(--text);background:var(--surface);padding:8px;border-radius:8px}.area-activity button[aria-pressed=true]{background:var(--soft);border-color:var(--purple)}.weekly-goal-progress{display:grid;gap:10px;margin-block:16px}.weekly-goal-progress a{display:grid;gap:6px;padding:12px;background:var(--soft);border-radius:8px;font-size:13px}.weekly-goal-progress progress{width:100%}.next-week-outcome{padding:12px;background:var(--soft);border-radius:8px;margin-block:12px}.next-week-outcome label{margin-bottom:8px}.guided-weekly h4{font-size:15px}.next-week-outcome input,.next-week-outcome select{width:100%}
-@media(max-width:850px){.undo-notice{bottom:88px}.daily-cycle,.guided-weekly{padding:14px}.area-activity{grid-template-columns:repeat(2,minmax(0,1fr))}.daily-cycle .home-section-title{align-items:flex-start;flex-wrap:wrap}.cycle-links{gap:10px}}
-@media(prefers-reduced-motion:reduce){.undo-notice,.daily-cycle *{scroll-behavior:auto;animation:none}}
+.daily-cycle,
+.guided-weekly {
+  padding: 20px;
+  margin-block: 20px;
+  min-width: 0;
+}
+.daily-cycle h2 {
+  font-size: var(--text-lg);
+  margin-block: 6px;
+}
+.daily-cycle p,
+.guided-weekly p {
+  font-size: var(--text-xs);
+  line-height: 1.8;
+}
+.morning-candidates {
+  display: grid;
+  gap: 8px;
+  max-height: 290px;
+  overflow: auto;
+  margin-block: 14px;
+}
+.morning-candidates label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 10px;
+  align-items: center;
+  padding: 10px;
+  background: var(--soft);
+  border-radius: 8px;
+}
+.morning-candidates small {
+  grid-column: 2;
+  color: var(--muted);
+}
+.capacity-summary {
+  padding: 14px;
+  background: var(--soft);
+  border-radius: 10px;
+}
+.capacity-summary progress {
+  display: block;
+  width: 100%;
+  height: 8px;
+  margin-top: 10px;
+}
+.capacity-summary.overloaded {
+  border: 1px solid #bf6c67;
+}
+.overdue-choice {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-block: 12px;
+  padding-block: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.overdue-choice > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.overdue-choice label {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+.overdue-choice input {
+  padding: 8px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.cycle-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  font-size: var(--text-xs);
+  color: var(--purple);
+}
+.evening-reminder {
+  padding: 16px;
+  border: 1px solid var(--purple);
+  border-radius: 10px;
+  margin-block: 16px;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.evening-reminder a {
+  text-decoration: underline;
+}
+.task-extra-details {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-block: 18px;
+}
+.task-extra-details summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.task-extra-details[open] > summary {
+  margin-bottom: 18px;
+}
+.editor-form input[type='checkbox'] {
+  display: inline-block;
+  width: auto;
+  margin: 0 8px 0 0;
+  padding: 0;
+}
+.journey-onboarding fieldset {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  margin-block: 15px;
+}
+.journey-onboarding fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+.onboarding-task {
+  padding: 12px;
+  background: var(--soft);
+  border-radius: 8px;
+  margin-block: 10px;
+}
+.journey-onboarding textarea {
+  width: 100%;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+}
+.undo-notice {
+  position: fixed;
+  inset-inline-end: 20px;
+  bottom: 20px;
+  z-index: 60;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--purple);
+  box-shadow: 0 5px 25px #0002;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  max-width: calc(100vw - 40px);
+  font-size: var(--text-xs);
+}
+.focus-question {
+  border: 1px solid var(--purple);
+  padding: 14px;
+  border-radius: 10px;
+  margin-block: 12px;
+}
+.focus-question h4 {
+  margin-block: 0 8px;
+}
+.focus-question .button {
+  margin: 4px;
+}
+.mood-picker {
+  border: 0;
+  padding: 14px 0;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.mood-picker button {
+  font-size: var(--text-xl);
+  min-width: 44px;
+  min-height: 44px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.mood-picker button[aria-pressed='true'] {
+  border: 2px solid var(--purple);
+  background: var(--soft);
+}
+.daily-review > label {
+  display: grid;
+  gap: 8px;
+  font-size: var(--text-xs);
+  margin-block: 12px;
+}
+.daily-review > label input {
+  padding: 10px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.rollover-day {
+  padding: 12px;
+  background: var(--soft);
+  border-radius: 10px;
+  margin-block: 14px;
+}
+.review-task > label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-xs);
+}
+.life-wheel {
+  max-width: 400px;
+  margin: 16px auto;
+}
+.life-wheel svg {
+  width: 100%;
+  height: auto;
+}
+.life-wheel figcaption {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  line-height: 1.8;
+}
+.area-activity {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.area-activity button {
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: var(--surface);
+  padding: 8px;
+  border-radius: 8px;
+}
+.area-activity button[aria-pressed='true'] {
+  background: var(--soft);
+  border-color: var(--purple);
+}
+.weekly-goal-progress {
+  display: grid;
+  gap: 10px;
+  margin-block: 16px;
+}
+.weekly-goal-progress a {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  background: var(--soft);
+  border-radius: 8px;
+  font-size: var(--text-xs);
+}
+.weekly-goal-progress progress {
+  width: 100%;
+}
+.next-week-outcome {
+  padding: 12px;
+  background: var(--soft);
+  border-radius: 8px;
+  margin-block: 12px;
+}
+.next-week-outcome label {
+  margin-bottom: 8px;
+}
+.guided-weekly h4 {
+  font-size: var(--text-sm);
+}
+.next-week-outcome input,
+.next-week-outcome select {
+  width: 100%;
+}
+@media (max-width: 850px) {
+  .undo-notice {
+    bottom: 88px;
+  }
+  .daily-cycle,
+  .guided-weekly {
+    padding: 14px;
+  }
+  .area-activity {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .daily-cycle .home-section-title {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .cycle-links {
+    gap: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .undo-notice,
+  .daily-cycle * {
+    scroll-behavior: auto;
+    animation: none;
+  }
+}
+.journey-onboarding label:has(input[type='checkbox']),
+.journey-onboarding fieldset label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.journey-onboarding fieldset {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.journey-onboarding input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+.dialog-content {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding-bottom: var(--space-6);
+}
+.journey-onboarding > .button:last-child {
+  margin-block: var(--space-3);
+}
+.week-review-steps {
+  display: flex;
+  gap: var(--space-2);
+  list-style: none;
+  padding: 0;
+  flex-wrap: wrap;
+}
+.week-review-steps button[aria-current='step'] {
+  background: var(--soft);
+  font-weight: 700;
+}

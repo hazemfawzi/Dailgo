@@ -13,13 +13,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '24.19.0'
           cache: npm
       - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
       - run: npm test
       - run: npm run build
       - run: npm run test:server
       - run: npm run test:features
+      - run: npm run test:core
+      - run: npm run test:components
       - run: npm run test:deploy
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser

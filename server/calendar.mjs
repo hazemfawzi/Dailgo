@@ -1,19 +1,267 @@
 import { Temporal } from '@js-temporal/polyfill';
-import { randomBytes,createHash,timingSafeEqual } from 'node:crypto';
+import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import { secretBox } from './secret.mjs';
-const hash=value=>createHash('sha256').update(value).digest('hex');
-const fail=(message,status=400)=>{throw Object.assign(Error(message),{status});};
-export function createCalendar(db,options={}){
- const env=options.env??process.env,fetchImpl=options.fetch??fetch;const box=secretBox(env.INTEGRATION_ENCRYPTION_KEY);const enabled=!!env.GOOGLE_CLIENT_ID&&!!env.GOOGLE_CLIENT_SECRET&&!!env.APP_ORIGIN&&box.ready;const redirect=env.APP_ORIGIN+'/api/calendar/callback';
- db.exec('CREATE TABLE IF NOT EXISTS google_connections(principal TEXT PRIMARY KEY,credentials TEXT NOT NULL); CREATE TABLE IF NOT EXISTS google_oauth_states(state TEXT PRIMARY KEY,principal TEXT NOT NULL,session TEXT NOT NULL,expires INTEGER NOT NULL); CREATE TABLE IF NOT EXISTS google_exports(principal TEXT NOT NULL,entry TEXT NOT NULL,google TEXT NOT NULL,PRIMARY KEY(principal,entry));');
- async function token(body){const response=await fetchImpl('https://oauth2.googleapis.com/token',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:env.GOOGLE_CLIENT_ID,client_secret:env.GOOGLE_CLIENT_SECRET,...body}).toString(),signal:AbortSignal.timeout(15000)});if(!response.ok)fail('google-token-rejected',502);return response.json();}
- function status(principal){return {enabled,connected:!!db.prepare('SELECT 1 FROM google_connections WHERE principal=?').get(principal)};}
- function start(principal,session){if(!enabled)fail('google-not-configured',503);const state=randomBytes(32).toString('base64url');db.prepare('DELETE FROM google_oauth_states WHERE expires<? OR principal=?').run(Date.now(),principal);db.prepare('INSERT INTO google_oauth_states VALUES(?,?,?,?)').run(hash(state),principal,session,Date.now()+600000);const url=new URL('https://accounts.google.com/o/oauth2/v2/auth');for(const [key,value] of Object.entries({client_id:env.GOOGLE_CLIENT_ID,redirect_uri:redirect,response_type:'code',scope:'https://www.googleapis.com/auth/calendar.events',state,access_type:'offline',prompt:'consent'}))url.searchParams.set(key,value);return {url:url.toString()};}
- async function callback(cookie,state,code){if(!enabled||typeof state!=='string'||typeof cookie!=='string'||state.length!==43||cookie.length!==43||!timingSafeEqual(Buffer.from(cookie),Buffer.from(state))||typeof code!=='string'||code.length>4096)fail('invalid-oauth');const row=db.prepare('SELECT * FROM google_oauth_states WHERE state=? AND expires>?').get(hash(state),Date.now());if(!row)fail('invalid-oauth');const principal=row.principal;const active=principal==='owner'?db.prepare('SELECT 1 FROM sessions WHERE token=? AND expires>?').get(row.session,Date.now()):db.prepare('SELECT 1 FROM member_sessions WHERE token=? AND principal=? AND expires>?').get(row.session,principal,Date.now());if(!active)fail('oauth-session-expired',401);db.prepare('DELETE FROM google_oauth_states WHERE state=?').run(hash(state));const result=await token({grant_type:'authorization_code',redirect_uri:redirect,code});const old=db.prepare('SELECT credentials FROM google_connections WHERE principal=?').get(principal);const previous=old?box.open(old.credentials):{};if(typeof result.access_token!=='string'||!result.refresh_token&&!previous.refresh_token)fail('google-offline-access-required');db.prepare('INSERT INTO google_connections VALUES(?,?) ON CONFLICT(principal) DO UPDATE SET credentials=excluded.credentials').run(principal,box.seal({...previous,...result,expires_at:Date.now()+(result.expires_in??3600)*1000}));return {connected:true};}
- async function access(principal){if(!enabled)fail('google-not-configured',503);const row=db.prepare('SELECT credentials FROM google_connections WHERE principal=?').get(principal);if(!row)fail('google-not-connected',409);let value=box.open(row.credentials);if(value.expires_at<Date.now()+60000){const refreshed=await token({grant_type:'refresh_token',refresh_token:value.refresh_token});value={...value,...refreshed,expires_at:Date.now()+(refreshed.expires_in??3600)*1000};db.prepare('UPDATE google_connections SET credentials=? WHERE principal=?').run(box.seal(value),principal);}return value.access_token;}
- async function google(principal,path,method='GET',body){const response=await fetchImpl('https://www.googleapis.com/calendar/v3/'+path,{method,headers:{authorization:'Bearer '+await access(principal),...(body?{'content-type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(15000)});if(!response.ok)throw Object.assign(Error('google-calendar-request-failed'),{status:502,providerStatus:response.status});return response.status===204?null:response.json();}
- async function events(principal,body){if(!/^\d{4}-\d{2}-\d{2}$/.test(body.from??'')||!/^\d{4}-\d{2}-\d{2}$/.test(body.to??''))fail('invalid-date-range');const from=new Date(body.from+'T00:00:00Z'),to=new Date(body.to+'T23:59:59Z');if(!Number.isFinite(from.getTime())||!Number.isFinite(to.getTime())||from.toISOString().slice(0,10)!==body.from||to.toISOString().slice(0,10)!==body.to||to<from||to-from>90*86400000)fail('invalid-date-range');const query=new URLSearchParams({timeMin:from.toISOString(),timeMax:to.toISOString(),singleEvents:'true',orderBy:'startTime',maxResults:'100'});if(body.pageToken){if(typeof body.pageToken!=='string'||body.pageToken.length>4096)fail('invalid-page');query.set('pageToken',body.pageToken);}const result=await google(principal,'calendars/primary/events?'+query);return {events:(result.items??[]).filter(x=>x.status!=='cancelled'&&typeof x.id==='string').map(x=>({id:x.id,title:String(x.summary??'Untitled').slice(0,160),start:x.start,end:x.end,updated:x.updated})),nextPageToken:result.nextPageToken??null};}
- async function exportEvent(principal,body,data){const raw=data['personal-os.entries.v1'];const entry=(Array.isArray(raw)?raw:raw?.entries??[]).find(x=>x.kind==='event'&&x.id===body.entryId&&!x.archived);if(!entry||!/^\d{4}-\d{2}-\d{2}$/.test(entry.date)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(entry.time))fail('invalid-event');if(entry.revision!==body.entryRevision)fail('event-changed',409);const zone=data['personal-os.planning.v1']?.timezone??'UTC';const [year,month,day]=entry.date.split('-').map(Number);const [hour,minute]=entry.time.split(':').map(Number);let start;try{start=Temporal.ZonedDateTime.from({timeZone:zone,year,month,day,hour,minute},{overflow:'reject',disambiguation:'reject'});}catch{fail('event-time-ambiguous-or-invalid');}const end=start.add({minutes:entry.durationMinutes??30});const payload={summary:entry.title,start:{dateTime:start.toInstant().toString(),timeZone:zone},end:{dateTime:end.toInstant().toString(),timeZone:zone},extendedProperties:{private:{dailgo_entry:entry.id,dailgo_principal:principal}}};const existing=db.prepare('SELECT google FROM google_exports WHERE principal=? AND entry=?').get(principal,entry.id);const generated=createHash('sha256').update(principal+'/'+entry.id).digest('hex');const id=existing?.google??generated;let result;try{result=await google(principal,'calendars/primary/events/'+encodeURIComponent(id),'PUT',payload);}catch(error){if(existing||error.providerStatus!==404)throw error;result=await google(principal,'calendars/primary/events','POST',{...payload,id});}db.prepare('INSERT INTO google_exports VALUES(?,?,?) ON CONFLICT(principal,entry) DO UPDATE SET google=excluded.google').run(principal,entry.id,result.id);return {exported:true,id:result.id};}
- async function disconnect(principal){const row=db.prepare('SELECT credentials FROM google_connections WHERE principal=?').get(principal);if(row&&box.ready){const value=box.open(row.credentials);const response=await fetchImpl('https://oauth2.googleapis.com/revoke',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token:value.refresh_token??value.access_token}).toString(),signal:AbortSignal.timeout(15000)});if(!response.ok)fail('google-revocation-failed',502);}db.prepare('DELETE FROM google_connections WHERE principal=?').run(principal);db.prepare('DELETE FROM google_oauth_states WHERE principal=?').run(principal);return {connected:false};}
- return {status,start,callback,events,exportEvent,disconnect};
+const hash = (value) => createHash('sha256').update(value).digest('hex');
+const fail = (message, status = 400) => {
+  throw Object.assign(Error(message), { status });
+};
+export function createCalendar(db, options = {}) {
+  const env = options.env ?? process.env,
+    fetchImpl = options.fetch ?? fetch;
+  const box = secretBox(env.INTEGRATION_ENCRYPTION_KEY);
+  const enabled =
+    !!env.GOOGLE_CLIENT_ID && !!env.GOOGLE_CLIENT_SECRET && !!env.APP_ORIGIN && box.ready;
+  const redirect = env.APP_ORIGIN + '/api/calendar/callback';
+  db.exec(
+    'CREATE TABLE IF NOT EXISTS google_connections(principal TEXT PRIMARY KEY,credentials TEXT NOT NULL); CREATE TABLE IF NOT EXISTS google_oauth_states(state TEXT PRIMARY KEY,principal TEXT NOT NULL,session TEXT NOT NULL,expires INTEGER NOT NULL); CREATE TABLE IF NOT EXISTS google_exports(principal TEXT NOT NULL,entry TEXT NOT NULL,google TEXT NOT NULL,PRIMARY KEY(principal,entry));',
+  );
+  async function token(body) {
+    const response = await fetchImpl('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: env.GOOGLE_CLIENT_ID,
+        client_secret: env.GOOGLE_CLIENT_SECRET,
+        ...body,
+      }).toString(),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!response.ok) fail('google-token-rejected', 502);
+    return response.json();
+  }
+  function status(principal) {
+    return {
+      enabled,
+      connected: !!db.prepare('SELECT 1 FROM google_connections WHERE principal=?').get(principal),
+    };
+  }
+  function start(principal, session) {
+    if (!enabled) fail('google-not-configured', 503);
+    const state = randomBytes(32).toString('base64url');
+    db.prepare('DELETE FROM google_oauth_states WHERE expires<? OR principal=?').run(
+      Date.now(),
+      principal,
+    );
+    db.prepare('INSERT INTO google_oauth_states VALUES(?,?,?,?)').run(
+      hash(state),
+      principal,
+      session,
+      Date.now() + 600000,
+    );
+    const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    for (const [key, value] of Object.entries({
+      client_id: env.GOOGLE_CLIENT_ID,
+      redirect_uri: redirect,
+      response_type: 'code',
+      scope: 'https://www.googleapis.com/auth/calendar.events',
+      state,
+      access_type: 'offline',
+      prompt: 'consent',
+    }))
+      url.searchParams.set(key, value);
+    return { url: url.toString() };
+  }
+  async function callback(cookie, state, code) {
+    if (
+      !enabled ||
+      typeof state !== 'string' ||
+      typeof cookie !== 'string' ||
+      state.length !== 43 ||
+      cookie.length !== 43 ||
+      !timingSafeEqual(Buffer.from(cookie), Buffer.from(state)) ||
+      typeof code !== 'string' ||
+      code.length > 4096
+    )
+      fail('invalid-oauth');
+    const row = db
+      .prepare('SELECT * FROM google_oauth_states WHERE state=? AND expires>?')
+      .get(hash(state), Date.now());
+    if (!row) fail('invalid-oauth');
+    const principal = row.principal;
+    const active =
+      principal === 'owner'
+        ? db
+            .prepare('SELECT 1 FROM sessions WHERE token=? AND expires>?')
+            .get(row.session, Date.now())
+        : db
+            .prepare('SELECT 1 FROM member_sessions WHERE token=? AND principal=? AND expires>?')
+            .get(row.session, principal, Date.now());
+    if (!active) fail('oauth-session-expired', 401);
+    db.prepare('DELETE FROM google_oauth_states WHERE state=?').run(hash(state));
+    const result = await token({ grant_type: 'authorization_code', redirect_uri: redirect, code });
+    const old = db
+      .prepare('SELECT credentials FROM google_connections WHERE principal=?')
+      .get(principal);
+    const previous = old ? box.open(old.credentials) : {};
+    if (
+      typeof result.access_token !== 'string' ||
+      (!result.refresh_token && !previous.refresh_token)
+    )
+      fail('google-offline-access-required');
+    db.prepare(
+      'INSERT INTO google_connections VALUES(?,?) ON CONFLICT(principal) DO UPDATE SET credentials=excluded.credentials',
+    ).run(
+      principal,
+      box.seal({
+        ...previous,
+        ...result,
+        expires_at: Date.now() + (result.expires_in ?? 3600) * 1000,
+      }),
+    );
+    return { connected: true };
+  }
+  async function access(principal) {
+    if (!enabled) fail('google-not-configured', 503);
+    const row = db
+      .prepare('SELECT credentials FROM google_connections WHERE principal=?')
+      .get(principal);
+    if (!row) fail('google-not-connected', 409);
+    let value = box.open(row.credentials);
+    if (value.expires_at < Date.now() + 60000) {
+      const refreshed = await token({
+        grant_type: 'refresh_token',
+        refresh_token: value.refresh_token,
+      });
+      value = {
+        ...value,
+        ...refreshed,
+        expires_at: Date.now() + (refreshed.expires_in ?? 3600) * 1000,
+      };
+      db.prepare('UPDATE google_connections SET credentials=? WHERE principal=?').run(
+        box.seal(value),
+        principal,
+      );
+    }
+    return value.access_token;
+  }
+  async function google(principal, path, method = 'GET', body) {
+    const response = await fetchImpl('https://www.googleapis.com/calendar/v3/' + path, {
+      method,
+      headers: {
+        authorization: 'Bearer ' + (await access(principal)),
+        ...(body ? { 'content-type': 'application/json' } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!response.ok)
+      throw Object.assign(Error('google-calendar-request-failed'), {
+        status: 502,
+        providerStatus: response.status,
+      });
+    return response.status === 204 ? null : response.json();
+  }
+  async function events(principal, body) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(body.from ?? '') || !/^\d{4}-\d{2}-\d{2}$/.test(body.to ?? ''))
+      fail('invalid-date-range');
+    const from = new Date(body.from + 'T00:00:00Z'),
+      to = new Date(body.to + 'T23:59:59Z');
+    if (
+      !Number.isFinite(from.getTime()) ||
+      !Number.isFinite(to.getTime()) ||
+      from.toISOString().slice(0, 10) !== body.from ||
+      to.toISOString().slice(0, 10) !== body.to ||
+      to < from ||
+      to - from > 90 * 86400000
+    )
+      fail('invalid-date-range');
+    const query = new URLSearchParams({
+      timeMin: from.toISOString(),
+      timeMax: to.toISOString(),
+      singleEvents: 'true',
+      orderBy: 'startTime',
+      maxResults: '100',
+    });
+    if (body.pageToken) {
+      if (typeof body.pageToken !== 'string' || body.pageToken.length > 4096) fail('invalid-page');
+      query.set('pageToken', body.pageToken);
+    }
+    const result = await google(principal, 'calendars/primary/events?' + query);
+    return {
+      events: (result.items ?? [])
+        .filter((x) => x.status !== 'cancelled' && typeof x.id === 'string')
+        .map((x) => ({
+          id: x.id,
+          title: String(x.summary ?? 'Untitled').slice(0, 160),
+          start: x.start,
+          end: x.end,
+          updated: x.updated,
+        })),
+      nextPageToken: result.nextPageToken ?? null,
+    };
+  }
+  async function exportEvent(principal, body, data) {
+    const raw = data['personal-os.entries.v1'];
+    const entry = (Array.isArray(raw) ? raw : (raw?.entries ?? [])).find(
+      (x) => x.kind === 'event' && x.id === body.entryId && !x.archived,
+    );
+    if (
+      !entry ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(entry.date) ||
+      !/^([01]\d|2[0-3]):[0-5]\d$/.test(entry.time)
+    )
+      fail('invalid-event');
+    if (entry.revision !== body.entryRevision) fail('event-changed', 409);
+    const zone = data['personal-os.planning.v1']?.timezone ?? 'UTC';
+    const [year, month, day] = entry.date.split('-').map(Number);
+    const [hour, minute] = entry.time.split(':').map(Number);
+    let start;
+    try {
+      start = Temporal.ZonedDateTime.from(
+        { timeZone: zone, year, month, day, hour, minute },
+        { overflow: 'reject', disambiguation: 'reject' },
+      );
+    } catch {
+      fail('event-time-ambiguous-or-invalid');
+    }
+    const end = start.add({ minutes: entry.durationMinutes ?? 30 });
+    const payload = {
+      summary: entry.title,
+      start: { dateTime: start.toInstant().toString(), timeZone: zone },
+      end: { dateTime: end.toInstant().toString(), timeZone: zone },
+      extendedProperties: { private: { dailgo_entry: entry.id, dailgo_principal: principal } },
+    };
+    const existing = db
+      .prepare('SELECT google FROM google_exports WHERE principal=? AND entry=?')
+      .get(principal, entry.id);
+    const generated = createHash('sha256')
+      .update(principal + '/' + entry.id)
+      .digest('hex');
+    const id = existing?.google ?? generated;
+    let result;
+    try {
+      result = await google(
+        principal,
+        'calendars/primary/events/' + encodeURIComponent(id),
+        'PUT',
+        payload,
+      );
+    } catch (error) {
+      if (existing || error.providerStatus !== 404) throw error;
+      result = await google(principal, 'calendars/primary/events', 'POST', { ...payload, id });
+    }
+    db.prepare(
+      'INSERT INTO google_exports VALUES(?,?,?) ON CONFLICT(principal,entry) DO UPDATE SET google=excluded.google',
+    ).run(principal, entry.id, result.id);
+    return { exported: true, id: result.id };
+  }
+  async function disconnect(principal) {
+    const row = db
+      .prepare('SELECT credentials FROM google_connections WHERE principal=?')
+      .get(principal);
+    if (row && box.ready) {
+      const value = box.open(row.credentials);
+      const response = await fetchImpl('https://oauth2.googleapis.com/revoke', {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ token: value.refresh_token ?? value.access_token }).toString(),
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!response.ok) fail('google-revocation-failed', 502);
+    }
+    db.prepare('DELETE FROM google_connections WHERE principal=?').run(principal);
+    db.prepare('DELETE FROM google_oauth_states WHERE principal=?').run(principal);
+    return { connected: false };
+  }
+  return { status, start, callback, events, exportEvent, disconnect };
 }

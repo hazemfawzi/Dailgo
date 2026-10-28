@@ -111,13 +111,13 @@ sudo bash deploy/bootstrap-deploy.sh /absolute/path/to/dailgo-github-actions.pub
 من Settings → Environments، أنشئ `production` وحدّد `main` كفرع نشر مسموح.
 من Settings → Secrets and variables → Actions:
 
-| النوع | الاسم | القيمة |
-| --- | --- | --- |
-| Repository variable | `DAILGO_DEPLOY_ENABLED` | اتركه `false` حتى تكتمل الخطوات، ثم `true` |
-| Production variable أو Repository variable | `DAILGO_SSH_HOST` | `94.237.30.56` |
-| Production variable أو Repository variable | `DAILGO_SSH_PORT` | `22` أو منفذ SSH الفعلي |
-| Production secret | `DAILGO_SSH_PRIVATE_KEY` | المفتاح الخاص المخصص، تدخله بنفسك في GitHub |
-| Production secret | `DAILGO_SSH_KNOWN_HOSTS` | سطر host key الموثوق للسيرفر |
+| النوع                                      | الاسم                    | القيمة                                      |
+| ------------------------------------------ | ------------------------ | ------------------------------------------- |
+| Repository variable                        | `DAILGO_DEPLOY_ENABLED`  | اتركه `false` حتى تكتمل الخطوات، ثم `true`  |
+| Production variable أو Repository variable | `DAILGO_SSH_HOST`        | `94.237.30.56`                              |
+| Production variable أو Repository variable | `DAILGO_SSH_PORT`        | `22` أو منفذ SSH الفعلي                     |
+| Production secret                          | `DAILGO_SSH_PRIVATE_KEY` | المفتاح الخاص المخصص، تدخله بنفسك في GitHub |
+| Production secret                          | `DAILGO_SSH_KNOWN_HOSTS` | سطر host key الموثوق للسيرفر                |
 
 لتحضير known_hosts، اجمع المفتاح العام بـ`ssh-keyscan -p PORT -t ed25519 HOST` على
 جهازك، وقارن بصمته مع بصمة `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub`
