@@ -1030,7 +1030,7 @@
   "ui.selectedTasksWillBePlannedForToday.8e04e2": "Selected tasks will be planned for today. Their due dates stay unchanged.",
   "ui.selectTask.32f3e7": "Select task",
   "ui.selectTasks.8e0c6f": "Select tasks",
-  "ui.selfReportedMeasurementsNotAutomaticProductivityScores.8e8d1c": "Self-reported measurements, not automatic productivity scores. Compare with your previous method after a full week. Blank fields mean unmeasured.",
+  "ui.selfReportedMeasurementsNotAutomaticProductivityScores.8e8d1c": "Your own weekly observations, not an automatic productivity score. Leave unmeasured fields empty.",
   "ui.sendEmailConfirmation.ddfa2b": "Send email confirmation",
   "ui.sendMessage.cbcd6c": "Send message",
   "ui.sendOneTestReminder.743884": "Send one test reminder",
@@ -1331,5 +1331,12 @@
   "datePicker.previous": "Previous month",
   "datePicker.next": "Next month",
   "datePicker.invalid": "Enter a valid date or time",
-  "assistant.settings.description": "Choose how the assistant helps and which information it may use."
+  "assistant.settings.description": "Choose how the assistant helps and which information it may use.",
+  "trial.start.title": "A week to find your rhythm",
+  "trial.start.description": "Record a few observations each day, then compare what changed.",
+  "trial.baseline.help": "Optional estimates from your previous routine.",
+  "trial.daily.title": "Today’s observations",
+  "trial.daily.help": "Fill in only what you measured. Leave the rest empty.",
+  "trial.note.placeholder": "What felt easier? What needs to change?",
+  "trial.autosave": "Changes save as you write"
 }

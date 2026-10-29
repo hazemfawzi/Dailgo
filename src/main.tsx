@@ -33,3 +33,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 );
 import './styles/responsive.css';
+import './features/review/review.css';

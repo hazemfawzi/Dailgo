@@ -50,7 +50,7 @@ export function DailyReview({
     setTasks((old) => old.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   }
   return (
-    <section id="daily-review" tabIndex={-1} className="card daily-review">
+    <section id="daily-review" tabIndex={-1} className="card daily-review evening-review">
       <div className="home-section-title">
         <h3 dir="auto">{t('ui.eveningReviewTwoMinutes.5e8cf6')}</h3>
         <DateTimeInput
@@ -169,69 +169,73 @@ export function DailyReview({
           </button>
         ))}
       </fieldset>
-      <label>
-        {t('ui.oneLineEveningNote.0f9fdf')}
-        <input
-          dir="auto"
-          aria-label={t('ui.eveningNote.3fd2ea')}
-          maxLength={1000}
-          value={review.note ?? ''}
-          onChange={(e) => {
-            const note = e.target.value;
-            setReviews((old) => ({ ...old, [day]: { ...(old[day] ?? review), note } }));
-          }}
-        />
-      </label>
-      <div className="review-fields">
-        {(['wins', 'obstacles', 'next'] as const).map((field, i) => (
-          <label key={field}>
-            {
-              [
-                t('ui.whatMovedForward.b334a6'),
-                t('ui.whatChangedOrGotInTheWay.3388e5'),
-                t('ui.whatWillYouAdjust.f8275f'),
-              ][i]
-            }
-            <textarea
-              dir="auto"
-              maxLength={2000}
-              rows={3}
-              value={review[field]}
-              onChange={(e) => {
-                const value = e.target.value;
-                setReviews((old) => ({
-                  ...old,
-                  [day]: { ...(old[day] ?? review), [field]: value },
-                }));
-              }}
-            />
-          </label>
-        ))}
+      <div className="review-notes-panel">
+        <label className="review-field review-evening-note">
+          {t('ui.oneLineEveningNote.0f9fdf')}
+          <input
+            dir="auto"
+            aria-label={t('ui.eveningNote.3fd2ea')}
+            maxLength={1000}
+            value={review.note ?? ''}
+            onChange={(e) => {
+              const note = e.target.value;
+              setReviews((old) => ({ ...old, [day]: { ...(old[day] ?? review), note } }));
+            }}
+          />
+        </label>
+        <div className="review-fields">
+          {(['wins', 'obstacles', 'next'] as const).map((field, i) => (
+            <label className="review-field" key={field}>
+              {
+                [
+                  t('ui.whatMovedForward.b334a6'),
+                  t('ui.whatChangedOrGotInTheWay.3388e5'),
+                  t('ui.whatWillYouAdjust.f8275f'),
+                ][i]
+              }
+              <textarea
+                dir="auto"
+                maxLength={2000}
+                rows={3}
+                value={review[field]}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setReviews((old) => ({
+                    ...old,
+                    [day]: { ...(old[day] ?? review), [field]: value },
+                  }));
+                }}
+              />
+            </label>
+          ))}
+        </div>
       </div>
-      <Button
-        disabled={busy}
-        onClick={async () => {
-          const ok = await transactData((data) => ({
-            ...data,
-            [JOURNEY_KEY]: { ...journeyState(data), eveningReviewedOn: day },
-          }));
-          setNotice(
-            ok
-              ? t('ui.eveningReviewFinishedYouCanRevisitIt.afe61c')
-              : t('ui.couldNotSaveTheReviewStatus.16d241'),
-          );
-        }}
-      >
-        {t('ui.finishEveningReview.b1e4d9')}
-      </Button>
-      {notice && (
-        <p dir="auto" role="status">
-          {notice}
+      <footer className="review-save-footer">
+        <p className="muted" role={error ? 'alert' : undefined}>
+          {error ? t('ui.couldNotSaveTheReview.2ead08') : storageText(t, 'review')}
         </p>
-      )}
-      <p dir="auto" className="muted" role={error ? 'alert' : undefined}>
-        {error ? t('ui.couldNotSaveTheReview.2ead08') : storageText(t, 'review')}
-      </p>
+        <Button
+          disabled={busy}
+          onClick={async () => {
+            const ok = await transactData((data) => ({
+              ...data,
+              [JOURNEY_KEY]: { ...journeyState(data), eveningReviewedOn: day },
+            }));
+            setNotice(
+              ok
+                ? t('ui.eveningReviewFinishedYouCanRevisitIt.afe61c')
+                : t('ui.couldNotSaveTheReviewStatus.16d241'),
+            );
+          }}
+        >
+          {t('ui.finishEveningReview.b1e4d9')}
+        </Button>
+        {notice && (
+          <p dir="auto" role="status">
+            {notice}
+          </p>
+        )}
+      </footer>
     </section>
   );
 }

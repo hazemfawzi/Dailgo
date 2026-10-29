@@ -116,12 +116,12 @@ function unitDB() {
 }
 
 test('Arabic display formatting uses one numeral system and correct singular, dual and plural forms', () => {
-  assert.equal(domain.fmt.formatNumber(65, 'ar'), '٦٥');
-  assert.equal(domain.fmt.formatTime('20:08', 'ar'), '٢٠:٠٨');
-  assert.doesNotMatch(domain.fmt.formatCalendarDate('2026-12-31', 'ar'), /[0-9]/);
+  assert.equal(domain.fmt.formatNumber(65, 'ar'), '65');
+  assert.equal(domain.fmt.formatTime('20:08', 'ar'), '20:08');
+  assert.doesNotMatch(domain.fmt.formatCalendarDate('2026-12-31', 'ar'), /[٠-٩۰-۹]/);
   assert.equal(domain.fmt.counted(1, 'item', 'ar'), 'عنصر');
   assert.equal(domain.fmt.counted(2, 'item', 'ar'), 'عنصران');
-  assert.equal(domain.fmt.counted(3, 'goal', 'ar'), '٣ أهداف');
+  assert.equal(domain.fmt.counted(3, 'goal', 'ar'), '3 أهداف');
   assert.equal(domain.fmt.activeGoals(1, 'ar'), 'هدف نشط (غير مؤرشف)');
   assert.equal(domain.fmt.counted(1, 'item', 'en'), '1 item');
   const reply = domain.respond('Show my memories', domain.createTranslator('en'), [], []);
@@ -1084,5 +1084,5 @@ test('Arabic planning defaults to Saturday without overwriting an explicitly sav
     }).weekStartsOn,
     1,
   );
-  assert.equal(domain.fmt.formatClockPart(1, 'ar'), '٠١');
+  assert.equal(domain.fmt.formatClockPart(1, 'ar'), '01');
 });

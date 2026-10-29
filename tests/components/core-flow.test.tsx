@@ -31,8 +31,8 @@ test('date controls show readable Arabic while submitting the standard calendar 
       onChange={(event) => values.push(event.currentTarget.value)}
     />,
   );
-  expect((screen.getByLabelText('Day') as HTMLInputElement).value).toBe('٢٨/١٠/٢٠٢٦');
-  expect(screen.getByText('٢٨ أكتوبر ٢٠٢٦')).toBeTruthy();
+  expect((screen.getByLabelText('Day') as HTMLInputElement).value).toBe('28/10/2026');
+  expect(screen.getByText('28 أكتوبر 2026')).toBeTruthy();
   fireEvent.change(screen.getByLabelText('Day'), { target: { value: '2026-11-02' } });
   expect(values).toEqual(['2026-11-02']);
 });
@@ -40,10 +40,10 @@ test('time controls preserve their machine value and empty controls do not show 
   const { rerender } = render(
     <DateTimeInput type="time" aria-label="Time" value="20:00" readOnly />,
   );
-  expect(screen.getByText('٢٠:٠٠')).toBeTruthy();
-  expect((screen.getByLabelText('Time') as HTMLInputElement).value).toBe('٢٠:٠٠');
+  expect(screen.getByText('20:00')).toBeTruthy();
+  expect((screen.getByLabelText('Time') as HTMLInputElement).value).toBe('20:00');
   rerender(<DateTimeInput type="date" aria-label="Day" value="" readOnly />);
-  expect(screen.queryByText(/٢٠٢٦/)).toBeNull();
+  expect(screen.queryByText(/2026/)).toBeNull();
 });
 test('weekly review reveals one step at a time and preserves a draft until explicit save', async () => {
   state.data = {
@@ -108,9 +108,9 @@ test('Arabic calendar follows week start, rejects impossible dates and enforces 
   fireEvent.change(screen.getByLabelText('Day'), { target: { value: '٢٩/١٠/٢٠٢٦' } });
   expect(values).toEqual(['2026-10-29']);
   await user.click(screen.getByRole('button', { name: 'اختار التاريخ' }));
-  const blocked = screen.getByRole('button', { name: '٢٦ أكتوبر ٢٠٢٦' });
+  const blocked = screen.getByRole('button', { name: '26 أكتوبر 2026' });
   expect((blocked as HTMLButtonElement).disabled).toBe(true);
-  await user.click(screen.getByRole('button', { name: '٢٧ أكتوبر ٢٠٢٦' }));
+  await user.click(screen.getByRole('button', { name: '27 أكتوبر 2026' }));
   expect(values).toEqual(['2026-10-29', '2026-10-27']);
 });
 
@@ -124,4 +124,13 @@ test('Arabic controls submit ISO values for uncontrolled form fields', () => {
   expect(new FormData(form).get('date')).toBe('2026-10-28');
   fireEvent.change(screen.getByLabelText('Day'), { target: { value: '٢٩/١٠/٢٠٢٦' } });
   expect(new FormData(form).get('date')).toBe('2026-10-29');
+});
+
+test('Arabic interface numbers use Latin digits while Arabic date labels and parsing remain available', async () => {
+  const { formatNumber, formatCalendarDate, formatDuration } =
+    await import('../../src/i18n/format');
+  expect(formatNumber(1234.5, 'ar')).toBe('1,234.5');
+  expect(formatDuration(65, 'ar')).toBe('1:05');
+  expect(formatCalendarDate('2026-10-29', 'ar')).toBe('29 أكتوبر 2026');
+  expect(createTranslator('ar')('ui.clarityOfNextStep15.29ce32')).not.toMatch(/[٠-٩۰-۹]/);
 });

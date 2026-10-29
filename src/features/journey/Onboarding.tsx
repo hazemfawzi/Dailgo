@@ -135,7 +135,7 @@ export function Onboarding({
       title={t('ui.setUpYourFirstFiveMinutes.85a0db')}
       description={t(
         `Step ${localizedNumber(step, t('en', 'ar'))} of 3. Review the suggestions; nothing is added until you confirm.`,
-        `الخطوة ${localizedNumber(step, t('en', 'ar'))} من ٣. راجع الاقتراحات؛ مش هنضيف بيانات غير بعد تأكيدك.`,
+        `الخطوة ${localizedNumber(step, t('en', 'ar'))} من 3. راجع الاقتراحات؛ مش هنضيف بيانات غير بعد تأكيدك.`,
       )}
     >
       <div className="journey-onboarding editor-form">

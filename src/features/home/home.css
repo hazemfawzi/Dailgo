@@ -1230,3 +1230,140 @@
     min-height: 44px;
   }
 }
+
+/* Home composition: overview first, daily work second, supporting tools last. */
+.core-home > .home-overview {
+  margin: 0 0 32px;
+  min-height: 248px;
+}
+.core-home > .home-heading {
+  margin-bottom: 20px;
+}
+.core-home .home-heading h1 {
+  font-size: var(--text-lg);
+  margin: 6px 0;
+}
+.core-home .home-main-column {
+  align-items: stretch;
+  gap: 24px;
+}
+.core-home .home-main-column > .card {
+  border-radius: 20px;
+  box-shadow: none;
+}
+.core-home .home-focus-task {
+  padding: 22px 24px;
+  align-items: start;
+}
+.core-home .home-focus-task .task-title-button {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1.7;
+}
+.core-home .home-assistant-bar {
+  border-radius: 16px;
+  background: var(--surface);
+}
+.core-home .home-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-block: 28px;
+  align-items: start;
+}
+.core-home .home-secondary {
+  padding: 0;
+  margin: 0;
+  border-radius: 18px;
+  box-shadow: none;
+  overflow: hidden;
+}
+.core-home .home-secondary > summary {
+  padding: 20px 24px;
+  min-height: 88px;
+  gap: 14px;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+.core-home .home-secondary > summary > small {
+  margin-inline-start: auto;
+}
+.core-home .home-secondary > summary::after {
+  margin-inline-start: 8px;
+  font-size: 20px;
+  color: var(--muted);
+}
+.core-home .home-secondary > summary > span:not(.home-panel-icon) {
+  flex: 1;
+}
+.core-home .home-panel-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: var(--soft);
+  color: var(--purple);
+}
+.core-home .home-secondary[open] {
+  grid-column: 1/-1;
+}
+.core-home .home-secondary[open] > summary {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.core-home .home-secondary > .card,
+.core-home .home-secondary > .home-side-column,
+.core-home .home-secondary > .daily-cycle,
+.core-home .home-secondary > .my-day,
+.core-home .home-secondary > .home-stats {
+  margin: 0;
+  padding: 24px;
+}
+.core-home .home-stats {
+  gap: 16px;
+}
+.core-home .stat-card {
+  box-shadow: none;
+  border-radius: 16px;
+}
+.core-home .home-secondary .home-side-column > .card {
+  border-radius: 16px;
+  box-shadow: none;
+}
+@media (max-width: 700px) {
+  .core-home > .home-overview {
+    padding: 24px;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  .core-home .home-tools-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .core-home .home-secondary > summary {
+    padding: 16px;
+    min-height: 80px;
+  }
+  .core-home .home-secondary > .card,
+  .core-home .home-secondary > .home-side-column,
+  .core-home .home-secondary > .daily-cycle,
+  .core-home .home-secondary > .my-day,
+  .core-home .home-secondary > .home-stats {
+    padding: 16px;
+  }
+  .core-home .home-focus-task {
+    padding: 18px 16px;
+  }
+}
+.core-home .progress-orbit > div > span {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+}
+.core-home .home-focus-task > .checkbox {
+  border-radius: 50%;
+  margin-top: 4px;
+}
