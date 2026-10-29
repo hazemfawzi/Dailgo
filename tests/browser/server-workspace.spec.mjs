@@ -1946,3 +1946,41 @@ test('Home starts with the overview and review panels keep Latin digits and save
     page.locator('.trial-review').getByLabel('وقت التسجيل (ثوانٍ)', { exact: true }),
   ).toHaveValue('45');
 });
+
+test('compact status planner paginates tasks without horizontal scrolling on desktop and mobile', async ({
+  page,
+}) => {
+  await signIn(page);
+  await seedUxWorkspace(page, 'ar', {
+    'personal-os.tasks.v1': Array.from({ length: 15 }, (_, index) => ({
+      id: `board-${index}`,
+      title: `مهمة المخطط ${index}`,
+      category: 'Personal',
+      done: false,
+      archived: false,
+      status: index === 14 ? 'doing' : 'todo',
+      description: 'تفاصيل المهمة تظهر في الكارت ويمكن فتح المهمة لمراجعتها بالكامل.',
+    })),
+  });
+  await page.goto('/planner?tab=tasks');
+  await page.getByRole('button', { name: 'عرض اللوحة', exact: true }).click();
+  await expect(page.locator('.status-board .task-item')).toHaveCount(6);
+  await page.getByRole('button', { name: 'التالي', exact: true }).click();
+  await page.getByRole('button', { name: 'التالي', exact: true }).click();
+  await expect(page.locator('.status-board .task-item')).toHaveCount(2);
+  await page.locator('.status-doing').click();
+  await expect(page.locator('.status-board .task-item')).toHaveCount(1);
+  await page.locator('.status-todo').click();
+  await expect(page.locator('.status-board .task-item')).toHaveCount(6);
+  for (const [name, width] of [
+    ['desktop', 1440],
+    ['mobile', 390],
+  ]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.locator('.status-board')).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    await page.screenshot({ path: `/tmp/dailgo-status-planner-${name}.png`, fullPage: true });
+  }
+});

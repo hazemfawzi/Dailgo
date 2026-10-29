@@ -4,6 +4,7 @@ import {
 } from '../../i18n/format';
 import { formatNumber as localizedNumber } from '../../i18n/format';
 import { formatCalendarDate } from '../../i18n/format';
+import './task-board.css';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
@@ -58,6 +59,11 @@ export function TaskBoard({
   const [priority, setPriority] = useState('all');
   const [sort, setSort] = useState('smart');
   const [view, setView] = useState('list');
+  const [boardStatus, setBoardStatus] = useState<(typeof taskStates)[number]>('todo');
+  const [boardPage, setBoardPage] = useState(0);
+  useEffect(() => {
+    setBoardPage(0);
+  }, [boardStatus, query, area, priority, filter, sort]);
   const [selected, setSelected] = useState<string[]>([]);
   const [bulkDelete, setBulkDelete] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
@@ -104,6 +110,10 @@ export function TaskBoard({
             ? a.title.localeCompare(b.title)
             : (a.dueDate || '9999').localeCompare(b.dueDate || '9999'),
         );
+  const statusTasks = visible.filter((task) => statusOf(task) === boardStatus);
+  const pageCount = Math.max(1, Math.ceil(statusTasks.length / 6));
+  const currentPage = Math.min(boardPage, pageCount - 1);
+  const boardTasks = statusTasks.slice(currentPage * 6, currentPage * 6 + 6);
   const selectedVisible = selected.filter((id) => visible.some((x) => x.id === id));
   const update = (id: string, patch: Partial<Task>) =>
     setTasks((old) => old.map((x) => (x.id === id ? { ...x, ...patch } : x)));
@@ -312,18 +322,23 @@ export function TaskBoard({
         </Button>
       </div>
       <div className="task-filter-chips">
-        {filters.map(([value, label]) => (
-          <button
-            className={filter === value ? 'selected' : ''}
-            key={value}
-            onClick={() => {
-              setParams(value === 'open' ? {} : { filter: value });
-              setSelected([]);
-            }}
-          >
-            {label}
-          </button>
-        ))}
+        {filters
+          .filter(
+            ([value]) =>
+              view !== 'board' || ['open', 'today', 'overdue', 'all', 'archived'].includes(value),
+          )
+          .map(([value, label]) => (
+            <button
+              className={filter === value ? 'selected' : ''}
+              key={value}
+              onClick={() => {
+                setParams(value === 'open' ? {} : { filter: value });
+                setSelected([]);
+              }}
+            >
+              {label}
+            </button>
+          ))}
       </div>
       <div className="task-toolbar">
         <label className="search-field">
@@ -433,31 +448,68 @@ export function TaskBoard({
       {view === 'list' ? (
         <div className="card task-list-expanded">{visible.map(renderTask)}</div>
       ) : (
-        <div className="kanban-board">
-          {taskStates.map((status) => (
-            <section
-              className="kanban-column"
-              key={status}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const id = e.dataTransfer.getData('text/plain');
-                if (tasks.some((x) => x.id === id && !x.archived))
-                  update(id, { status, done: status === 'done' });
-              }}
-            >
-              <h3 dir="auto">
-                {statusLabel(status, t)}
-                <span className="count">
+        <div className="status-board">
+          <nav className="status-board-nav" aria-label={t('ui.status.7dafdc')}>
+            {taskStates.map((status) => (
+              <button
+                key={status}
+                className={`status-board-tab status-${status}`}
+                aria-pressed={boardStatus === status}
+                onClick={() => setBoardStatus(status)}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const id = event.dataTransfer.getData('text/plain');
+                  if (tasks.some((task) => task.id === id && !task.archived))
+                    update(id, { status, done: status === 'done' });
+                }}
+              >
+                <span className="status-dot" aria-hidden="true" />
+                <span>{statusLabel(status, t)}</span>
+                <span className="status-count">
                   {localizedNumber(
-                    visible.filter((x) => statusOf(x) === status).length,
+                    visible.filter((task) => statusOf(task) === status).length,
                     t('en', 'ar'),
                   )}
                 </span>
-              </h3>
-              {visible.filter((x) => statusOf(x) === status).map(renderTask)}
-            </section>
-          ))}
+              </button>
+            ))}
+          </nav>
+          <section className="status-board-content" aria-label={statusLabel(boardStatus, t)}>
+            <header className="status-board-heading">
+              <h3>{statusLabel(boardStatus, t)}</h3>
+              <span className="count">{localizedNumber(statusTasks.length, t('en', 'ar'))}</span>
+            </header>
+            <div className="status-board-tasks">{boardTasks.map(renderTask)}</div>
+            {!statusTasks.length && (
+              <p className="status-board-empty">{t('ui.noMatchingTasks.2c9d91')}</p>
+            )}
+            {pageCount > 1 && (
+              <nav
+                className="status-board-pagination"
+                aria-label={t('Previous and next tasks', 'صفحات المهام')}
+              >
+                <Button
+                  variant="outline"
+                  disabled={currentPage === 0}
+                  onClick={() => setBoardPage(currentPage - 1)}
+                >
+                  {t('Previous', 'السابق')}
+                </Button>
+                <span dir="ltr">
+                  {localizedNumber(currentPage + 1, t('en', 'ar'))} /{' '}
+                  {localizedNumber(pageCount, t('en', 'ar'))}
+                </span>
+                <Button
+                  variant="outline"
+                  disabled={currentPage + 1 >= pageCount}
+                  onClick={() => setBoardPage(currentPage + 1)}
+                >
+                  {t('Next', 'التالي')}
+                </Button>
+              </nav>
+            )}
+          </section>
         </div>
       )}
       {!visible.length && (
