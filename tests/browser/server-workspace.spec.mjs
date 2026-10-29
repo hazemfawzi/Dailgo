@@ -1959,10 +1959,19 @@ test('compact status planner paginates tasks without horizontal scrolling on des
       done: false,
       archived: false,
       status: index === 14 ? 'doing' : 'todo',
-      description: 'تفاصيل المهمة تظهر في الكارت ويمكن فتح المهمة لمراجعتها بالكامل.',
+      description: 'تفاصيل المهمة تظهر في الكارت ويمكن فتح المهمة لمراجعتها بالكامل.\n'.repeat(20),
     })),
   });
   await page.goto('/planner?tab=tasks');
+  await expect(page.locator('.compact-task-list .task-item')).toHaveCount(6);
+  const notes = page.locator('.compact-task-list .task-notes').first();
+  await expect(notes).not.toHaveAttribute('open');
+  await notes.locator('summary').click();
+  await expect(notes.locator('.task-description')).toBeVisible();
+  await notes.locator('summary').click();
+  await page.getByRole('button', { name: 'التالي', exact: true }).click();
+  await expect(page.locator('.compact-task-list .task-item')).toHaveCount(6);
+  await page.screenshot({ path: '/tmp/dailgo-compact-task-list.png', fullPage: true });
   await page.getByRole('button', { name: 'عرض اللوحة', exact: true }).click();
   await expect(page.locator('.status-board .task-item')).toHaveCount(6);
   await page.getByRole('button', { name: 'التالي', exact: true }).click();
