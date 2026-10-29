@@ -364,7 +364,7 @@ test('Arabic connection bar stays clear of the sidebar, follows dark mode and is
   await expect(page.getByRole('textbox', { name: 'عنوان المعاينة', exact: true })).toHaveValue(
     /أذاكر/,
   );
-  await expect(page.getByLabel('يوم التنفيذ (اختياري)', { exact: true })).toHaveValue('٢٨/١٠/٢٠٢٦');
+  await expect(page.getByLabel('يوم التنفيذ (اختياري)', { exact: true })).toHaveValue('28/10/2026');
   await expect(page.locator('.message-text').first()).toHaveAttribute('dir', 'auto');
   await expect(page.locator('.conversation-row>button>span').first()).toHaveAttribute(
     'dir',
@@ -1040,23 +1040,23 @@ test('Arabic numbers, goal dates and week starts stay consistent across Home, ca
       timezone: 'Africa/Cairo',
     },
   });
-  await expect(page.locator('.daily-cycle')).toContainText('الروتين: ٠');
-  await expect(page.locator('.daily-cycle')).not.toContainText(/الروتين: 0/);
+  await expect(page.locator('.daily-cycle')).toContainText('الروتين: 0');
+  await expect(page.locator('.daily-cycle')).not.toContainText(/[٠-٩۰-۹]/);
   await page.goto('/life');
-  await expect(page.locator('.entry-target-date')).toContainText('فاضل ٦٥ يوم');
+  await expect(page.locator('.entry-target-date')).toContainText('فاضل 65 يوم');
   await expect(page.locator('.life-area').filter({ hasText: 'العمل' })).not.toContainText(
-    '١ أهداف',
+    '1 أهداف',
   );
   await page.goto('/life/review-goal');
-  await expect(page.locator('.goal-date')).toContainText('٣١ ديسمبر ٢٠٢٦');
+  await expect(page.locator('.goal-date')).toContainText('31 ديسمبر 2026');
   await expect(page.locator('.goal-date')).not.toContainText('2026-12-31');
   await page.goto('/planner?tab=week&week=2026-10-27');
-  await expect(page.locator('.week-header')).toContainText('٢٤');
+  await expect(page.locator('.week-header')).toContainText('24');
   await expect(page.locator('.week-day').first().locator('.week-day-heading')).toContainText(
     'السبت',
   );
   await expect(page.locator('.week-day').first().locator('.week-day-heading')).toContainText(
-    '٢٤ أكتوبر',
+    '24 أكتوبر',
   );
   await page.goto('/planner?tab=calendar&date=2026-10-27');
   await expect(page.locator('.weekday').first()).toHaveText('سب');
@@ -1444,14 +1444,14 @@ test('Oct 28 Arabic review: rendered digits, evening date and editable week-star
     },
   });
   await openHomeSection(page, 'planning');
-  await expect(page.getByRole('button', { name: 'ابدأ يومي (٠/٣)', exact: true })).toBeVisible();
-  await expect(page.locator('.home-stats .stat-card strong')).toHaveText(['٠', '٠', '٠', '٠/٠']);
-  await expect(page.locator('.daily-review').first()).toContainText('٢٨ أكتوبر ٢٠٢٦');
+  await expect(page.getByRole('button', { name: 'ابدأ يومي (0/3)', exact: true })).toBeVisible();
+  await expect(page.locator('.home-stats .stat-card strong')).toHaveText(['0', '0', '0', '0/0']);
+  await expect(page.locator('.daily-review').first()).toContainText('28 أكتوبر 2026');
   await expect(page.locator('.daily-review').first()).not.toContainText('2026-10-28');
   await page.goto('/planner?tab=week&week=2026-10-26');
   await setWeekStart(page, '6');
   await expect(page.locator('.week-day-heading').first()).toContainText('السبت');
-  await expect(page.locator('.outcome-index')).toHaveText(['٠١', '٠٢', '٠٣']);
+  await expect(page.locator('.outcome-index')).toHaveText(['01', '02', '03']);
   expect((await workspace(page))['personal-os.weeks.v1']['2026-10-26'].outcomes[0].title).toBe(
     'نتيجة محفوظة',
   );
@@ -1499,7 +1499,7 @@ test('Oct 28 Arabic review: assistant shows inferred and editable life area and 
   );
   await expect(page.locator('#assistant-message-quoted .message-text')).toHaveText(english);
   await expect(page.locator('#assistant-message-legacy .message-time')).toContainText(
-    '٢٧ أكتوبر ٢٠٢٦',
+    '27 أكتوبر 2026',
   );
   await expect(page.locator('#assistant-message-legacy .message-time')).not.toContainText('/');
   await page.getByRole('button', { name: 'تسجيل سريع', exact: true }).click();
@@ -1520,7 +1520,7 @@ test('Oct 28 Arabic review: assistant shows inferred and editable life area and 
   await page.getByLabel('رسالتك', { exact: true }).fill('عايز أذاكر بكرة الساعة 8');
   await page.getByRole('button', { name: 'إرسال الرسالة', exact: true }).click();
   await expect(page.getByLabel('مجال الحياة المقترح', { exact: true })).toHaveValue('Learning');
-  await expect(page.getByLabel('وقت التنفيذ (اختياري)', { exact: true })).toHaveValue('٢٠:٠٠');
+  await expect(page.getByLabel('وقت التنفيذ (اختياري)', { exact: true })).toHaveValue('20:00');
   await page.getByLabel('مجال الحياة المقترح', { exact: true }).selectOption('Personal');
   await page.getByRole('button', { name: 'تأكيد الإجراء', exact: true }).click();
   await expect
@@ -1818,16 +1818,16 @@ test('Arabic custom calendar works in a mobile task editor', async ({ page }) =>
     page.getByRole('button', { name: 'Deadline only', exact: true }).first(),
   ).toBeVisible();
   await expect(page.locator('.home-new-task')).not.toBeVisible();
-  await expect(page.locator('.home-overview > summary')).toHaveCSS('border-top-width', '0px');
+  await expect(page.locator('.core-home > :first-child')).toHaveClass(/home-overview/);
   await page.getByRole('button', { name: 'Deadline only', exact: true }).first().click();
   await page.getByLabel('عنوان المهمة', { exact: true }).fill('اختبار التقويم العربي');
   await page.getByRole('button', { name: 'اختار التاريخ', exact: true }).first().click();
   await expect(page.getByRole('dialog', { name: 'اختار التاريخ', exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: '/tmp/dailgo-polish-calendar-mobile.png', fullPage: true });
-  await page.getByRole('button', { name: '٢٨ أكتوبر ٢٠٢٦', exact: true }).click();
+  await page.getByRole('button', { name: '28 أكتوبر 2026', exact: true }).click();
   await expect(page.getByRole('dialog').locator('.arabic-date-control input').first()).toHaveValue(
-    '٢٨/١٠/٢٠٢٦',
+    '28/10/2026',
   );
 });
 
@@ -1888,4 +1888,61 @@ test('an online conflict merges independent completions and Undo preserves the o
     release();
     await page.unroute('**/api/workspace/changes');
   }
+});
+
+test('Home starts with the overview and review panels keep Latin digits and save notes across reloads', async ({
+  page,
+}) => {
+  await signIn(page);
+  await seedUxWorkspace(page, 'ar', {
+    'personal-os.journey.v1': completeJourney,
+    'personal-os.trial.v1': {
+      startedOn: '2026-10-20',
+      baseline: { captureSeconds: 60, reviewMinutes: 10 },
+      days: {
+        '2026-10-27': { captureSeconds: 30, reviewMinutes: 5, clarity: 4, duplicates: 0, lost: 0 },
+      },
+    },
+  });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await expect(page.locator('.core-home > :first-child')).toHaveClass(/home-overview/);
+  await expect(page.locator('.home-overview')).toBeVisible();
+  expect(await page.locator('main').innerText()).not.toMatch(/[٠-٩۰-۹]/);
+  await page.screenshot({ path: '/tmp/dailgo-home-refresh-desktop.png', fullPage: true });
+  await openHomeSection(page, 'review');
+  await page.getByLabel('ملاحظة مسائية', { exact: true }).fill('مراجعة التصميم الجديد');
+  const review = page.locator('.evening-review');
+  const fieldBottom = await review
+    .locator('.review-notes-panel')
+    .evaluate((e) => e.getBoundingClientRect().bottom);
+  const buttonTop = await review
+    .getByRole('button', { name: 'إنهاء المراجعة المسائية', exact: true })
+    .evaluate((e) => e.getBoundingClientRect().top);
+  expect(buttonTop).toBeGreaterThan(fieldBottom);
+  await review.screenshot({ path: '/tmp/dailgo-evening-review-desktop.png' });
+  await openHomeSection(page, 'trial');
+  const trial = page.locator('.trial-review');
+  await trial.getByLabel('وقت التسجيل (ثوانٍ)', { exact: true }).fill('45');
+  await trial
+    .getByLabel('هل التطبيق قلّل مجهودك؟ وإيه اللي محتاج إصلاح؟', { exact: true })
+    .fill('التقسيم الجديد أوضح');
+  await trial.screenshot({ path: '/tmp/dailgo-trial-review-desktop.png' });
+  await expect
+    .poll(
+      async () => (await workspace(page))['personal-os.trial.v1'].days['2026-10-27'].captureSeconds,
+    )
+    .toBe(45);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await trial.screenshot({ path: '/tmp/dailgo-trial-review-mobile.png' });
+  await review.screenshot({ path: '/tmp/dailgo-evening-review-mobile.png' });
+  await page.reload();
+  await openHomeSection(page, 'review');
+  await expect(page.getByLabel('ملاحظة مسائية', { exact: true })).toHaveValue(
+    'مراجعة التصميم الجديد',
+  );
+  await openHomeSection(page, 'trial');
+  await expect(
+    page.locator('.trial-review').getByLabel('وقت التسجيل (ثوانٍ)', { exact: true }),
+  ).toHaveValue('45');
 });

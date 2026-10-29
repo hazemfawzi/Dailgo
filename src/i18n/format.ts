@@ -1,5 +1,5 @@
 import { getPlanning } from '../lib/planningConfig';
-export const localeFor = (language: string) => (language === 'ar' ? 'ar-EG-u-nu-arab' : 'en-GB');
+export const localeFor = (language: string) => (language === 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB');
 export function formatCalendarDate(
   value: string | undefined,
   language: string,

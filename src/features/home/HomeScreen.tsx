@@ -140,6 +140,53 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
   ];
   return (
     <div className="home-v2 core-home">
+      <section className="daily-hero home-overview" aria-label={t('home.overview.title')}>
+        <div className="hero-content">
+          <span className="hero-kicker">
+            <span />
+            {t('ui.yourDailyPerspective.f59752')}
+          </span>
+          <h2 dir="auto">
+            {overdue.length
+              ? t('ui.aFreshStartIsAlwaysAnOption.203482')
+              : t('ui.makeSpaceForWhatMovesYouForward.7d6ad4')}
+          </h2>
+          <p dir="auto">
+            {t(
+              `${localizedNumber(open.length, t('en', 'ar'))} open tasks, ${localizedNumber(due.length, t('en', 'ar'))} due today. Choose one meaningful step and give it your attention.`,
+              `${localizedNumber(open.length, t('en', 'ar'))} مهام مفتوحة، منها ${localizedNumber(due.length, t('en', 'ar'))} تسليمها اليوم. اختار خطوة مهمة واديها تركيزك.`,
+            )}
+          </p>
+          <Button onClick={() => propose(t('ui.planMyDay.fec857'))}>
+            <Sparkles size={16} />
+            {t('ui.planMyDayWithMe.9669ca')}
+            <ArrowUpRight size={15} />
+          </Button>
+          <span className="hero-disclaimer">
+            {t('ui.ruleBasedAssistantReviewBeforeConfirming.9b6935')}
+          </span>
+        </div>
+        <div className="hero-progress">
+          <div
+            className="progress-orbit"
+            style={{ background: `conic-gradient(#c9dfb8 ${percent}%,#ffffff17 0)` }}
+          >
+            <div>
+              <span>
+                {formatNumber(percent, t('en', 'ar'))}
+                <small>%</small>
+              </span>
+              <p dir="auto">{t('ui.ofActiveTasksDone.fcfc42')}</p>
+            </div>
+          </div>
+          <span>
+            <CheckCheck size={14} />
+            {formatNumber(done, t('en', 'ar'))} {t('ui.completed.ff1564')} ·{' '}
+            {formatNumber(active.length, t('en', 'ar'))} {t('ui.total.c1e5a5')}
+          </span>
+        </div>
+      </section>
+
       <div className="home-heading">
         <div>
           <div className="eyebrow">
@@ -392,175 +439,153 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
           </section>
         </div>
       </div>
-      <details className="home-secondary" data-home-section="planning">
-        <summary>{t('home.planning.title')}</summary>{' '}
-        <DailyCycle tasks={tasks} entries={entries} settings={settings} t={t} />
-        <MyDay tasks={tasks} entries={entries} t={t} edit={edit} />
-      </details>
-      <details className="home-secondary" data-home-section="focus">
-        <summary>{t('home.focus.title')}</summary>{' '}
-        <div className="home-side-column">
-          <FocusTimer t={t} tasks={tasks} />
-          <NeedsAttention tasks={tasks} t={t} edit={edit} />
-          <section className="card home-routines">
-            <div className="home-section-title">
-              <h3 dir="auto">{t('ui.dailyRoutines.7c227d')}</h3>
-              <Repeat2 size={17} />
-            </div>
-            {routines.slice(0, 4).map((routine) => (
-              <button
-                className="home-routine"
-                key={routine.id}
-                aria-pressed={routine.doneDates.includes(today)}
-                onClick={() =>
-                  setEntries((old) =>
-                    old.map((x) =>
-                      x.id === routine.id
-                        ? {
-                            ...x,
-                            doneDates: x.doneDates.includes(today)
-                              ? x.doneDates.filter((d) => d !== today)
-                              : [...x.doneDates, today],
-                          }
-                        : x,
-                    ),
-                  )
-                }
-              >
-                <span className={`checkbox ${routine.doneDates.includes(today) ? 'checked' : ''}`}>
-                  {routine.doneDates.includes(today) && <Check size={12} />}
-                </span>
-                <span>{routine.title}</span>
-                <small>
-                  {localizedTime(routine.time, t('en', 'ar'))} · 🔥{' '}
-                  {counted(
-                    routineStreak(routine.doneDates, routine.routineDays, today),
-                    'day',
-                    t('en', 'ar'),
-                  )}
-                </small>
-              </button>
-            ))}
-            {!routines.length && (
-              <p dir="auto" className="muted">
-                {t('ui.buildASmallHabitYouCanReturn.4d558a')}
-              </p>
-            )}
-            <Link className="home-section-link" to="/planner?tab=routines">
-              {t('ui.manageRoutines.1a5ed2')}
-              <ArrowRight size={14} />
-            </Link>
-          </section>
-          <section className="card home-goals">
-            <div className="home-section-title">
-              <h3 dir="auto">{t('ui.theBiggerPicture.f2039f')}</h3>
-              <Target size={17} />
-            </div>
-            {goals.map((goal) => (
-              <Link className="home-goal" key={goal.id} to={`/life/${goal.id}`}>
+      <div className="home-tools-grid">
+        <details className="home-secondary" data-home-section="planning">
+          <summary>
+            <span className="home-panel-icon">
+              <CalendarDays size={20} />
+            </span>
+            <span>{t('home.planning.title')}</span>
+          </summary>{' '}
+          <DailyCycle tasks={tasks} entries={entries} settings={settings} t={t} />
+          <MyDay tasks={tasks} entries={entries} t={t} edit={edit} />
+        </details>
+        <details className="home-secondary" data-home-section="focus">
+          <summary>
+            <span className="home-panel-icon">
+              <Target size={20} />
+            </span>
+            <span>{t('home.focus.title')}</span>
+          </summary>{' '}
+          <div className="home-side-column">
+            <FocusTimer t={t} tasks={tasks} />
+            <NeedsAttention tasks={tasks} t={t} edit={edit} />
+            <section className="card home-routines">
+              <div className="home-section-title">
+                <h3 dir="auto">{t('ui.dailyRoutines.7c227d')}</h3>
+                <Repeat2 size={17} />
+              </div>
+              {routines.slice(0, 4).map((routine) => (
+                <button
+                  className="home-routine"
+                  key={routine.id}
+                  aria-pressed={routine.doneDates.includes(today)}
+                  onClick={() =>
+                    setEntries((old) =>
+                      old.map((x) =>
+                        x.id === routine.id
+                          ? {
+                              ...x,
+                              doneDates: x.doneDates.includes(today)
+                                ? x.doneDates.filter((d) => d !== today)
+                                : [...x.doneDates, today],
+                            }
+                          : x,
+                      ),
+                    )
+                  }
+                >
+                  <span
+                    className={`checkbox ${routine.doneDates.includes(today) ? 'checked' : ''}`}
+                  >
+                    {routine.doneDates.includes(today) && <Check size={12} />}
+                  </span>
+                  <span>{routine.title}</span>
+                  <small>
+                    {localizedTime(routine.time, t('en', 'ar'))} · 🔥{' '}
+                    {counted(
+                      routineStreak(routine.doneDates, routine.routineDays, today),
+                      'day',
+                      t('en', 'ar'),
+                    )}
+                  </small>
+                </button>
+              ))}
+              {!routines.length && (
+                <p dir="auto" className="muted">
+                  {t('ui.buildASmallHabitYouCanReturn.4d558a')}
+                </p>
+              )}
+              <Link className="home-section-link" to="/planner?tab=routines">
+                {t('ui.manageRoutines.1a5ed2')}
+                <ArrowRight size={14} />
+              </Link>
+            </section>
+            <section className="card home-goals">
+              <div className="home-section-title">
+                <h3 dir="auto">{t('ui.theBiggerPicture.f2039f')}</h3>
+                <Target size={17} />
+              </div>
+              {goals.map((goal) => (
+                <Link className="home-goal" key={goal.id} to={`/life/${goal.id}`}>
+                  <div>
+                    <strong dir="auto">{goal.title}</strong>
+                    <span>{localizedNumber(goal.progress, t('en', 'ar'))}%</span>
+                  </div>
+                  <progress value={goal.progress} max={100} />
+                </Link>
+              ))}
+              {!goals.length && (
+                <p dir="auto" className="muted">
+                  {t('ui.giveYourNextAmbitionAHome.d80a96')}
+                </p>
+              )}
+              <Link className="home-section-link" to="/life">
+                {t('ui.exploreMyLife.4ae1e8')}
+                <ArrowRight size={14} />
+              </Link>
+            </section>
+          </div>
+        </details>
+        <details className="home-secondary">
+          <summary>
+            <span className="home-panel-icon">
+              <Flag size={20} />
+            </span>
+            <span>{t('home.progress.title')}</span>
+          </summary>
+          <div className="home-stats">
+            {stats.map((stat) => (
+              <Link className="card stat-card" to={stat.path} key={stat.path}>
                 <div>
-                  <strong dir="auto">{goal.title}</strong>
-                  <span>{localizedNumber(goal.progress, t('en', 'ar'))}%</span>
+                  <span>{stat.label}</span>
+                  <stat.icon size={17} />
                 </div>
-                <progress value={goal.progress} max={100} />
+                <strong dir="auto">
+                  {typeof stat.value === 'number'
+                    ? formatNumber(stat.value, t('en', 'ar'))
+                    : stat.value}
+                </strong>
+                <small>
+                  {stat.sub}
+                  <ArrowUpRight size={13} />
+                </small>
               </Link>
             ))}
-            {!goals.length && (
-              <p dir="auto" className="muted">
-                {t('ui.giveYourNextAmbitionAHome.d80a96')}
-              </p>
-            )}
-            <Link className="home-section-link" to="/life">
-              {t('ui.exploreMyLife.4ae1e8')}
-              <ArrowRight size={14} />
-            </Link>
-          </section>
-        </div>
-      </details>
-      <details className="home-secondary home-overview">
-        <summary>{t('home.overview.title')}</summary>
-        <section className="daily-hero">
-          <div className="hero-content">
-            <span className="hero-kicker">
-              <span />
-              {t('ui.yourDailyPerspective.f59752')}
-            </span>
-            <h2 dir="auto">
-              {overdue.length
-                ? t('ui.aFreshStartIsAlwaysAnOption.203482')
-                : t('ui.makeSpaceForWhatMovesYouForward.7d6ad4')}
-            </h2>
-            <p dir="auto">
-              {t(
-                `${localizedNumber(open.length, t('en', 'ar'))} open tasks, ${localizedNumber(due.length, t('en', 'ar'))} due today. Choose one meaningful step and give it your attention.`,
-                `${localizedNumber(open.length, t('en', 'ar'))} مهام مفتوحة، منها ${localizedNumber(due.length, t('en', 'ar'))} تسليمها اليوم. اختار خطوة مهمة واديها تركيزك.`,
-              )}
-            </p>
-            <Button onClick={() => propose(t('ui.planMyDay.fec857'))}>
-              <Sparkles size={16} />
-              {t('ui.planMyDayWithMe.9669ca')}
-              <ArrowUpRight size={15} />
-            </Button>
-            <span className="hero-disclaimer">
-              {t('ui.ruleBasedAssistantReviewBeforeConfirming.9b6935')}
-            </span>
           </div>
-          <div className="hero-progress">
-            <div
-              className="progress-orbit"
-              style={{ background: `conic-gradient(#c9dfb8 ${percent}%,#ffffff17 0)` }}
-            >
-              <div>
-                <span>
-                  {formatNumber(percent, t('en', 'ar'))}
-                  <small>%</small>
-                </span>
-                <p dir="auto">{t('ui.ofActiveTasksDone.fcfc42')}</p>
-              </div>
-            </div>
-            <span>
-              <CheckCheck size={14} />
-              {formatNumber(done, t('en', 'ar'))} {t('ui.completed.ff1564')} ·{' '}
-              {formatNumber(active.length, t('en', 'ar'))} {t('ui.total.c1e5a5')}
+        </details>
+        <details className="home-secondary" data-home-section="review">
+          <summary>
+            <span className="home-panel-icon">
+              <CheckCheck size={20} />
             </span>
-          </div>
-        </section>
-      </details>
-      <details className="home-secondary">
-        <summary>{t('home.progress.title')}</summary>
-        <div className="home-stats">
-          {stats.map((stat) => (
-            <Link className="card stat-card" to={stat.path} key={stat.path}>
-              <div>
-                <span>{stat.label}</span>
-                <stat.icon size={17} />
-              </div>
-              <strong dir="auto">
-                {typeof stat.value === 'number'
-                  ? formatNumber(stat.value, t('en', 'ar'))
-                  : stat.value}
-              </strong>
-              <small>
-                {stat.sub}
-                <ArrowUpRight size={13} />
-              </small>
-            </Link>
-          ))}
-        </div>
-      </details>
-      <details className="home-secondary" data-home-section="review">
-        <summary>
-          <span>{t('home.review.title')}</span>
-          <small>
-            {t(journey.eveningReviewedOn === today ? 'home.review.done' : 'home.review.pending')}
-          </small>
-        </summary>
-        <DailyReview t={t} tasks={tasks} setTasks={setTasks} edit={edit} />
-      </details>
-      <details className="home-secondary" data-home-section="trial">
-        <summary>{t('home.trial.title')}</summary>
-        <TrialReview t={t} />
-      </details>
+            <span>{t('home.review.title')}</span>
+            <small>
+              {t(journey.eveningReviewedOn === today ? 'home.review.done' : 'home.review.pending')}
+            </small>
+          </summary>
+          <DailyReview t={t} tasks={tasks} setTasks={setTasks} edit={edit} />
+        </details>
+        <details className="home-secondary" data-home-section="trial">
+          <summary>
+            <span className="home-panel-icon">
+              <Clock3 size={20} />
+            </span>
+            <span>{t('home.trial.title')}</span>
+          </summary>
+          <TrialReview t={t} />
+        </details>
+      </div>
       <footer className="home-footer">
         <span>{t('ui.shortcutsNNewTaskSearchFFocus.ca546e')}</span>
         <span>{storageText(t, 'saved')}</span>

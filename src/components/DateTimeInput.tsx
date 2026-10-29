@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import type { ChangeEvent, ComponentProps } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useStorageState } from '../lib/storage';
-import { formatCalendarDate, formatTime, formatNumber } from '../i18n/format';
+import { formatCalendarDate, formatTime, formatNumber, localeFor } from '../i18n/format';
 import { createTranslator } from '../i18n/translate';
 import { Dialog } from './ui/dialog';
 import { Button } from './ui/button';
@@ -23,7 +23,7 @@ function validDate(value: string) {
 }
 function editValue(value: string, time: boolean) {
   const result = time || !validDate(value) ? value : value.split('-').reverse().join('/');
-  return result.replace(/\d/g, (digit) => '٠١٢٣٤٥٦٧٨٩'[Number(digit)]);
+  return result;
 }
 export function DateTimeInput(props: ComponentProps<'input'>) {
   const { data } = useStorageState();
@@ -98,9 +98,9 @@ export function DateTimeInput(props: ComponentProps<'input'>) {
             ref={field}
             type="text"
             lang="ar"
-            dir="rtl"
+            dir="ltr"
             inputMode="text"
-            placeholder={time ? 'ساعة:دقيقة (٢٤ ساعة)' : 'يوم/شهر/سنة'}
+            placeholder={time ? 'ساعة:دقيقة (24 ساعة)' : 'يوم/شهر/سنة'}
             value={draft}
             aria-invalid={invalid || undefined}
             onChange={(event) => change(event.target.value)}
@@ -143,7 +143,7 @@ export function DateTimeInput(props: ComponentProps<'input'>) {
         onOpenChange={setOpen}
         title={t('datePicker.open')}
         description={
-          time ? 'ساعة ودقيقة بنظام ٢٤ ساعة' : 'اختار اليوم من التقويم أو اكتب يوم/شهر/سنة.'
+          time ? 'ساعة ودقيقة بنظام 24 ساعة' : 'اختار اليوم من التقويم أو اكتب يوم/شهر/سنة.'
         }
       >
         <div className="arabic-calendar" dir="rtl">
@@ -158,7 +158,7 @@ export function DateTimeInput(props: ComponentProps<'input'>) {
               <ChevronRight size={18} />
             </Button>
             <strong>
-              {new Intl.DateTimeFormat('ar-EG', {
+              {new Intl.DateTimeFormat(localeFor('ar'), {
                 month: 'long',
                 year: 'numeric',
                 timeZone: 'UTC',
@@ -177,9 +177,10 @@ export function DateTimeInput(props: ComponentProps<'input'>) {
           <div className="calendar-date-grid">
             {Array.from({ length: 7 }, (_, index) => (
               <small key={'weekday' + index}>
-                {new Intl.DateTimeFormat('ar-EG', { weekday: 'narrow', timeZone: 'UTC' }).format(
-                  new Date(Date.UTC(2026, 10, 1 + ((start + index) % 7))),
-                )}
+                {new Intl.DateTimeFormat(localeFor('ar'), {
+                  weekday: 'narrow',
+                  timeZone: 'UTC',
+                }).format(new Date(Date.UTC(2026, 10, 1 + ((start + index) % 7))))}
               </small>
             ))}
             {Array.from({ length: offset }, (_, index) => (
