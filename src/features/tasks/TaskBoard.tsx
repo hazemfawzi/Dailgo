@@ -63,7 +63,7 @@ export function TaskBoard({
   const [boardPage, setBoardPage] = useState(0);
   useEffect(() => {
     setBoardPage(0);
-  }, [boardStatus, query, area, priority, filter, sort]);
+  }, [boardStatus, query, area, priority, filter, sort, view]);
   const [selected, setSelected] = useState<string[]>([]);
   const [bulkDelete, setBulkDelete] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
@@ -111,10 +111,11 @@ export function TaskBoard({
             : (a.dueDate || '9999').localeCompare(b.dueDate || '9999'),
         );
   const statusTasks = visible.filter((task) => statusOf(task) === boardStatus);
-  const pageCount = Math.max(1, Math.ceil(statusTasks.length / 6));
+  const pageTasks = view === 'list' ? visible : statusTasks;
+  const pageCount = Math.max(1, Math.ceil(pageTasks.length / 6));
   const currentPage = Math.min(boardPage, pageCount - 1);
-  const boardTasks = statusTasks.slice(currentPage * 6, currentPage * 6 + 6);
-  const selectedVisible = selected.filter((id) => visible.some((x) => x.id === id));
+  const boardTasks = pageTasks.slice(currentPage * 6, currentPage * 6 + 6);
+  const selectedVisible = selected.filter((id) => boardTasks.some((x) => x.id === id));
   const update = (id: string, patch: Partial<Task>) =>
     setTasks((old) => old.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   function bulk(patch: Partial<Task>) {
@@ -166,9 +167,12 @@ export function TaskBoard({
           </p>
         )}
         {task.description && (
-          <p dir="auto" className="task-description">
-            {task.description}
-          </p>
+          <details className="task-notes">
+            <summary>{t('Task notes', 'ملاحظات المهمة')}</summary>
+            <p dir="auto" className="task-description">
+              {task.description}
+            </p>
+          </details>
         )}
         <div className="task-badges">
           <span className={`priority-badge ${priorityOf(task)}`}>
@@ -420,8 +424,8 @@ export function TaskBoard({
           <label>
             <input
               type="checkbox"
-              checked={visible.length > 0 && selectedVisible.length === visible.length}
-              onChange={(e) => setSelected(e.target.checked ? visible.map((x) => x.id) : [])}
+              checked={boardTasks.length > 0 && selectedVisible.length === boardTasks.length}
+              onChange={(e) => setSelected(e.target.checked ? boardTasks.map((x) => x.id) : [])}
             />
             {selectedVisible.length
               ? `${localizedNumber(selectedVisible.length, t('en', 'ar'))} ${t('ui.selected.fbd7e6')}`
@@ -446,7 +450,9 @@ export function TaskBoard({
         </div>
       )}
       {view === 'list' ? (
-        <div className="card task-list-expanded">{visible.map(renderTask)}</div>
+        <div className="card task-list-expanded compact-task-list">
+          {boardTasks.map(renderTask)}
+        </div>
       ) : (
         <div className="status-board">
           <nav className="status-board-nav" aria-label={t('ui.status.7dafdc')}>
@@ -484,33 +490,33 @@ export function TaskBoard({
             {!statusTasks.length && (
               <p className="status-board-empty">{t('ui.noMatchingTasks.2c9d91')}</p>
             )}
-            {pageCount > 1 && (
-              <nav
-                className="status-board-pagination"
-                aria-label={t('Previous and next tasks', 'صفحات المهام')}
-              >
-                <Button
-                  variant="outline"
-                  disabled={currentPage === 0}
-                  onClick={() => setBoardPage(currentPage - 1)}
-                >
-                  {t('Previous', 'السابق')}
-                </Button>
-                <span dir="ltr">
-                  {localizedNumber(currentPage + 1, t('en', 'ar'))} /{' '}
-                  {localizedNumber(pageCount, t('en', 'ar'))}
-                </span>
-                <Button
-                  variant="outline"
-                  disabled={currentPage + 1 >= pageCount}
-                  onClick={() => setBoardPage(currentPage + 1)}
-                >
-                  {t('Next', 'التالي')}
-                </Button>
-              </nav>
-            )}
           </section>
         </div>
+      )}
+      {pageCount > 1 && (
+        <nav
+          className="status-board-pagination"
+          aria-label={t('Previous and next tasks', 'صفحات المهام')}
+        >
+          <Button
+            variant="outline"
+            disabled={currentPage === 0}
+            onClick={() => setBoardPage(currentPage - 1)}
+          >
+            {t('Previous', 'السابق')}
+          </Button>
+          <span dir="ltr">
+            {localizedNumber(currentPage + 1, t('en', 'ar'))} /{' '}
+            {localizedNumber(pageCount, t('en', 'ar'))}
+          </span>
+          <Button
+            variant="outline"
+            disabled={currentPage + 1 >= pageCount}
+            onClick={() => setBoardPage(currentPage + 1)}
+          >
+            {t('Next', 'التالي')}
+          </Button>
+        </nav>
       )}
       {!visible.length && (
         <div className="card collection-empty">
