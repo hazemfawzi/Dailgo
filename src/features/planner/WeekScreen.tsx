@@ -489,41 +489,44 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
                   max={Math.max(1, load.capacity)}
                   value={Math.min(load.total, Math.max(1, load.capacity))}
                 />
-                <label>
-                  {t('ui.availableMinutes.768c33')}
-                  <input
-                    aria-label={`${t('ui.dailyCapacity.dc01b3')} ${date}`}
-                    type="number"
-                    min={0}
-                    max={1440}
-                    step={15}
-                    value={load.rawCapacity}
-                    onChange={(e) => {
-                      const capacity = Math.max(0, Math.min(1440, Number(e.target.value)));
-                      updatePlan((old) => ({
-                        ...old,
-                        capacities: { ...old.capacities, [date]: capacity },
-                      }));
-                    }}
-                  />
-                </label>
-                <label>
-                  {t('ui.reserveMinutes.7d4b73')}
-                  <input
-                    aria-label={t('ui.dailyReserve.0a6b93') + ' ' + date}
-                    type="number"
-                    min={0}
-                    max={1440}
-                    value={load.buffer}
-                    onChange={(e) => {
-                      const buffer = Math.max(0, Math.min(1440, Number(e.target.value)));
-                      updatePlan((old) => ({
-                        ...old,
-                        buffers: { ...old.buffers, [date]: buffer },
-                      }));
-                    }}
-                  />
-                </label>
+                <details className="day-capacity-editor">
+                  <summary>{t('week.capacity.edit')}</summary>
+                  <label>
+                    {t('week.capacity.available')}
+                    <input
+                      aria-label={`${t('ui.dailyCapacity.dc01b3')} ${date}`}
+                      type="number"
+                      min={0}
+                      max={1440}
+                      step={15}
+                      value={load.rawCapacity}
+                      onChange={(e) => {
+                        const capacity = Math.max(0, Math.min(1440, Number(e.target.value)));
+                        updatePlan((old) => ({
+                          ...old,
+                          capacities: { ...old.capacities, [date]: capacity },
+                        }));
+                      }}
+                    />
+                  </label>
+                  <label>
+                    {t('week.capacity.reserve')}
+                    <input
+                      aria-label={t('ui.dailyReserve.0a6b93') + ' ' + date}
+                      type="number"
+                      min={0}
+                      max={1440}
+                      value={load.buffer}
+                      onChange={(e) => {
+                        const buffer = Math.max(0, Math.min(1440, Number(e.target.value)));
+                        updatePlan((old) => ({
+                          ...old,
+                          buffers: { ...old.buffers, [date]: buffer },
+                        }));
+                      }}
+                    />
+                  </label>
+                </details>
                 {load.unknownTasks > 0 && (
                   <small>
                     {localizedNumber(load.unknownTasks, t('en', 'ar'))}{' '}

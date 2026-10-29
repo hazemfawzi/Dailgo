@@ -283,7 +283,7 @@ export function DailyCycle({
       )}
       <nav className="cycle-links" aria-label={t('ui.dailyCycleNavigation.4c2302')}>
         <a href="#daily-focus">{t('ui.startFocus.98a925')}</a>
-        <a href="#daily-review">{t('ui.eveningReview.fc70ce')}</a>
+        <a href="#daily-review">{t('home.review.title')}</a>
         <Link to="/planner?tab=week&review=1">{t('ui.weeklyReview.d0d31a')}</Link>
         {!journey.onboardingComplete && (
           <Button

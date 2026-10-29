@@ -20,6 +20,7 @@ import { areas, areaLabel } from '../../lib/workspace';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
+  Settings,
   Sparkles,
   ArrowUp,
   Check,
@@ -69,6 +70,7 @@ export function AssistantScreen({
   const [providerError, setProviderError] = useState(false);
   const [mode, setMode] = useState<'local' | 'claude'>('local');
   const [consent, setConsent] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [asking, setAsking] = useState(false);
   useEffect(() => {
     void apiRequest('assistant/status')
@@ -171,6 +173,7 @@ export function AssistantScreen({
   }
   async function askClaude(text: string) {
     if (!consent) {
+      setSettingsOpen(true);
       setActionError(t('ui.allowSendingTheSelectedScopeToClaude.103f42'));
       return;
     }
@@ -518,98 +521,171 @@ export function AssistantScreen({
                   : t('ui.quickHelpForTasksAndNotes.a79970')}
               </p>
             </div>
-          </div>
-          <section className="assistant-mode editor-form">
-            <label>
-              {t('ui.assistantMode.7a4a12')}
-              <select
-                aria-label={t('ui.assistantMode.7a4a12')}
-                disabled={asking}
-                value={mode}
-                onChange={(e) => setMode(e.target.value as 'local' | 'claude')}
-              >
-                <option value="local">{t('ui.localRules.c0d011')}</option>
-                <option value="claude" disabled={!provider?.enabled}>
-                  Claude
-                </option>
-              </select>
-            </label>
-            {!provider?.enabled && (
-              <p dir="auto" role="status">
-                {provider
-                  ? t('ui.quickCaptureIsAvailableTheSmartAssistant.a9809e')
-                  : providerError
-                    ? t('ui.couldNotCheckClaudeAvailabilityCheckYour.8ee9b9')
-                    : t('ui.checkingClaudeAvailability.ede8ac')}
-              </p>
-            )}
-            {mode === 'claude' && (
-              <>
-                <p dir="auto">{t('ui.onlyTheSelectedScopeSTasksGoals.c09847')}</p>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={consent}
-                    onChange={(e) => setConsent(e.target.checked)}
-                  />
-                  {t('ui.allowSharingThisSelectedContextWithClaude.a08bc3')}
-                </label>
-                <p dir="auto">
-                  {t('ui.remainingProviderAttemptsToday.559d39')}:{' '}
-                  {formatNumber(provider?.remaining ?? 0, t('en', 'ar'))} /{' '}
-                  {formatNumber(provider?.limit ?? 0, t('en', 'ar'))} ·{' '}
-                  <bdi>{provider?.resetTimezone ?? 'Africa/Cairo'}</bdi>
-                </p>
-              </>
-            )}
-            {!provider?.enabled && (
-              <p dir="auto">{t('ui.claudeRequiresAServerApiKeyAnd.b64364')}</p>
-            )}
-          </section>
-          <label className="assistant-scope">
-            {t('ui.conversationDataScope.e952e6')}
-            <select
-              aria-label={t('ui.conversationDataScope.e952e6')}
-              value={scope}
-              onChange={(e) => setScope(e.target.value)}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="assistant-settings-button"
+              aria-label={t('assistant.settings.title')}
+              onClick={() => setSettingsOpen(true)}
             >
-              <option value="all">{t('ui.allAreas.e2d78b')}</option>
-              {areas.map((a) => (
-                <option key={a} value={a}>
-                  {areaLabel(a, t)}
-                </option>
-              ))}
-              {Array.from(
-                new Set([...tasks, ...entries].map((x) => x.context).filter(Boolean)),
-              ).map((context) => (
-                <option key={context} value={'context:' + context}>
-                  {t('ui.context.6dd3bd')}: {context}
-                </option>
-              ))}
-            </select>
-            <small>{t('ui.newSummariesUseThisScopeOnlyOlder.aa76cb')}</small>
-          </label>
-          <details className="assistant-command-help">
-            <summary>{t('ui.supportedLocalEditCommands.662a0a')}</summary>
-            <p dir="auto">{t('ui.useAnExactUniqueTitleInThe.1640d1')}</p>
-            <ul>
-              {[
-                t('ui.renameTaskCurrentTitleNewTitle.47bc49'),
-                t('ui.planTaskCurrentTitleYyyyMmDd.0c333d'),
-                t('ui.dueTaskCurrentTitleYyyyMmDd.296e14'),
-                t('ui.editNoteCurrentTitleNewDetails.229120'),
-                t('ui.archiveExactTitle.eebe98'),
-                t('ui.restoreExactTitle.3a8e7e'),
-              ].map((x) => (
-                <li key={x}>{x}</li>
-              ))}
-            </ul>
-          </details>
+              <Settings size={19} />
+            </Button>
+          </div>
+          <Dialog
+            open={settingsOpen}
+            onOpenChange={setSettingsOpen}
+            title={t('assistant.settings.title')}
+            description={t('assistant.settings.description')}
+          >
+            <section className="assistant-mode editor-form">
+              <label>
+                {t('assistant.settings.mode')}
+                <select
+                  aria-label={t('assistant.settings.mode')}
+                  disabled={asking}
+                  value={mode}
+                  onChange={(e) => setMode(e.target.value as 'local' | 'claude')}
+                >
+                  <option value="local">{t('ui.localRules.c0d011')}</option>
+                  <option value="claude" disabled={!provider?.enabled}>
+                    Claude
+                  </option>
+                </select>
+              </label>
+              {!provider?.enabled && (
+                <p dir="auto" role="status">
+                  {provider
+                    ? t('ui.quickCaptureIsAvailableTheSmartAssistant.a9809e')
+                    : providerError
+                      ? t('ui.couldNotCheckClaudeAvailabilityCheckYour.8ee9b9')
+                      : t('ui.checkingClaudeAvailability.ede8ac')}
+                </p>
+              )}
+              {mode === 'claude' && (
+                <>
+                  <p dir="auto">{t('ui.onlyTheSelectedScopeSTasksGoals.c09847')}</p>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={consent}
+                      onChange={(e) => setConsent(e.target.checked)}
+                    />
+                    {t('ui.allowSharingThisSelectedContextWithClaude.a08bc3')}
+                  </label>
+                  <p dir="auto">
+                    {t('ui.remainingProviderAttemptsToday.559d39')}:{' '}
+                    {formatNumber(provider?.remaining ?? 0, t('en', 'ar'))} /{' '}
+                    {formatNumber(provider?.limit ?? 0, t('en', 'ar'))} ·{' '}
+                    <bdi>{provider?.resetTimezone ?? 'Africa/Cairo'}</bdi>
+                  </p>
+                </>
+              )}
+            </section>
+            <label className="assistant-scope">
+              {t('assistant.settings.scope')}
+              <select
+                aria-label={t('assistant.settings.scope')}
+                value={scope}
+                onChange={(e) => setScope(e.target.value)}
+              >
+                <option value="all">{t('ui.allAreas.e2d78b')}</option>
+                {areas.map((a) => (
+                  <option key={a} value={a}>
+                    {areaLabel(a, t)}
+                  </option>
+                ))}
+                {Array.from(
+                  new Set([...tasks, ...entries].map((x) => x.context).filter(Boolean)),
+                ).map((context) => (
+                  <option key={context} value={'context:' + context}>
+                    {t('ui.context.6dd3bd')}: {context}
+                  </option>
+                ))}
+              </select>
+              <small>{t('ui.newSummariesUseThisScopeOnlyOlder.aa76cb')}</small>
+            </label>
+            <details className="assistant-command-help">
+              <summary>{t('assistant.settings.commands')}</summary>
+              <p dir="auto">{t('ui.useAnExactUniqueTitleInThe.1640d1')}</p>
+              <ul>
+                {[
+                  t('ui.renameTaskCurrentTitleNewTitle.47bc49'),
+                  t('ui.planTaskCurrentTitleYyyyMmDd.0c333d'),
+                  t('ui.dueTaskCurrentTitleYyyyMmDd.296e14'),
+                  t('ui.editNoteCurrentTitleNewDetails.229120'),
+                  t('ui.archiveExactTitle.eebe98'),
+                  t('ui.restoreExactTitle.3a8e7e'),
+                ].map((x) => (
+                  <li key={x}>{x}</li>
+                ))}
+              </ul>
+            </details>
+            <VoiceCapture
+              t={t}
+              onText={(value) => {
+                setInput((old) => (old ? old + ' ' + value : value));
+                setSettingsOpen(false);
+              }}
+            />
+            <Button onClick={() => setSettingsOpen(false)}>{t('assistant.settings.done')}</Button>
+          </Dialog>
           {actionError && (
             <p dir="auto" className="notice" role="alert">
               {actionError}
             </p>
           )}
+          <>
+            {active?.archived ? (
+              <div className="context-banner archived-chat">
+                <p dir="auto">{t('ui.archivedConversationRestoreItToContinue.2d3024')}</p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setConversations((old) =>
+                      old.map((c) => (c.id === active.id ? { ...c, archived: false } : c)),
+                    );
+                    setArchive(false);
+                  }}
+                >
+                  {t('ui.restoreConversation.087950')}
+                </Button>
+              </div>
+            ) : (
+              <form
+                className="chat-input"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  send(input);
+                }}
+              >
+                <label htmlFor="chat-message" className="sr-only">
+                  {t('ui.yourMessage.f58f21')}
+                </label>
+                <textarea
+                  dir="auto"
+                  id="chat-message"
+                  rows={2}
+                  maxLength={4000}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={t('ui.tryTaskReviewMyPriorities.6933e4')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                      e.preventDefault();
+                      send(input);
+                    }
+                  }}
+                />
+                <Button
+                  disabled={!input.trim() || asking}
+                  size="icon"
+                  aria-label={t('ui.sendMessage.cbcd6c')}
+                >
+                  <ArrowUp size={19} />
+                </Button>
+              </form>
+            )}
+          </>
           <div
             ref={messageList}
             className="chat-messages"
@@ -924,62 +1000,6 @@ export function AssistantScreen({
               </article>
             ))}
           </div>
-          <>
-            {active?.archived ? (
-              <div className="context-banner archived-chat">
-                <p dir="auto">{t('ui.archivedConversationRestoreItToContinue.2d3024')}</p>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setConversations((old) =>
-                      old.map((c) => (c.id === active.id ? { ...c, archived: false } : c)),
-                    );
-                    setArchive(false);
-                  }}
-                >
-                  {t('ui.restoreConversation.087950')}
-                </Button>
-              </div>
-            ) : (
-              <form
-                className="chat-input"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  send(input);
-                }}
-              >
-                <VoiceCapture
-                  t={t}
-                  onText={(value) => setInput((old) => (old ? old + ' ' + value : value))}
-                />
-                <label htmlFor="chat-message" className="sr-only">
-                  {t('ui.yourMessage.f58f21')}
-                </label>
-                <textarea
-                  dir="auto"
-                  id="chat-message"
-                  rows={2}
-                  maxLength={4000}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder={t('ui.tryTaskReviewMyPriorities.6933e4')}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-                      e.preventDefault();
-                      send(input);
-                    }
-                  }}
-                />
-                <Button
-                  disabled={!input.trim() || asking || (mode === 'claude' && !consent)}
-                  size="icon"
-                  aria-label={t('ui.sendMessage.cbcd6c')}
-                >
-                  <ArrowUp size={19} />
-                </Button>
-              </form>
-            )}
-          </>
           <p dir="auto" className="chat-disclaimer">
             {asking
               ? t('ui.claudeIsPreparingAProposal.ffb6b3')

@@ -33,7 +33,7 @@ export function PlanningSettings({ t }: { t: Translate }) {
           />
         </label>
         <label>
-          {t('ui.reserveMinutes.7d4b73')}
+          {t('week.capacity.reserve')}
           <input
             type="number"
             min={0}

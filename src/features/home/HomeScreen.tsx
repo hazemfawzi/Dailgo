@@ -160,7 +160,7 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
               {t('ui.planMyWeek.d6ffa7')}
             </Link>
           </Button>
-          <Button onClick={() => edit()}>
+          <Button className="home-new-task" onClick={() => edit()}>
             <Plus size={17} />
             {t('ui.newTask.02b6c9')}
           </Button>
@@ -393,12 +393,12 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
         </div>
       </div>
       <details className="home-secondary" data-home-section="planning">
-        <summary>{t('ui.planAndRecordMyDay.1636bb')}</summary>{' '}
+        <summary>{t('home.planning.title')}</summary>{' '}
         <DailyCycle tasks={tasks} entries={entries} settings={settings} t={t} />
         <MyDay tasks={tasks} entries={entries} t={t} edit={edit} />
       </details>
       <details className="home-secondary" data-home-section="focus">
-        <summary>{t('ui.focusRoutinesAndGoals.b384a4')}</summary>{' '}
+        <summary>{t('home.focus.title')}</summary>{' '}
         <div className="home-side-column">
           <FocusTimer t={t} tasks={tasks} />
           <NeedsAttention tasks={tasks} t={t} edit={edit} />
@@ -477,8 +477,8 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
           </section>
         </div>
       </details>
-      <details className="home-briefing home-secondary">
-        <summary>{t('ui.generalOverview.4e8d97')}</summary>
+      <details className="home-secondary home-overview">
+        <summary>{t('home.overview.title')}</summary>
         <section className="daily-hero">
           <div className="hero-content">
             <span className="hero-kicker">
@@ -527,7 +527,7 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
         </section>
       </details>
       <details className="home-secondary">
-        <summary>{t('ui.progressSummary.fea616')}</summary>
+        <summary>{t('home.progress.title')}</summary>
         <div className="home-stats">
           {stats.map((stat) => (
             <Link className="card stat-card" to={stat.path} key={stat.path}>
@@ -549,11 +549,16 @@ export function HomeScreen({ t, ar, tasks, setTasks, entries, setEntries, edit, 
         </div>
       </details>
       <details className="home-secondary" data-home-section="review">
-        <summary>{t('ui.eveningReview.fc70ce')}</summary>
+        <summary>
+          <span>{t('home.review.title')}</span>
+          <small>
+            {t(journey.eveningReviewedOn === today ? 'home.review.done' : 'home.review.pending')}
+          </small>
+        </summary>
         <DailyReview t={t} tasks={tasks} setTasks={setTasks} edit={edit} />
       </details>
       <details className="home-secondary" data-home-section="trial">
-        <summary>{t('ui.weeklyTrialNotes.3a7fc0')}</summary>
+        <summary>{t('home.trial.title')}</summary>
         <TrialReview t={t} />
       </details>
       <footer className="home-footer">

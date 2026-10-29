@@ -364,7 +364,7 @@ test('Arabic connection bar stays clear of the sidebar, follows dark mode and is
   await expect(page.getByRole('textbox', { name: 'عنوان المعاينة', exact: true })).toHaveValue(
     /أذاكر/,
   );
-  await expect(page.getByLabel('يوم التنفيذ (اختياري)', { exact: true })).toHaveValue('2026-10-28');
+  await expect(page.getByLabel('يوم التنفيذ (اختياري)', { exact: true })).toHaveValue('٢٨/١٠/٢٠٢٦');
   await expect(page.locator('.message-text').first()).toHaveAttribute('dir', 'auto');
   await expect(page.locator('.conversation-row>button>span').first()).toHaveAttribute(
     'dir',
@@ -599,7 +599,7 @@ test('routine check-ins persist and linked focus sessions record paused and elap
     (await (await page.request.get('/api/workspace')).json()).data['personal-os.sessions.v1'],
   ).toHaveLength(2);
 });
-test('Arabic mobile screens and task dialog fit the viewport', async ({ page }) => {
+test('Arabic mobile screens and capture dialog fit the viewport', async ({ page }) => {
   await signIn(page);
   await seedUxWorkspace(page, 'ar');
   await page.setViewportSize({ width: 390, height: 844 });
@@ -628,7 +628,7 @@ test('Arabic mobile screens and task dialog fit the viewport', async ({ page }) 
     expect(width.document, route).toBeLessThanOrEqual(width.viewport + 1);
   }
   await page.goto('/');
-  await page.getByRole('button', { name: 'مهمة جديدة', exact: true }).click();
+  await page.getByRole('button', { name: 'تسجيل سريع', exact: true }).click();
   const bounds = await page.getByRole('dialog').boundingBox();
   expect(bounds.x).toBeGreaterThanOrEqual(0);
   expect(bounds.x + bounds.width).toBeLessThanOrEqual(391);
@@ -1299,12 +1299,15 @@ test('Claude tools stay as proposals until confirmation and support undo in the 
     'عايز أذاكر بكرة الساعة 8',
   );
   await expect(page.locator('.chat-message.assistant')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Send message', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Assistant settings', exact: true })).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Assistant mode', exact: true })).toHaveValue(
     'claude',
   );
   await page
     .getByRole('checkbox', { name: 'Allow sharing this selected context with Claude', exact: true })
     .check();
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
   await page.getByLabel('Your message', { exact: true }).fill('عايز أذاكر بكرة الساعة 8');
   await page.getByRole('button', { name: 'Send message', exact: true }).click();
   await expect(
@@ -1506,13 +1509,18 @@ test('Oct 28 Arabic review: assistant shows inferred and editable life area and 
     page.getByRole('dialog').getByRole('combobox', { name: 'مجال الحياة', exact: true }),
   ).toHaveValue('Learning');
   await page.getByRole('button', { name: 'Close / إغلاق', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'المساعد الذكي غير متاح' })).toHaveCount(
+    0,
+  );
+  await page.getByRole('button', { name: 'إعدادات المساعد', exact: true }).click();
   await expect(
     page.getByRole('status').filter({ hasText: 'المساعد الذكي غير متاح' }),
   ).toBeVisible();
+  await page.getByRole('button', { name: 'تم', exact: true }).click();
   await page.getByLabel('رسالتك', { exact: true }).fill('عايز أذاكر بكرة الساعة 8');
   await page.getByRole('button', { name: 'إرسال الرسالة', exact: true }).click();
   await expect(page.getByLabel('مجال الحياة المقترح', { exact: true })).toHaveValue('Learning');
-  await expect(page.getByLabel('وقت التنفيذ (اختياري)', { exact: true })).toHaveValue('20:00');
+  await expect(page.getByLabel('وقت التنفيذ (اختياري)', { exact: true })).toHaveValue('٢٠:٠٠');
   await page.getByLabel('مجال الحياة المقترح', { exact: true }).selectOption('Personal');
   await page.getByRole('button', { name: 'تأكيد الإجراء', exact: true }).click();
   await expect
@@ -1751,5 +1759,133 @@ test('a second offline tab cannot overwrite another tab’s pending edits', asyn
       .context()
       .setOffline(false)
       .catch(() => {});
+  }
+});
+
+test('assistant settings stay out of the conversation and week capacity opens only on demand', async ({
+  page,
+}) => {
+  await signIn(page);
+  await seedUxWorkspace(page, 'ar', { 'personal-os.journey.v1': completeJourney });
+  await page.goto('/assistant');
+  await expect(page.getByLabel('رسالتك', { exact: true })).toBeVisible();
+  expect((await page.getByLabel('رسالتك', { exact: true }).boundingBox()).y).toBeLessThan(
+    (await page.locator('.suggestion-grid').boundingBox()).y,
+  );
+  await expect(page.getByRole('combobox', { name: 'نوع المساعد', exact: true })).toHaveCount(0);
+  await expect(page.getByText('Claude مش مفعّل', { exact: false })).toHaveCount(0);
+  await page.getByRole('button', { name: 'إعدادات المساعد', exact: true }).click();
+  await expect(page.getByRole('combobox', { name: 'نوع المساعد', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'تم', exact: true }).click();
+  await page.goto('/planner?tab=week&week=2026-10-27');
+  await expect(page.locator('.week-days input[type=number]:visible')).toHaveCount(0);
+  await page.locator('.day-capacity-editor summary').first().click();
+  await expect(page.locator('.week-days input[type=number]:visible')).toHaveCount(2);
+});
+
+for (const [name, path] of [
+  ['home', '/'],
+  ['assistant', '/assistant'],
+  ['week', '/planner?tab=week&week=2026-10-27'],
+]) {
+  test(`Arabic dark mode fits desktop and mobile: ${name}`, async ({ page }) => {
+    await signIn(page);
+    await seedUxWorkspace(page, 'ar', {
+      'personal-os.journey.v1': completeJourney,
+      'personal-os.dark': true,
+    });
+    await page.goto(path);
+    await expect(page.locator('main h1')).toBeVisible();
+    await expect(page.locator('html')).toHaveClass(/dark/);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.screenshot({ path: `/tmp/dailgo-polish-dark-${name}.png`, fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    await page.screenshot({ path: `/tmp/dailgo-polish-dark-mobile-${name}.png`, fullPage: true });
+  });
+}
+
+test('Arabic custom calendar works in a mobile task editor', async ({ page }) => {
+  await signIn(page);
+  await seedUxWorkspace(page, 'ar', {
+    'personal-os.journey.v1': completeJourney,
+    'personal-os.dark': true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(
+    page.getByRole('button', { name: 'Deadline only', exact: true }).first(),
+  ).toBeVisible();
+  await expect(page.locator('.home-new-task')).not.toBeVisible();
+  await expect(page.locator('.home-overview > summary')).toHaveCSS('border-top-width', '0px');
+  await page.getByRole('button', { name: 'Deadline only', exact: true }).first().click();
+  await page.getByLabel('عنوان المهمة', { exact: true }).fill('اختبار التقويم العربي');
+  await page.getByRole('button', { name: 'اختار التاريخ', exact: true }).first().click();
+  await expect(page.getByRole('dialog', { name: 'اختار التاريخ', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: '/tmp/dailgo-polish-calendar-mobile.png', fullPage: true });
+  await page.getByRole('button', { name: '٢٨ أكتوبر ٢٠٢٦', exact: true }).click();
+  await expect(page.getByRole('dialog').locator('.arabic-date-control input').first()).toHaveValue(
+    '٢٨/١٠/٢٠٢٦',
+  );
+});
+
+test('an online conflict merges independent completions and Undo preserves the other device', async ({
+  page,
+}) => {
+  await signIn(page);
+  await seedUxWorkspace(page, 'en', {
+    'personal-os.journey.v1': completeJourney,
+    'personal-os.tasks.v1': [
+      { id: 'merge-a', title: 'Local completion', category: 'Work', done: false, archived: false },
+      { id: 'merge-b', title: 'Remote completion', category: 'Work', done: false, archived: false },
+    ],
+  });
+  let release;
+  const blocked = new Promise((resolve) => (release = resolve));
+  let started;
+  const requestStarted = new Promise((resolve) => (started = resolve));
+  let writes = 0;
+  await page.route('**/api/workspace/changes', async (route) => {
+    if (++writes === 1) {
+      started();
+      await blocked;
+    }
+    await route.continue();
+  });
+  try {
+    await page.getByRole('button', { name: 'Complete: Local completion', exact: true }).click();
+    await requestStarted;
+    const snapshot = await (await page.request.get('/api/workspace')).json();
+    const updated = {
+      ...snapshot.data,
+      'personal-os.tasks.v1': snapshot.data['personal-os.tasks.v1'].map((task) =>
+        task.id === 'merge-b' ? { ...task, done: true, status: 'done' } : task,
+      ),
+    };
+    const response = await page.request.put('/api/workspace/commit', {
+      headers: { Origin: 'http://127.0.0.1:5187' },
+      data: { revision: snapshot.revision, data: updated },
+    });
+    expect(response.status()).toBe(200);
+    release();
+    await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Undo', exact: true }).click();
+    await expect
+      .poll(async () =>
+        (await workspace(page))['personal-os.tasks.v1'].map((task) => ({
+          id: task.id,
+          done: task.done,
+        })),
+      )
+      .toEqual([
+        { id: 'merge-a', done: false },
+        { id: 'merge-b', done: true },
+      ]);
+    expect(writes).toBeGreaterThanOrEqual(3);
+  } finally {
+    release();
+    await page.unroute('**/api/workspace/changes');
   }
 });

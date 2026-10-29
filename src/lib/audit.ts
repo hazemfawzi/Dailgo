@@ -59,7 +59,9 @@ export function auditWorkspace(
   at = new Date().toISOString(),
 ) {
   const next = { ...after };
-  if (after['personal-os.tasks.v1']) {
+  const changed = (key: string) =>
+    before[key] !== after[key] && JSON.stringify(before[key]) !== JSON.stringify(after[key]);
+  if (after['personal-os.tasks.v1'] && changed('personal-os.tasks.v1')) {
     const old = (before['personal-os.tasks.v1'] ?? []) as Task[];
     const expanded = recurringSuccessors(old, after['personal-os.tasks.v1'] as Task[]);
     const restored = new Set(
@@ -82,7 +84,7 @@ export function auditWorkspace(
   ]) {
     const old = before[key] as any,
       value = after[key] as any;
-    if (value === undefined) continue;
+    if (value === undefined || !changed(key)) continue;
     const oldItems = Array.isArray(old) ? old : (old?.entries ?? []);
     const items = Array.isArray(value) ? value : value.entries;
     const ids = new Set(items.map((item: any) => item.id));
@@ -97,7 +99,7 @@ export function auditWorkspace(
   for (const key of ['personal-os.tasks.v1', 'personal-os.entries.v1']) {
     const old = before[key] as any,
       value = after[key] as any;
-    if (value === undefined) continue;
+    if (value === undefined || !changed(key)) continue;
     const oldItems = Array.isArray(old) ? old : (old?.entries ?? []);
     const items = Array.isArray(value) ? value : value.entries;
     const audited = auditItems(oldItems, items, at);

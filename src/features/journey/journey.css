@@ -10,7 +10,7 @@
 }
 .daily-cycle p,
 .guided-weekly p {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   line-height: 1.8;
 }
 .morning-candidates {
@@ -192,7 +192,7 @@
 .daily-review > label {
   display: grid;
   gap: 8px;
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   margin-block: 12px;
 }
 .daily-review > label input {
@@ -212,7 +212,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
 }
 .life-wheel {
   max-width: 400px;

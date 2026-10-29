@@ -59,9 +59,9 @@ export function diffWorkspace(before: Data, after: Data): Delta[] {
   }
   return changes;
 }
-export function applyWorkspaceDelta(before: Data, changes: Delta[]): Data {
+export function applyWorkspaceDelta(before: Data, changes: Delta[], trustedBase = false): Data {
   if (!Array.isArray(changes) || changes.length > 10000) throw Error('invalid-changes');
-  const next = structuredClone(before);
+  const next = { ...before };
   for (const change of changes) {
     if (
       !change ||
@@ -92,6 +92,33 @@ export function applyWorkspaceDelta(before: Data, changes: Delta[]): Data {
     } else if (change.remove) delete next[change.key];
     else next[change.key] = change.value;
   }
-  validateData(next);
+  if (trustedBase) validateChangedData(before, next);
+  else validateData(next);
   return next;
+}
+
+// Only a server-owned, previously validated base may take this path. Each changed
+// record and collection envelope is checked; duplicate IDs remain a collection invariant.
+export function validateChangedData(before: Data, after: Data) {
+  if (!after || Object.keys(after).some((key) => !(DATA_KEYS as readonly string[]).includes(key)))
+    throw Error('Invalid data keys');
+  for (const [key, value] of Object.entries(after)) {
+    if (before[key] === value || JSON.stringify(before[key]) === JSON.stringify(value)) continue;
+    const previous = rows(before[key]),
+      current = rows(value);
+    if (collections.has(key) && previous && current) {
+      if (
+        current.some((row) => !row || typeof row !== 'object' || typeof row.id !== 'string') ||
+        new Set(current.map((row) => row.id)).size !== current.length
+      )
+        throw Error('invalid-record-change');
+      const old = new Map(previous.map((row) => [row.id, row]));
+      const changed = current.filter(
+        (row) => JSON.stringify(row) !== JSON.stringify(old.get(row.id)),
+      );
+      validateData({
+        [key]: Array.isArray(value) ? changed : { ...(value as object), entries: changed },
+      });
+    } else validateData({ [key]: value });
+  }
 }

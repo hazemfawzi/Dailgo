@@ -470,3 +470,50 @@ test('family records use partial, audited writes in their own normalized namespa
     await f.close();
   }
 });
+
+test('partial validation rejects invalid records, duplicate IDs and invalid collection envelopes', () => {
+  const base = {
+    'personal-os.tasks.v1': [
+      { id: 'a', title: 'One', category: 'Work', done: false, archived: false },
+    ],
+  };
+  assert.throws(() =>
+    model.applyWorkspaceDelta(
+      base,
+      [{ key: 'personal-os.tasks.v1', id: 'a', value: { id: 'a', title: 42 } }],
+      true,
+    ),
+  );
+  assert.throws(() =>
+    model.applyWorkspaceDelta(
+      base,
+      [
+        {
+          key: 'personal-os.tasks.v1',
+          value: [...base['personal-os.tasks.v1'], ...base['personal-os.tasks.v1']],
+        },
+      ],
+      true,
+    ),
+  );
+  assert.throws(() =>
+    model.applyWorkspaceDelta(
+      base,
+      [{ key: 'personal-os.entries.v1', value: { version: 99, entries: [] } }],
+      true,
+    ),
+  );
+  const updated = model.applyWorkspaceDelta(
+    base,
+    [
+      {
+        key: 'personal-os.tasks.v1',
+        id: 'a',
+        value: { ...base['personal-os.tasks.v1'][0], title: 'Changed' },
+      },
+    ],
+    true,
+  );
+  assert.equal(updated['personal-os.tasks.v1'][0].title, 'Changed');
+  assert.equal(base['personal-os.tasks.v1'][0].title, 'One');
+});

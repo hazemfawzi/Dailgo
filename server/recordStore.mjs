@@ -18,29 +18,34 @@ export function recordStore(db, { recordsOnly = false } = {}) {
   db.exec(
     "CREATE INDEX IF NOT EXISTS workspace_tasks_due ON workspace_tasks(principal,json_extract(payload,'$.dueDate'));CREATE INDEX IF NOT EXISTS workspace_tasks_planned ON workspace_tasks(principal,json_extract(payload,'$.plannedDate'));CREATE INDEX IF NOT EXISTS workspace_entries_kind ON workspace_entries(principal,json_extract(payload,'$.kind'));",
   );
+  // Statements are reused for all rows and writes on this connection.
+  const statements = new Map();
+  function prepare(sql) {
+    if (!statements.has(sql)) statements.set(sql, db.prepare(sql));
+    return statements.get(sql);
+  }
   function read(principal) {
-    const meta = db.prepare('SELECT * FROM workspace_meta WHERE principal=?').get(principal);
+    const meta = prepare('SELECT * FROM workspace_meta WHERE principal=?').get(principal);
     if (!meta) return null;
     const data = {};
     const values = new Map(
-      db
-        .prepare('SELECT key,payload FROM workspace_values WHERE principal=?')
+      prepare('SELECT key,payload FROM workspace_values WHERE principal=?')
         .all(principal)
         .map((row) => [row.key, JSON.parse(row.payload)]),
     );
     for (const key of JSON.parse(meta.keys)) {
       if (key === 'personal-os.entries.v1') {
-        const rows = db
-          .prepare(
-            'SELECT position,payload FROM workspace_entries WHERE principal=? UNION ALL SELECT position,payload FROM workspace_goals WHERE principal=? ORDER BY position',
-          )
+        const rows = prepare(
+          'SELECT position,payload FROM workspace_entries WHERE principal=? UNION ALL SELECT position,payload FROM workspace_goals WHERE principal=? ORDER BY position',
+        )
           .all(principal, principal)
           .map((row) => JSON.parse(row.payload));
         const shape = JSON.parse(meta.entry_shape ?? 'null');
         data[key] = shape ? { ...shape, entries: rows } : rows;
       } else if (specs[key])
-        data[key] = db
-          .prepare('SELECT payload FROM ' + specs[key] + ' WHERE principal=? ORDER BY position')
+        data[key] = prepare(
+          'SELECT payload FROM ' + specs[key] + ' WHERE principal=? ORDER BY position',
+        )
           .all(principal)
           .map((row) => JSON.parse(row.payload));
       else data[key] = values.get(key);
@@ -49,8 +54,7 @@ export function recordStore(db, { recordsOnly = false } = {}) {
   }
   function saveRows(table, principal, rows) {
     const old = new Map(
-      db
-        .prepare('SELECT id,position,payload FROM ' + table + ' WHERE principal=?')
+      prepare('SELECT id,position,payload FROM ' + table + ' WHERE principal=?')
         .all(principal)
         .map((row) => [row.id, row]),
     );
@@ -58,7 +62,7 @@ export function recordStore(db, { recordsOnly = false } = {}) {
       const payload = JSON.stringify(item);
       const row = old.get(item.id);
       if (row?.payload !== payload || row?.position !== position)
-        db.prepare(
+        prepare(
           'INSERT INTO ' +
             table +
             ' VALUES(?,?,?,?) ON CONFLICT(principal,id) DO UPDATE SET position=excluded.position,payload=excluded.payload',
@@ -66,7 +70,7 @@ export function recordStore(db, { recordsOnly = false } = {}) {
       old.delete(item.id);
     });
     for (const id of old.keys())
-      db.prepare('DELETE FROM ' + table + ' WHERE principal=? AND id=?').run(principal, id);
+      prepare('DELETE FROM ' + table + ' WHERE principal=? AND id=?').run(principal, id);
   }
   function save(principal, revision, data) {
     const own = !db.isTransaction;
@@ -96,8 +100,7 @@ export function recordStore(db, { recordsOnly = false } = {}) {
           ? Object.fromEntries(Object.entries(value).filter(([key]) => key !== 'entries'))
           : null;
       const existing = new Map(
-        db
-          .prepare('SELECT key,payload FROM workspace_values WHERE principal=?')
+        prepare('SELECT key,payload FROM workspace_values WHERE principal=?')
           .all(principal)
           .map((row) => [row.key, row.payload]),
       );
@@ -105,14 +108,14 @@ export function recordStore(db, { recordsOnly = false } = {}) {
         if (!specs[key] && key !== 'personal-os.entries.v1') {
           const payload = JSON.stringify(item);
           if (existing.get(key) !== payload)
-            db.prepare(
+            prepare(
               'INSERT INTO workspace_values VALUES(?,?,?) ON CONFLICT(principal,key) DO UPDATE SET payload=excluded.payload',
             ).run(principal, key, payload);
           existing.delete(key);
         }
       for (const key of existing.keys())
-        db.prepare('DELETE FROM workspace_values WHERE principal=? AND key=?').run(principal, key);
-      db.prepare(
+        prepare('DELETE FROM workspace_values WHERE principal=? AND key=?').run(principal, key);
+      prepare(
         'INSERT INTO workspace_meta VALUES(?,?,?,?) ON CONFLICT(principal) DO UPDATE SET revision=excluded.revision,keys=excluded.keys,entry_shape=excluded.entry_shape',
       ).run(principal, revision, JSON.stringify(Object.keys(data)), JSON.stringify(shape));
       if (!recordsOnly) project(principal, revision, data);
@@ -123,23 +126,23 @@ export function recordStore(db, { recordsOnly = false } = {}) {
     }
   }
   function noteLegacy(principal, revision) {
-    db.prepare(
+    prepare(
       'INSERT INTO workspace_legacy_marks VALUES(?,?) ON CONFLICT(principal) DO UPDATE SET revision=excluded.revision',
     ).run(principal, revision);
   }
   function project(principal, revision, data) {
     if (principal.startsWith('family:'))
-      db.prepare('UPDATE family_spaces SET revision=?,data=? WHERE id=?').run(
+      prepare('UPDATE family_spaces SET revision=?,data=? WHERE id=?').run(
         revision,
         JSON.stringify(data),
         principal.slice(7),
       );
     else if (principal === 'owner')
-      db.prepare(
+      prepare(
         'INSERT INTO workspace VALUES(1,?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,data=excluded.data',
       ).run(revision, JSON.stringify(data));
     else
-      db.prepare(
+      prepare(
         'INSERT INTO member_workspaces VALUES(?,?,?) ON CONFLICT(principal) DO UPDATE SET revision=excluded.revision,data=excluded.data',
       ).run(principal, revision, JSON.stringify(data));
     noteLegacy(principal, revision);
@@ -148,7 +151,7 @@ export function recordStore(db, { recordsOnly = false } = {}) {
     const own = !db.isTransaction;
     if (own) db.exec('BEGIN IMMEDIATE');
     try {
-      for (const { principal } of db.prepare('SELECT principal FROM workspace_meta').all()) {
+      for (const { principal } of prepare('SELECT principal FROM workspace_meta').all()) {
         const state = read(principal);
         project(principal, state.revision, state.data);
       }

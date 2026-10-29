@@ -211,9 +211,13 @@ export async function replaceData(data: Data, expected: string) {
   pendingWrites++;
   emit();
   try {
-    snapshot = remote ? await writeConnected(data, expected) : commit(localStorage, expected, data);
+    const result: Store & { undoBase?: Data } = remote
+      ? await writeConnected(data, expected)
+      : commit(localStorage, expected, data);
+    const { undoBase, ...confirmed } = result;
+    snapshot = confirmed;
     issue = '';
-    offerUndo(before, snapshot.data);
+    offerUndo(undoBase ?? before, snapshot.data);
     emit();
     return true;
   } catch (error) {
@@ -443,10 +447,10 @@ async function writeConnected(data: Data, expected: string) {
   const account = getServerAccount();
   if (!outbox && navigator.onLine) {
     try {
-      const saved = await commitServerStore(data, expected, snapshot.data);
+      const { undoBase, ...saved } = await commitServerStore(data, expected, snapshot.data);
       offline = false;
       if (account && offlineEnabled()) await saveOffline({ account, store: saved });
-      return saved;
+      return { ...saved, undoBase };
     } catch (error) {
       if (error instanceof ApiError && error.status < 500) throw error;
       if (!offlineEnabled()) throw error;
@@ -507,7 +511,11 @@ async function syncOfflineLocked(choices: Record<string, 'local' | 'server'> = {
       emit();
       return false;
     }
-    const saved = await commitServerStore(merged.data, latest.revision, latest.data);
+    const { undoBase: _undoBase, ...saved } = await commitServerStore(
+      merged.data,
+      latest.revision,
+      latest.data,
+    );
     await saveOffline({ account, store: saved }, outbox.draft.revision);
     snapshot = saved;
     outbox = undefined;

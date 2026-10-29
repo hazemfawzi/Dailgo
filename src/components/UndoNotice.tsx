@@ -13,7 +13,7 @@ export function UndoNotice({ t }: { t: Translate }) {
       <p dir="auto" className="undo-notice" role="status">
         {error}
         <Button variant="ghost" onClick={() => setError('')}>
-          {t('ui.dismiss.f9e997')}
+          {t('undo.dismiss')}
         </Button>
       </p>
     ) : null;
