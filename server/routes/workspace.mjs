@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { resource, stateKeys } from '../resources.mjs';
 import {
   validateData,
+  validateChangedData,
   auditWorkspace,
   validateGoalDateChanges,
   diffWorkspace,
@@ -78,12 +79,15 @@ export function createWorkspaceRoutes(context) {
         } else
           data =
             url.pathname === '/api/workspace/changes'
-              ? applyWorkspaceDelta(store.data, body.changes)
+              ? applyWorkspaceDelta(store.data, body.changes, true)
               : body.data;
-        validateData(data);
-        validateGoalDateChanges(store.data, data);
+        const partial = url.pathname === '/api/workspace/changes';
+        if (!partial) validateData(data);
+        if (store.data['personal-os.entries.v1'] !== data['personal-os.entries.v1'])
+          validateGoalDateChanges(store.data, data);
         data = auditWorkspace(store.data, data);
-        validateData(data);
+        if (partial) validateChangedData(store.data, data);
+        else validateData(data);
         const revision = randomUUID();
         identities.save(principal, revision, data);
         db.exec('COMMIT');

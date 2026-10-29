@@ -19,7 +19,7 @@
   margin: 7px 0 0;
 }
 .collection-top h2 .count {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
 }
 .collection-tools {
   display: flex;
@@ -173,7 +173,7 @@ progress::-moz-progress-bar {
   line-height: 1.7;
 }
 .collection-empty p {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   margin: 12px 0 22px;
 }
 .editor-form textarea {
@@ -215,7 +215,7 @@ progress::-moz-progress-bar {
   flex-shrink: 0;
 }
 .context-banner p {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   line-height: 1.9;
   margin: 0;
 }
@@ -282,7 +282,7 @@ progress::-moz-progress-bar {
   margin-top: 19px;
 }
 .life-area p {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   color: var(--muted);
   margin: 8px 0 20px;
 }
@@ -500,7 +500,7 @@ progress::-moz-progress-bar {
   background: none;
   border: 0;
   color: var(--text);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   padding: 11px 7px;
 }
 .conversation-row > button:first-child > svg {
@@ -533,10 +533,10 @@ progress::-moz-progress-bar {
   border-bottom: 1px solid var(--border);
 }
 .chat-header h3 {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
 }
 .chat-header p {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   color: var(--muted);
   margin: 5px 0 0;
   line-height: 1.7;
@@ -566,7 +566,7 @@ progress::-moz-progress-bar {
   color: var(--text);
 }
 .chat-welcome p {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   line-height: 1.9;
 }
 .suggestion-grid {
@@ -615,7 +615,7 @@ progress::-moz-progress-bar {
 }
 .chat-message > p {
   white-space: pre-wrap;
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   line-height: 1.9;
   margin: 0;
 }
@@ -640,7 +640,7 @@ progress::-moz-progress-bar {
   margin-bottom: 12px;
 }
 .chat-proposal p {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   line-height: 1.8;
   color: var(--muted);
   margin: 7px 0;
@@ -761,7 +761,7 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
     padding: 0 12px;
   }
   .collection-top p {
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
   }
   .collection-tools {
     gap: 8px;
@@ -801,7 +801,7 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
     align-items: flex-start;
   }
   .context-banner p {
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
   }
   .life-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -824,11 +824,11 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
     width: 13px;
   }
   .life-area h3 {
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
     margin-top: 17px;
   }
   .life-area p {
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
     margin-bottom: 16px;
   }
   .life-area small {
@@ -866,7 +866,7 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
     padding: 17px;
   }
   .calendar-heading h3 {
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
   }
   .calendar-heading .button {
     padding: 0 9px;
@@ -906,10 +906,10 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
     gap: 10px;
   }
   .chat-header h3 {
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
   }
   .chat-header p {
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
   }
   .chat-messages {
     padding: 18px 15px;
@@ -930,7 +930,7 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
     min-height: 44px;
   }
   .chat-message > p {
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
   }
   .chat-input {
     margin-inline: 15px;

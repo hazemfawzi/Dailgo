@@ -1,3 +1,4 @@
+import { mergeOffline } from './offlineMerge';
 import { getServerData } from './activeWorkspace';
 import { diffWorkspace, applyWorkspaceDelta } from './workspaceDelta';
 import { validateData } from './storageCore';
@@ -13,7 +14,10 @@ export function clearServerAccount() {
   expectedAccount = null;
 }
 export class ApiError extends Error {
-  constructor(public status: number) {
+  constructor(
+    public status: number,
+    public code?: string,
+  ) {
     super(`Server request failed (${status})`);
   }
 }
@@ -53,7 +57,12 @@ export async function apiRequest(path: string, method = 'GET', body?: unknown) {
       path !== 'account/login'
     )
       window.dispatchEvent(new Event('dailgo-session-expired'));
-    throw new ApiError(response.status);
+    let code: string | undefined;
+    try {
+      const body = await response.json();
+      if (typeof body.error === 'string') code = body.error;
+    } catch {}
+    throw new ApiError(response.status, code);
   }
   return response.json();
 }
@@ -72,14 +81,39 @@ export async function commitServerStore(
   base = getServerData() ?? {},
 ) {
   validateData(data);
-  const result = await apiRequest('workspace/changes', 'PUT', {
-    revision,
-    changes: diffWorkspace(base, data),
-  });
-  return serverStore({
-    revision: result.revision,
-    data: applyWorkspaceDelta(base, result.changes),
-  });
+  let observed = base;
+  let draft = data;
+  let token = revision;
+  // A bounded retry merges independent edits only. Conflicting fields still require review.
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const result = await apiRequest('workspace/changes', 'PUT', {
+        revision: token,
+        changes: diffWorkspace(observed, draft),
+      });
+      return {
+        ...serverStore({
+          revision: result.revision,
+          data: applyWorkspaceDelta(observed, result.changes),
+        }),
+        undoBase: observed,
+      };
+    } catch (error) {
+      if (
+        !(error instanceof ApiError) ||
+        error.status !== 409 ||
+        error.code === 'record-changed' ||
+        attempt >= 2
+      )
+        throw error;
+      const latest = await loadServerStore();
+      const merged = mergeOffline(observed, draft, latest.data);
+      if (merged.conflicts.length) throw error;
+      observed = latest.data;
+      draft = merged.data;
+      token = latest.revision;
+    }
+  }
 }
 export async function replaceServerStore(data: Data, revision: string) {
   validateData(data);
