@@ -1455,6 +1455,7 @@ test('Oct 28 Arabic review: rendered digits, evening date and editable week-star
   expect((await workspace(page))['personal-os.weeks.v1']['2026-10-26'].outcomes[0].title).toBe(
     'نتيجة محفوظة',
   );
+  await page.locator('.week-outcomes-panel > summary').click();
   await page.getByLabel('أسابيع محفوظة سابقًا', { exact: true }).selectOption('2026-10-26');
   await expect(page.locator('.week-day-heading').first()).toContainText('الاثنين');
   await expect(page.getByRole('status').filter({ hasText: 'بحدوده الأصلية' })).toBeVisible();
@@ -1779,6 +1780,7 @@ test('assistant settings stay out of the conversation and week capacity opens on
   await page.getByRole('button', { name: 'تم', exact: true }).click();
   await page.goto('/planner?tab=week&week=2026-10-27');
   await expect(page.locator('.week-days input[type=number]:visible')).toHaveCount(0);
+  await page.locator('.week-expand-empty').first().click();
   await page.locator('.day-capacity-editor summary').first().click();
   await expect(page.locator('.week-days input[type=number]:visible')).toHaveCount(2);
 });
@@ -1992,4 +1994,289 @@ test('compact status planner paginates tasks without horizontal scrolling on des
     );
     await page.screenshot({ path: `/tmp/dailgo-status-planner-${name}.png`, fullPage: true });
   }
+});
+
+const agendaTitles = [
+  'القرآن | مراجعة الجزء الأول: تسميع الفاتحة والبقرة 1–43 وتسجيل مواضع التردد',
+  'English | Practice explaining the project, correct three mistakes and record the result',
+  'AI + Tech | Convert meeting notes into tasks with owner, deadline and missing information',
+];
+function agendaTasks() {
+  return agendaTitles.map((title, index) => ({
+    id: `agenda-${index}`,
+    title,
+    category: 'Learning',
+    done: false,
+    archived: false,
+    status: 'todo',
+    plannedDate: '2026-11-01',
+    plannedTime: ['04:30', '08:00', '05:15'][index],
+    dueDate: '2026-11-03',
+    estimate: [40, 30, 45][index],
+    goalId: 'agenda-goal',
+    description: 'مراجعة وتطبيق وتسليم واضح، مع تسجيل النتيجة الفعلية والمعلومة الناقصة.',
+  }));
+}
+async function seedAgenda(page, tasks = agendaTasks(), language = 'ar') {
+  await signIn(page);
+  await seedUxWorkspace(page, language, {
+    'personal-os.journey.v1': completeJourney,
+    'personal-os.tasks.v1': tasks,
+    'personal-os.planning.v1': {
+      weekStartsOn: 6,
+      capacity: 240,
+      buffer: 30,
+      timezone: 'Africa/Cairo',
+    },
+    'personal-os.entries.v1': {
+      version: 2,
+      demoVersion: 1,
+      entries: [
+        {
+          id: 'agenda-goal',
+          kind: 'goal',
+          title: 'دراسة يومية مستمرة للقرآن والإنجليزي وهندسة الذكاء الاصطناعي',
+          area: 'Learning',
+          detail: '',
+          date: '2026-12-31',
+          time: '',
+          progress: 0,
+          archived: false,
+          doneDates: [],
+          milestones: [],
+        },
+      ],
+    },
+  });
+  await page.clock.setFixedTime(new Date('2026-11-01T09:00:00Z'));
+  await page.goto('/planner?tab=week&week=2026-10-31');
+  await expect(page.locator('.week-agenda')).toBeVisible();
+}
+async function agendaContrast(page) {
+  return page.evaluate(() => {
+    const rgb = (value) => value.match(/[\d.]+/g)?.map(Number) ?? [];
+    const luminance = (color) =>
+      rgb(color)
+        .slice(0, 3)
+        .map((n) => {
+          const s = n / 255;
+          return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+        })
+        .reduce((sum, n, i) => sum + n * [0.2126, 0.7152, 0.0722][i], 0);
+    return [
+      '.week-task-title button',
+      '.week-task-meta',
+      '.week-task-goal',
+      '.week-day-heading span',
+      '.day-load',
+      '.week-day-button[aria-pressed=true] span',
+    ].map((selector) => {
+      const el = document.querySelector(selector);
+      let background = el;
+      while (background && (rgb(getComputedStyle(background).backgroundColor)[3] ?? 1) === 0)
+        background = background.parentElement;
+      const foreground = luminance(getComputedStyle(el).color);
+      const back = luminance(
+        background ? getComputedStyle(background).backgroundColor : 'rgb(255,255,255)',
+      );
+      return {
+        selector,
+        ratio: (Math.max(foreground, back) + 0.05) / (Math.min(foreground, back) + 0.05),
+      };
+    });
+  });
+}
+test('weekly agenda puts long mixed-language tasks first, orders times and fits desktop and mobile', async ({
+  page,
+}) => {
+  await seedAgenda(page);
+  const before = (await workspace(page))['personal-os.tasks.v1'];
+  const day = page.locator('.week-day[data-date="2026-11-01"]');
+  expect(
+    await day
+      .locator('.week-task')
+      .evaluateAll((nodes) => nodes.map((node) => node.dataset.taskId)),
+  ).toEqual(['agenda-0', 'agenda-2', 'agenda-1']);
+  await expect(page.locator('.week-outcomes-panel')).not.toHaveAttribute('open');
+  await expect(page.locator('.week-review-panel')).not.toHaveAttribute('open');
+  for (const [width, height] of [
+    [1905, 882],
+    [1280, 900],
+    [390, 844],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.evaluate(() => scrollTo(0, 0));
+    const first = await day.locator('.week-task').first().boundingBox();
+    const last = await day.locator('.week-task').last().boundingBox();
+    expect(first.y + first.height).toBeLessThan(height - (width < 851 ? 70 : 0));
+    expect(last.y + last.height - first.y).toBeLessThanOrEqual(650);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    for (const title of await day.locator('.week-task-title button').all()) {
+      const layout = await title.evaluate((el) => ({
+        height: el.getBoundingClientRect().height,
+        line: parseFloat(getComputedStyle(el).lineHeight),
+        break: getComputedStyle(el).wordBreak,
+        wrap: getComputedStyle(el).overflowWrap,
+      }));
+      expect(layout.height).toBeLessThanOrEqual(layout.line * 2 + 1);
+      expect(layout.break).toBe('normal');
+      expect(layout.wrap).toBe('normal');
+    }
+    for (const result of await agendaContrast(page))
+      expect(result.ratio, result.selector).toBeGreaterThanOrEqual(4.5);
+    await page.screenshot({ path: `/tmp/dailgo-week-agenda-${width}.png`, fullPage: true });
+    if (width === 390) {
+      await expect(page.locator('.week-day:visible')).toHaveCount(1);
+      await page.locator('.week-day-button').nth(2).click();
+      await expect(page.locator('.week-day.selected-day')).toHaveAttribute(
+        'data-date',
+        '2026-11-02',
+      );
+      await expect(page.locator('.week-day:visible')).toHaveCount(1);
+      await page.locator('.week-show-all').click();
+      await expect(page.locator('.week-day:visible')).toHaveCount(7);
+      expect((await page.locator('.week-day.empty-day').first().boundingBox()).height).toBeLessThan(
+        80,
+      );
+      await page.locator('.week-show-all').click();
+      await page.locator('.week-day-button').nth(1).click();
+    }
+  }
+  await page.setViewportSize({ width: 1905, height: 882 });
+  await page.getByRole('button', { name: 'تغيير المظهر', exact: true }).click();
+  await expect(page.locator('html')).toHaveClass(/dark/);
+  for (const width of [1905, 390]) {
+    await page.setViewportSize({ width, height: 882 });
+    await page.evaluate(() => scrollTo(0, 0));
+    for (const result of await agendaContrast(page))
+      expect(result.ratio, result.selector).toBeGreaterThanOrEqual(4.5);
+    await page.screenshot({ path: `/tmp/dailgo-week-agenda-dark-${width}.png`, fullPage: true });
+  }
+  expect((await workspace(page))['personal-os.tasks.v1']).toEqual(before);
+});
+test('weekly agenda actions preserve data until saved, separate completion, and support navigation and empty days', async ({
+  page,
+}) => {
+  const tasks = [
+    ...agendaTasks(),
+    {
+      ...agendaTasks()[0],
+      id: 'no-time',
+      title: 'متابعة عرض العميل بدون موعد ساعة محدد',
+      plannedTime: undefined,
+      estimate: undefined,
+    },
+    {
+      ...agendaTasks()[0],
+      id: 'completed',
+      title: 'مهمة اكتملت مع الاحتفاظ بميعادها',
+      done: true,
+      status: 'done',
+      plannedTime: undefined,
+    },
+    {
+      ...agendaTasks()[0],
+      id: 'blocked',
+      title: 'Waiting for client — مهمة متوقفة لمعلومة ناقصة',
+      status: 'blocked',
+      plannedTime: undefined,
+    },
+  ];
+  await seedAgenda(page, tasks, 'en');
+  const day = page.locator('.week-day[data-date="2026-11-01"]');
+  await expect(day.locator('.week-task')).toHaveCount(6);
+  await expect(day).toContainText('No estimate');
+  await expect(day.locator('.week-task').last()).toHaveAttribute('data-task-id', 'blocked');
+  const before = (await workspace(page))['personal-os.tasks.v1'];
+  await day.locator('[data-task-id="agenda-0"] .week-task-actions').click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText(tasks[0].description);
+  await dialog.getByRole('button', { name: 'Close / إغلاق', exact: true }).click();
+  expect((await workspace(page))['personal-os.tasks.v1']).toEqual(before);
+  await day.locator('[data-task-id="agenda-0"] .week-task-actions').click();
+  await dialog.getByLabel('Plan task: ' + tasks[0].title, { exact: true }).fill('2026-11-02');
+  expect((await workspace(page))['personal-os.tasks.v1']).toEqual(before);
+  await dialog.getByRole('button', { name: 'Save execution day', exact: true }).click();
+  await expect
+    .poll(
+      async () =>
+        (await workspace(page))['personal-os.tasks.v1'].find((x) => x.id === 'agenda-0')
+          .plannedDate,
+    )
+    .toBe('2026-11-02');
+  let saved = (await workspace(page))['personal-os.tasks.v1'];
+  expect(saved.find((x) => x.id === 'agenda-0').dueDate).toBe('2026-11-03');
+  expect(saved.find((x) => x.id === 'agenda-0').done).toBe(false);
+  const moved = page.locator('.week-day[data-date="2026-11-02"] [data-task-id="agenda-0"]');
+  await moved.locator('.week-task-actions').click();
+  await dialog.getByRole('button', { name: 'Unplan', exact: true }).click();
+  await expect
+    .poll(
+      async () =>
+        (await workspace(page))['personal-os.tasks.v1'].find((x) => x.id === 'agenda-0')
+          .plannedDate,
+    )
+    .toBeUndefined();
+  await day.locator('[data-task-id="agenda-2"] .week-complete').click();
+  await expect(day.locator('[data-task-id="agenda-2"] .week-complete')).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await day.locator('[data-task-id="agenda-2"] .week-complete').click();
+  await expect(day.locator('[data-task-id="agenda-2"] .week-complete')).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  );
+  await page.getByRole('button', { name: 'Next week', exact: true }).click();
+  await expect(page.locator('.week-day').first()).toHaveAttribute('data-date', '2026-11-07');
+  await page.getByRole('button', { name: 'Previous week', exact: true }).click();
+  await expect(page.locator('.week-day').first()).toHaveAttribute('data-date', '2026-10-31');
+  await page.locator('.week-expand-empty').first().click();
+  await expect(page.locator('.empty-day .week-day-content:visible')).toHaveCount(1);
+  await page.locator('.week-expand-empty').first().click();
+  await expect(page.locator('.empty-day .week-day-content:visible')).toHaveCount(0);
+  saved = (await workspace(page))['personal-os.tasks.v1'];
+  expect(saved).toHaveLength(before.length);
+  for (const task of saved) {
+    const original = before.find((x) => x.id === task.id);
+    expect(task.plannedTime).toBe(original.plannedTime);
+    expect(task.dueDate).toBe(original.dueDate);
+    expect(task.goalId).toBe(original.goalId);
+  }
+  await page.reload();
+  await expect(page.locator('.week-day [data-task-id="agenda-0"]')).toHaveCount(0);
+  await expect(page.locator('.week-day [data-task-id="completed"] .week-complete')).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+});
+
+test('weekly agenda rejects an invalid Arabic date draft without saving the previous valid draft', async ({
+  page,
+}) => {
+  await seedAgenda(page);
+  const before = (await workspace(page))['personal-os.tasks.v1'];
+  await page.locator('.week-day [data-task-id="agenda-0"] .week-task-actions').click();
+  const dialog = page.getByRole('dialog');
+  const date = dialog.getByLabel('تخطيط المهمة: ' + agendaTitles[0], { exact: true });
+  await date.fill('04/11/2026');
+  await date.fill('31/02/2026');
+  await dialog.getByRole('button', { name: 'حفظ يوم التنفيذ', exact: true }).click();
+  await expect(dialog).toBeVisible();
+  expect((await workspace(page))['personal-os.tasks.v1']).toEqual(before);
+  await date.fill('04/11/2026');
+  await dialog.getByRole('button', { name: 'حفظ يوم التنفيذ', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect
+    .poll(
+      async () =>
+        (await workspace(page))['personal-os.tasks.v1'].find((task) => task.id === 'agenda-0')
+          .plannedDate,
+    )
+    .toBe('2026-11-04');
+  expect(
+    (await workspace(page))['personal-os.tasks.v1'].find((task) => task.id === 'agenda-0').dueDate,
+  ).toBe('2026-11-03');
 });

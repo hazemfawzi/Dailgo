@@ -1338,5 +1338,15 @@
   "trial.daily.title": "Today’s observations",
   "trial.daily.help": "Fill in only what you measured. Leave the rest empty.",
   "trial.note.placeholder": "What felt easier? What needs to change?",
-  "trial.autosave": "Changes save as you write"
+  "trial.autosave": "Changes save as you write",
+  "week.task.actions": "Task details and actions",
+  "week.task.chooseDay": "Choose a day from actions",
+  "week.task.actionsHelp": "Review details or change the execution day. The due date stays unchanged.",
+  "week.task.saveDate": "Save execution day",
+  "week.days.choose": "Choose a day",
+  "week.days.selected": "Selected day",
+  "week.days.all": "Whole week",
+  "week.days.expand": "Show empty day details",
+  "week.tools": "Plan and move tasks",
+  "week.review.open": "Review the week"
 }

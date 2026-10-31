@@ -1338,5 +1338,15 @@
   "trial.daily.title": "ملاحظات اليوم",
   "trial.daily.help": "اكتب اللي قسته بس، وسيب الباقي فاضي.",
   "trial.note.placeholder": "إيه بقى أسهل؟ وإيه محتاج يتغيّر؟",
-  "trial.autosave": "التغييرات بتتحفظ أثناء الكتابة"
+  "trial.autosave": "التغييرات بتتحفظ أثناء الكتابة",
+  "week.task.actions": "تفاصيل المهمة وإجراءاتها",
+  "week.task.chooseDay": "اختار اليوم من الإجراءات",
+  "week.task.actionsHelp": "راجع التفاصيل أو غيّر يوم التنفيذ. تاريخ التسليم يفضل زي ما هو.",
+  "week.task.saveDate": "حفظ يوم التنفيذ",
+  "week.days.choose": "اختيار اليوم",
+  "week.days.selected": "اليوم المختار",
+  "week.days.all": "الأسبوع كله",
+  "week.days.expand": "عرض تفاصيل اليوم الفارغ",
+  "week.tools": "تخطيط المهام وترحيلها",
+  "week.review.open": "مراجعة الأسبوع"
 }

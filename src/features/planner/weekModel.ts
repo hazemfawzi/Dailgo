@@ -70,3 +70,9 @@ export const emptyWeek = (): WeekPlan => ({
   capacities: {},
   review: { wins: '', obstacles: '', next: '' },
 });
+
+export function orderDayTasks(tasks: Task[]) {
+  return [...tasks].sort((a, b) =>
+    (a.plannedTime || '99:99').localeCompare(b.plannedTime || '99:99'),
+  );
+}
