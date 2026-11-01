@@ -1354,3 +1354,9 @@ html[dir='rtl'] .calendar-heading > div > button > svg {
   height: 20px;
   flex: none;
 }
+.week-fixed-range {
+  display: block;
+  color: var(--text);
+  padding-block: 8px;
+  font-weight: 600;
+}

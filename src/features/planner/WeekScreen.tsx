@@ -65,9 +65,10 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
   const requestedWeek = params.get('week');
   const savedWeek =
     requestedWeek && params.get('saved') === '1' && plans[requestedWeek] ? requestedWeek : null;
-  const start = savedWeek ?? weekStart(requestedWeek || localDate(), settings.weekStartsOn);
+  const start = weekStart(requestedWeek || localDate(), settings.weekStartsOn);
+  const planKey = savedWeek ?? start;
   const days = weekDates(start);
-  const plan = plans[start] ?? emptyWeek();
+  const plan = plans[planKey] ?? emptyWeek();
   const [pool, setPool] = useState('unplanned');
   const [query, setQuery] = useState('');
   const [goalFilter, setGoalFilter] = useState('all');
@@ -107,7 +108,7 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
   const events = entries.filter((x) => x.kind === 'event' && !x.archived && days.includes(x.date));
   const outcomesDone = plan.outcomes.filter((x) => x.done && x.title.trim()).length;
   const updatePlan = (change: (old: WeekPlan) => WeekPlan) =>
-    setPlans((old) => ({ ...old, [start]: change(old[start] ?? emptyWeek()) }));
+    setPlans((old) => ({ ...old, [planKey]: change(old[planKey] ?? emptyWeek()) }));
   const updateTask = (id: string, patch: Partial<Task>) =>
     setTasks((old) => old.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   const dateLabel = (
@@ -183,7 +184,15 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
         <div className="week-task-main">
           <div className="week-task-title">
             <button dir="auto" onClick={() => edit(task)} title={task.title}>
-              {task.title}
+              {task.title.split(/([0-9٠-٩۰-۹]+\s*[-–]\s*[0-9٠-٩۰-۹]+)/g).map((part, index) =>
+                index % 2 ? (
+                  <bdi dir="ltr" key={index}>
+                    {part}
+                  </bdi>
+                ) : (
+                  part
+                ),
+              )}
             </button>
           </div>
           <div className="week-task-meta">
@@ -490,7 +499,7 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
           {t('ui.previouslySavedWeeks.9d4b38')}
           <select
             aria-label={t('ui.previouslySavedWeeks.9d4b38')}
-            value={plans[start] ? start : ''}
+            value={savedWeek ?? (plans[start] ? start : '')}
             onChange={(e) => {
               if (e.target.value) {
                 const next = new URLSearchParams(params);
@@ -514,7 +523,7 @@ export function WeekScreen({ t, ar, tasks, setTasks, entries, edit }: Props) {
         </label>
         {savedWeek && savedWeek !== weekStart(savedWeek, settings.weekStartsOn) && (
           <p dir="auto" role="status">
-            {t('ui.viewingASavedWeekWithItsOriginal.15641c')}{' '}
+            {t('week.archivedRange')} {dateLabel(savedWeek)} — {dateLabel(addDays(savedWeek, 6))}.{' '}
             <Button variant="outline" onClick={() => navigateWeek(localDate())}>
               {t('ui.openCurrentWeek.aace20')}
             </Button>

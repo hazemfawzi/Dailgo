@@ -1073,16 +1073,16 @@ test('owner reviews partner comments and replacing the workspace forgets removed
   }
 });
 
-test('Arabic planning defaults to Saturday without overwriting an explicitly saved week start', () => {
+test('planning always uses Saturday without mutating saved preferences', () => {
   assert.equal(domain.planningFor({}).weekStartsOn, 6);
   assert.equal(domain.planningFor({ 'personal-os.language': 'ar' }).weekStartsOn, 6);
-  assert.equal(domain.planningFor({ 'personal-os.language': 'en' }).weekStartsOn, 1);
-  assert.equal(
-    domain.planningFor({
-      'personal-os.language': 'ar',
-      'personal-os.planning.v1': { weekStartsOn: 1, timezone: 'Africa/Cairo' },
-    }).weekStartsOn,
-    1,
-  );
+  assert.equal(domain.planningFor({ 'personal-os.language': 'en' }).weekStartsOn, 6);
+  const data = {
+    'personal-os.planning.v1': { weekStartsOn: 1, timezone: 'Africa/Cairo', capacity: 180 },
+  };
+  assert.equal(domain.planningFor(data).weekStartsOn, 6);
+  assert.equal(domain.planningFor(data).timezone, 'Africa/Cairo');
+  assert.equal(domain.planningFor(data).capacity, 180);
+  assert.equal(data['personal-os.planning.v1'].weekStartsOn, 1);
   assert.equal(domain.fmt.formatClockPart(1, 'ar'), '01');
 });

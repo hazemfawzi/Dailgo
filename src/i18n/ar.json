@@ -1348,5 +1348,7 @@
   "week.days.all": "الأسبوع كله",
   "week.days.expand": "عرض تفاصيل اليوم الفارغ",
   "week.tools": "تخطيط المهام وترحيلها",
-  "week.review.open": "مراجعة الأسبوع"
+  "week.review.open": "مراجعة الأسبوع",
+  "week.fixedRange": "السبت — الجمعة",
+  "week.archivedRange": "نتائج الأسبوع المؤرشف محفوظة بفترتها الأصلية:"
 }

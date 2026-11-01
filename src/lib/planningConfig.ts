@@ -5,18 +5,18 @@ export type PlanningPreferences = {
   buffer: number;
   timezone: string;
 };
+export const WEEK_START = 6;
 export const defaultPlanning: PlanningPreferences = {
-  weekStartsOn: 1,
+  weekStartsOn: WEEK_START,
   capacity: 240,
   buffer: 30,
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
 };
 export function planningFor(data: Record<string, unknown>): PlanningPreferences {
-  const language = data['personal-os.language'] ?? 'ar';
   return {
     ...defaultPlanning,
-    weekStartsOn: language === 'ar' ? 6 : 1,
     ...((data['personal-os.planning.v1'] as Partial<PlanningPreferences>) ?? {}),
+    weekStartsOn: WEEK_START,
   };
 }
 export function getPlanning(): PlanningPreferences {

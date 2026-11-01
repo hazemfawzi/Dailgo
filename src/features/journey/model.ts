@@ -391,7 +391,7 @@ export function addGoalTemplate(
       dark: data['personal-os.dark'] === true,
       wakeTime: '07:00',
       eveningTime: '20:00',
-      weekStartsOn: spec.language === 'ar' ? 6 : 1,
+      weekStartsOn: 6,
     },
     batch,
   );

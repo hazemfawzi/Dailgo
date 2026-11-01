@@ -125,9 +125,11 @@ const weekBuild = await build({
 const { weekStart, weekDates, dayLoad, rolloverTasks, emptyWeek } = await import(
   `data:text/javascript;base64,${Buffer.from(weekBuild.outputFiles[0].text).toString('base64')}`
 );
-test('weeks align to Monday across month and year boundaries', () => {
-  assert.equal(weekStart('2027-01-03'), '2026-12-28');
-  assert.equal(weekDates('2026-12-28')[6], '2027-01-03');
+test('weeks align to Saturday and end Friday across month and year boundaries', () => {
+  assert.equal(weekStart('2027-01-03'), '2027-01-02');
+  assert.equal(weekStart('2026-12-31'), '2026-12-26');
+  assert.equal(weekStart('2027-01-01'), '2026-12-26');
+  assert.equal(weekDates('2026-12-26')[6], '2027-01-01');
 });
 test('weekly rollover moves only unfinished non-archived source-week tasks and keeps deadlines', () => {
   const all = [

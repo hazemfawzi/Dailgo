@@ -68,22 +68,12 @@ export function PlanningSettings({ t }: { t: Translate }) {
 }
 
 export function WeekStartSetting({ t }: { t: Translate }) {
-  const [settings, setSettings] = usePlanning();
   return (
     <label>
       {t('ui.weekStartsOn.c9c926')}
-      <select
-        aria-label={t('ui.weekStartsOn.c9c926')}
-        value={settings.weekStartsOn}
-        onChange={(e) => {
-          const value = Number(e.target.value);
-          setSettings((old) => ({ ...old, weekStartsOn: value }));
-        }}
-      >
-        <option value={6}>{t('ui.saturday.e29416')}</option>
-        <option value={0}>{t('ui.sunday.4e830a')}</option>
-        <option value={1}>{t('ui.monday.99a6de')}</option>
-      </select>
+      <output className="week-fixed-range" aria-label={t('ui.weekStartsOn.c9c926')}>
+        {t('week.fixedRange')}
+      </output>
     </label>
   );
 }

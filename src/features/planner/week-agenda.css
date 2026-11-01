@@ -529,3 +529,13 @@ main:has(.week-agenda) > .page-heading h1 {
 .week-agenda .day-load.overloaded > div strong {
   display: inline;
 }
+/* Text direction follows its content; alignment follows the interface. */
+.week-agenda:dir(rtl) .week-task-title > button {
+  text-align: right;
+}
+.week-agenda:dir(ltr) .week-task-title > button {
+  text-align: left;
+}
+.week-task-title bdi {
+  unicode-bidi: isolate;
+}

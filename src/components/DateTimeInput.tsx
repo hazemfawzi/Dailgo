@@ -78,8 +78,7 @@ export function DateTimeInput(props: ComponentProps<'input'>) {
   const anchor =
     month || (validDate(value) ? value.slice(0, 7) : new Date().toISOString().slice(0, 7));
   const first = new Date(anchor + '-01T12:00:00Z');
-  const planning = data['personal-os.planning.v1'] as { weekStartsOn?: number } | undefined;
-  const start = planning?.weekStartsOn ?? (ar ? 6 : 1);
+  const start = 6;
   const offset = (first.getUTCDay() - start + 7) % 7;
   const days = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
   function moveMonth(by: number) {

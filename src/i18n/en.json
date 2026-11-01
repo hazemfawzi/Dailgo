@@ -1348,5 +1348,7 @@
   "week.days.all": "Whole week",
   "week.days.expand": "Show empty day details",
   "week.tools": "Plan and move tasks",
-  "week.review.open": "Review the week"
+  "week.review.open": "Review the week",
+  "week.fixedRange": "Saturday — Friday",
+  "week.archivedRange": "Archived results retain their original period:"
 }

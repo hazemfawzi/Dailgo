@@ -53,13 +53,6 @@ async function openHomeSection(page, key) {
   const section = page.locator('details[data-home-section="' + key + '"]');
   if ((await section.getAttribute('open')) === null) await section.locator('> summary').click();
 }
-async function setWeekStart(page, value) {
-  await page.getByRole('button', { name: /^(Data and backup|البيانات والنسخ الاحتياطي)$/ }).click();
-  await page
-    .getByRole('combobox', { name: /^(Week starts on|بداية الأسبوع)$/ })
-    .selectOption(value);
-  await page.getByRole('button', { name: 'Close / إغلاق', exact: true }).click();
-}
 test('account bootstrap, explicit local migration, automatic server saves, multiple devices, conflicts and offline failures', async ({
   page,
   browser,
@@ -701,7 +694,9 @@ test('three-step onboarding saves reviewed preferences, one goal and three tasks
   await dialog.getByRole('checkbox', { name: 'Work', exact: true }).check();
   await dialog.getByRole('checkbox', { name: 'Learning', exact: true }).check();
   await dialog.getByLabel('Wake-up time', { exact: true }).fill('06:30');
-  await dialog.getByRole('combobox', { name: 'Week starts on', exact: true }).selectOption('6');
+  await expect(dialog.getByLabel('Week starts on', { exact: true })).toHaveText(
+    'Saturday — Friday',
+  );
   await dialog.getByRole('checkbox', { name: 'Dark theme', exact: true }).check();
   await dialog.getByRole('button', { name: 'Next', exact: true }).click();
   await dialog
@@ -939,7 +934,7 @@ test('evening review rolls only selected tasks and weekly review saves three res
   await expect
     .poll(async () => {
       const saved = await workspace(page);
-      return saved['personal-os.weeks.v1']?.['2026-11-02']?.outcomes.map((item) => item.title);
+      return saved['personal-os.weeks.v1']?.['2026-10-31']?.outcomes.map((item) => item.title);
     })
     .toEqual(['Next result 1', 'Next result 2', 'Next result 3']);
 });
@@ -1422,7 +1417,7 @@ test('goal templates remain available after onboarding and add only a reviewed g
   expect((await workspace(page))['personal-os.tasks.v1']).toHaveLength(6);
 });
 
-test('Oct 28 Arabic review: rendered digits, evening date and editable week-start preferences stay consistent', async ({
+test('Oct 28 Arabic review: rendered digits and Saturday weeks stay consistent with archived results', async ({
   page,
 }) => {
   await signIn(page);
@@ -1449,7 +1444,7 @@ test('Oct 28 Arabic review: rendered digits, evening date and editable week-star
   await expect(page.locator('.daily-review').first()).toContainText('28 أكتوبر 2026');
   await expect(page.locator('.daily-review').first()).not.toContainText('2026-10-28');
   await page.goto('/planner?tab=week&week=2026-10-26');
-  await setWeekStart(page, '6');
+
   await expect(page.locator('.week-day-heading').first()).toContainText('السبت');
   await expect(page.locator('.outcome-index')).toHaveText(['01', '02', '03']);
   expect((await workspace(page))['personal-os.weeks.v1']['2026-10-26'].outcomes[0].title).toBe(
@@ -1457,16 +1452,15 @@ test('Oct 28 Arabic review: rendered digits, evening date and editable week-star
   );
   await page.locator('.week-outcomes-panel > summary').click();
   await page.getByLabel('أسابيع محفوظة سابقًا', { exact: true }).selectOption('2026-10-26');
-  await expect(page.locator('.week-day-heading').first()).toContainText('الاثنين');
-  await expect(page.getByRole('status').filter({ hasText: 'بحدوده الأصلية' })).toBeVisible();
+  await expect(page.locator('.week-day-heading').first()).toContainText('السبت');
+  await expect(page.getByRole('status').filter({ hasText: 'المؤرشف' })).toBeVisible();
   await page.getByRole('button', { name: 'افتح الأسبوع الحالي', exact: true }).click();
   await expect(page.locator('.week-day-heading').first()).toContainText('السبت');
   await page.goto('/planner?tab=calendar&date=2026-10-27');
   await expect(page.locator('.weekday').first()).toHaveText('سب');
-  await setWeekStart(page, '0');
-  await expect(page.locator('.weekday').first()).toHaveText('أح');
+  await expect(page.locator('.weekday').first()).toHaveText('سب');
   await page.goto('/');
-  await expect(page.locator('.home-week button').first()).toContainText('الأحد');
+  await expect(page.locator('.home-week button').first()).toContainText('السبت');
   await page.getByRole('button', { name: 'مهمة جديدة', exact: true }).click();
   await expect(page.getByRole('combobox', { name: 'التكرار', exact: true })).toBeVisible();
   await expect(
@@ -2279,4 +2273,44 @@ test('weekly agenda rejects an invalid Arabic date draft without saving the prev
   expect(
     (await workspace(page))['personal-os.tasks.v1'].find((task) => task.id === 'agenda-0').dueDate,
   ).toBe('2026-11-03');
+});
+
+test('Saturday weeks and RTL title alignment ignore legacy Monday settings without rewriting data', async ({
+  page,
+}) => {
+  await seedAgenda(page);
+  let snapshot = await (await page.request.get('/api/workspace')).json();
+  const data = structuredClone(snapshot.data);
+  data['personal-os.planning.v1'].weekStartsOn = 1;
+  data['personal-os.tasks.v1'][0].title = 'القرآن | البقرة 75-105';
+  data['personal-os.tasks.v1'][2].title = 'AI + Tech | JSON والحالات الصناعية';
+  const response = await page.request.put('/api/workspace', {
+    headers: { Origin: 'http://127.0.0.1:5187' },
+    data: { revision: snapshot.revision, data },
+  });
+  expect(response.ok()).toBe(true);
+  snapshot = await (await page.request.get('/api/workspace')).json();
+  await page.goto('/planner?tab=week&week=2026-11-01');
+  await expect(page.locator('.week-day').first()).toHaveAttribute('data-date', '2026-10-31');
+  await expect(page.locator('.week-day').last()).toHaveAttribute('data-date', '2026-11-06');
+  const ai = page.locator('.week-day [data-task-id="agenda-2"] .week-task-title button');
+  await expect(ai).toHaveCSS('direction', 'ltr');
+  await expect(ai).toHaveCSS('text-align', 'right');
+  const range = page.locator('.week-day [data-task-id="agenda-0"] .week-task-title bdi');
+  await expect(range).toHaveText('75-105');
+  await expect(range).toHaveCSS('direction', 'ltr');
+  await page.screenshot({ path: '/tmp/dailgo-saturday-directions.png' });
+  await page.goto('/planner?tab=calendar&date=2026-11-01');
+  await expect(page.locator('.weekday').first()).toHaveText('سب');
+  await page.goto('/');
+  await expect(page.locator('.home-week button').first()).toContainText('السبت');
+  await page.goto('/planner?tab=week&week=2026-11-01');
+  await page.getByRole('button', { name: 'التبديل إلى الإنجليزية', exact: true }).click();
+  await expect(page.locator('.week-day').first()).toHaveAttribute('data-date', '2026-10-31');
+  await expect(
+    page.locator('.week-day [data-task-id="agenda-2"] .week-task-title button'),
+  ).toHaveCSS('text-align', 'left');
+  const after = await workspace(page);
+  expect(after['personal-os.tasks.v1']).toEqual(snapshot.data['personal-os.tasks.v1']);
+  expect(after['personal-os.planning.v1']).toEqual(snapshot.data['personal-os.planning.v1']);
 });

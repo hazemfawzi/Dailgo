@@ -36,7 +36,7 @@ export function Onboarding({
   const [chosen, setChosen] = useState<Area[]>(journey.areas);
   const [wake, setWake] = useState(journey.wakeTime);
   const [evening, setEvening] = useState(journey.eveningTime);
-  const [week, setWeek] = useState(language === 'ar' ? 6 : 1);
+  const week = 6;
   const [template, setTemplate] = useState('custom');
   const [title, setTitle] = useState('');
   const [criteria, setCriteria] = useState('');
@@ -200,11 +200,9 @@ export function Onboarding({
             </label>
             <label>
               {t('ui.weekStartsOn.c9c926')}
-              <select value={week} onChange={(e) => setWeek(Number(e.target.value))}>
-                <option value={6}>{t('ui.saturday.e29416')}</option>
-                <option value={0}>{t('ui.sunday.4e830a')}</option>
-                <option value={1}>{t('ui.monday.99a6de')}</option>
-              </select>
+              <output className="week-fixed-range" aria-label={t('ui.weekStartsOn.c9c926')}>
+                {t('week.fixedRange')}
+              </output>
             </label>
           </>
         )}
